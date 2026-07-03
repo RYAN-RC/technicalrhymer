@@ -143,6 +143,10 @@ Match modes: *Ends with (rhyme)* · *Starts with* · *Anywhere* · *Exact*.
 - **Shareable URLs** — searches sync to `?q=…` (plus mode/fuzzy/stress/sort and
   sense settings), and the tab title follows the query.
 - **Copy list** — copies the visible result words, one per line.
+- **Sticky preferences** — fuzzy, ignore-stress, sort, match mode, sense
+  relation, and panel open/closed state persist in `localStorage`
+  (`rf_prefs_v1`) and survive reloads. A shared `?q=` link overrides them for
+  that load but never overwrites them.
 - **Keyboard** — `/` focuses lookup from anywhere; `Esc` clears the focused
   box; `Enter` searches.
 - Clear (×) buttons in both inputs, auto-growing search box, back-to-top

@@ -351,6 +351,44 @@
     return '<svg aria-hidden="true"><use href="#' + id + '"></use></svg>';
   }
 
+  function setSeg(btns, attr, val) {
+    btns.forEach((b) => b.classList.toggle("on", b.getAttribute(attr) === val));
+  }
+
+  // ---- sticky preferences (fuzzy, stress, sort, match, sense relation, panels) ----
+  const PREFS_KEY = "rf_prefs_v1";
+
+  function savePrefs() {
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify({
+        mode: mode,
+        sort: sortMode,
+        fuzzy: fuzzyEl.checked,
+        ignoreStress: ignoreStressEl.checked,
+        senseRel: senseRel,
+        phoneOpen: !!(phonePanel && phonePanel.open),
+        senseOpen: !!sensePanelEl.open,
+      }));
+    } catch (e) { /* localStorage unavailable */ }
+  }
+
+  // Applied at boot, BEFORE the URL restore — a shared ?q= link still wins,
+  // and merely opening one never overwrites the saved preferences.
+  function loadPrefs() {
+    let p = null;
+    try { p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null"); } catch (e) { /* */ }
+    if (!p) return;
+    if (["end", "start", "any", "exact"].indexOf(p.mode) >= 0) { mode = p.mode; setSeg(matchBtns, "data-mode", mode); }
+    if (["common", "syllable", "alpha"].indexOf(p.sort) >= 0) { sortMode = p.sort; setSeg(sortBtns, "data-sort", sortMode); }
+    fuzzyEl.checked = !!p.fuzzy;
+    const on = p.ignoreStress !== false;
+    stripStress1El.checked = on;
+    ignoreStressEl.checked = on;
+    if (["related", "synonym", "opposite"].indexOf(p.senseRel) >= 0) { senseRel = p.senseRel; setSeg(senseRelBtns, "data-rel", senseRel); }
+    if (phonePanel) phonePanel.open = !!p.phoneOpen;
+    if (p.senseOpen) sensePanelEl.open = true;
+  }
+
   // ---- step 1: lookup ----
   function displayPron(p) {
     return stripStress1El.checked ? stripStress(p) : p;
@@ -551,8 +589,6 @@
     try { p = new URLSearchParams(location.search); } catch (e) { return false; }
     const q = (p.get("q") || "").trim();
     if (!q) return false;
-    const setSeg = (btns, attr, val) =>
-      btns.forEach((b) => b.classList.toggle("on", b.getAttribute(attr) === val));
     const m = p.get("m");
     if (m && ["end", "start", "any", "exact"].indexOf(m) >= 0) { mode = m; setSeg(matchBtns, "data-mode", m); }
     fuzzyEl.checked = p.get("f") === "1";
@@ -1187,6 +1223,7 @@
   function setIgnoreStress(on) {
     stripStress1El.checked = on;
     ignoreStressEl.checked = on;
+    savePrefs();
     if (wordInput.value.trim()) doLookup();
     if (fragInput.value.trim()) doSearch();
   }
@@ -1197,7 +1234,7 @@
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); doSearch(); }
   });
   ignoreStressEl.addEventListener("change", () => setIgnoreStress(ignoreStressEl.checked));
-  fuzzyEl.addEventListener("change", () => { if (fragInput.value.trim()) doSearch(); });
+  fuzzyEl.addEventListener("change", () => { savePrefs(); if (fragInput.value.trim()) doSearch(); });
 
   // ---- input quality-of-life: auto-grow, clear buttons, shortcuts ----
   function autoGrow() {
@@ -1319,14 +1356,18 @@
       senseRelBtns.forEach((o) => o.classList.remove("on"));
       b.classList.add("on");
       senseRel = b.getAttribute("data-rel");
+      savePrefs();
       if (senseWordEl.value.trim() && fragInput.value.trim()) doSearch();
     });
   });
+  sensePanelEl.addEventListener("toggle", savePrefs);
+  if (phonePanel) phonePanel.addEventListener("toggle", savePrefs);
   matchBtns.forEach((b) => {
     b.addEventListener("click", () => {
       matchBtns.forEach((o) => o.classList.remove("on"));
       b.classList.add("on");
       mode = b.getAttribute("data-mode");
+      savePrefs();
       if (fragInput.value.trim()) doSearch();
     });
   });
@@ -1335,12 +1376,14 @@
       sortBtns.forEach((o) => o.classList.remove("on"));
       b.classList.add("on");
       sortMode = b.getAttribute("data-sort");
+      savePrefs();
       if (fragInput.value.trim()) doSearch();
     });
   });
 
   // ---- boot ----
   function boot() {
+    loadPrefs(); // sticky settings first; a ?q= URL below still overrides
     statusEl.innerHTML = '<span class="loading-pill"><span class="spinner"></span>Loading dictionary…</span>';
     // defer parse one frame so the loading state paints
     setTimeout(() => {
