@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rhyme Finder — search by pronunciation</title>
+  <meta name="description" content="Look up a word's pronunciation, then find every word that rhymes or matches a phoneme pattern. Powered by the CMU Pronouncing Dictionary." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6cff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 10v3'/%3E%3Cpath d='M6 6v11'/%3E%3Cpath d='M10 3v18'/%3E%3Cpath d='M14 8v7'/%3E%3Cpath d='M18 5v13'/%3E%3Cpath d='M22 10v3'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Lucide icon sprite (line icons, currentColor) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="ic-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" />
+      </symbol>
+      <symbol id="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+      </symbol>
+      <symbol id="ic-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" /><path d="M16 9a5 5 0 0 1 0 6" /><path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
+      </symbol>
+      <symbol id="ic-audio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 10v3" /><path d="M6 6v11" /><path d="M10 3v18" /><path d="M14 8v7" /><path d="M18 5v13" /><path d="M22 10v3" />
+      </symbol>
+      <symbol id="ic-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14" /><path d="m19 12-7 7-7-7" />
+      </symbol>
+      <symbol id="ic-scissors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="6" cy="6" r="3" /><path d="M8.12 8.12 12 12" /><path d="M20 4 8.12 15.88" /><circle cx="6" cy="18" r="3" /><path d="M14.8 14.8 20 20" />
+      </symbol>
+      <symbol id="ic-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+      </symbol>
+      <symbol id="ic-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" />
+      </symbol>
+      <symbol id="ic-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 5H3" /><path d="M11 12H3" /><path d="M11 19H3" /><path d="M21 16V5" /><circle cx="18" cy="16" r="3" />
+      </symbol>
+      <symbol id="ic-thumbs-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" /><path d="M7 10v12" />
+      </symbol>
+      <symbol id="ic-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      </symbol>
+      <symbol id="ic-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14" /><path d="M12 5v14" />
+      </symbol>
+      <symbol id="ic-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <span class="mark"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v3" /><path d="M6 6v11" /><path d="M10 3v18" /><path d="M14 8v7" /><path d="M18 5v13" /><path d="M22 10v3" /></svg></span>
+        <h1>Rhyme Finder</h1>
+      </div>
+      <p class="tagline">
+        Search by <b>sound</b>, not spelling. Look up a word's pronunciation, take the
+        part you want to match, and find every word whose pronunciation ends the same way.
+      </p>
+    </header>
+
+    <!-- STEP 1 -->
+    <section class="step">
+      <div class="step-head">
+        <span class="step-num">1</span>
+        <h2>Look up a pronunciation</h2>
+        <span class="hint">ARPABET phonemes</span>
+      </div>
+      <div class="field">
+        <div class="input-shell">
+          <svg class="lead" aria-hidden="true"><use href="#ic-search"></use></svg>
+          <input id="wordInput" type="text" placeholder="Type a word, e.g. orange" autocomplete="off" autocapitalize="off" spellcheck="false" disabled />
+        </div>
+        <button id="lookupBtn" class="btn" disabled><svg aria-hidden="true"><use href="#ic-audio"></use></svg>Look up</button>
+      </div>
+      <div class="options">
+        <div class="opt">
+          <label class="switch">
+            <input id="stripStress1" type="checkbox" checked />
+            <span class="slider"></span>
+          </label>
+          <label for="stripStress1">Ignore stress &mdash; show &amp; copy the pronunciation without stress numbers</label>
+        </div>
+      </div>
+      <div id="pronResult" class="pron-result"></div>
+      <div id="notFound" class="notfound"></div>
+    </section>
+
+    <div class="connector"><svg aria-hidden="true"><use href="#ic-arrow-down"></use></svg></div>
+
+    <!-- STEP 2 -->
+    <section class="step">
+      <div class="step-head">
+        <span class="step-num">2</span>
+        <h2>Find rhymes &amp; matches</h2>
+        <span class="hint">paste a phoneme fragment</span>
+      </div>
+      <div class="field">
+        <div class="input-shell">
+          <textarea id="fragInput" rows="1" placeholder="e.g. AH N JH   ·   AO R * JH (in order)   ·   AO | JH (any order)" autocomplete="off" spellcheck="false" disabled></textarea>
+        </div>
+        <button id="searchBtn" class="btn" disabled><svg aria-hidden="true"><use href="#ic-search"></use></svg>Search</button>
+      </div>
+      <div class="options">
+        <div class="opt">
+          <span>Sort:</span>
+          <span class="seg" id="sortSeg">
+            <button class="on" data-sort="common">Most common</button>
+            <button data-sort="syllable">By syllables</button>
+            <button data-sort="alpha">A&ndash;Z</button>
+          </span>
+        </div>
+        <div class="opt">
+          <span>Match:</span>
+          <span class="seg" id="matchSeg">
+            <button class="on" data-mode="end">Ends with (rhyme)</button>
+            <button data-mode="start">Starts with</button>
+            <button data-mode="any">Anywhere</button>
+            <button data-mode="exact">Exact</button>
+          </span>
+        </div>
+        <div class="opt">
+          <label class="switch">
+            <input id="ignoreStress" type="checkbox" checked />
+            <span class="slider"></span>
+          </label>
+          <label for="ignoreStress">Ignore stress marks</label>
+        </div>
+        <div class="opt">
+          <label class="switch">
+            <input id="fuzzy" type="checkbox" />
+            <span class="slider"></span>
+          </label>
+          <label for="fuzzy">Fuzzy &mdash; match similar-sounding consonants</label>
+        </div>
+      </div>
+      <div class="search-help">
+        <b>*</b> or <b>%</b> = parts in that order with anything between (e.g.
+        <code>AO R * AH N JH</code>). <b>|</b> = parts in any order (e.g.
+        <code>AO R | JH</code>). Match buttons anchor the ends of an ordered query.
+      </div>
+
+      <details id="sensePanel" class="sense-panel">
+        <summary>
+          <svg aria-hidden="true"><use href="#ic-sparkles"></use></svg>
+          Word sense filter <span class="sense-opt">optional</span>
+          <svg class="chev" aria-hidden="true"><use href="#ic-arrow-down"></use></svg>
+        </summary>
+        <div class="sense-body">
+          <div class="field">
+            <div class="input-shell">
+              <svg class="lead" aria-hidden="true"><use href="#ic-search"></use></svg>
+              <input id="senseWord" type="text" placeholder="Keep only words related to… e.g. grass" autocomplete="off" autocapitalize="off" spellcheck="false" />
+            </div>
+            <button id="senseClear" class="btn ghost" type="button"><svg aria-hidden="true"><use href="#ic-x"></use></svg>Clear</button>
+          </div>
+          <div class="options">
+            <div class="opt">
+              <span>Relation:</span>
+              <span class="seg" id="senseRel">
+                <button class="on" data-rel="related" type="button">Related</button>
+                <button data-rel="synonym" type="button">Synonym / like</button>
+                <button data-rel="opposite" type="button">Opposite</button>
+              </span>
+            </div>
+          </div>
+          <div class="sense-ai">
+            <div class="input-shell">
+              <svg class="lead" aria-hidden="true"><use href="#ic-sparkles"></use></svg>
+              <input id="anthropicKey" type="password" placeholder="Anthropic API key (sk-ant-…) for AI mode" autocomplete="off" autocapitalize="off" spellcheck="false" />
+            </div>
+            <span class="seg" id="senseModel">
+              <button class="on" data-model="claude-opus-4-8" type="button">Opus 4.8</button>
+              <button data-model="claude-sonnet-4-6" type="button">Sonnet 4.6</button>
+              <button data-model="claude-haiku-4-5" type="button">Haiku 4.5</button>
+            </span>
+          </div>
+          <div class="sense-hint">
+            With an API key, the filter asks <b>Claude</b> which rhymes are
+            <b>related</b> / <b>synonyms</b> / <b>opposites</b> of your word — so
+            <code>EH ZH ER</code> + “pirates” keeps <code>treasure</code>. Without a key it falls
+            back to offline word vectors + WordNet. The key is stored only in this browser and sent
+            only to api.anthropic.com.
+            <span class="sense-status" id="senseStatus"></span>
+          </div>
+        </div>
+      </details>
+
+      <div id="tabBar" class="tab-bar" hidden></div>
+      <div id="results" class="results"></div>
+    </section>
+
+    <footer>
+      <div id="status">Loading…</div>
+      <p style="margin:10px 0 0">
+        Pronunciations: <a href="https://github.com/cmusphinx/cmudict" target="_blank" rel="noopener">CMU Pronouncing Dictionary</a>
+        (~135k standard English words). ARPABET notation — digits on vowels mark stress
+        (1 = primary, 2 = secondary, 0 = none). Commonality ranking via
+        <a href="https://github.com/rspeer/wordfreq" target="_blank" rel="noopener">wordfreq</a>
+        (Zipf scale).
+      </p>
+      <p style="margin:8px 0 0">
+        Slang terms marked <span class="ud-badge" style="vertical-align:middle"><svg aria-hidden="true"><use href="#ic-thumbs-up"></use></svg>UD</span>
+        are the top 10,000 highest-rated entries from
+        <a href="https://www.urbandictionary.com" target="_blank" rel="noopener">Urban Dictionary</a>
+        (definitions and vote scores © their respective authors); their pronunciations are
+        auto-generated and approximate. Urban Dictionary content is user-submitted and may be
+        crude, offensive, or NSFW.
+      </p>
+    </footer>
+  </div>
+
+  <script src="cmudict-data.js"></script>
+  <script src="freq-data.js"></script>
+  <script src="ud-data.js"></script>
+  <!-- optional local-only default API key (key.local.js is gitignored; absent on deploys) -->
+  <script src="key.local.js" onerror="void 0"></script>
+  <script src="app.js"></script>
+</body>
+</html>

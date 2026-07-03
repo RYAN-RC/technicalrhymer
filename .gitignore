@@ -1,0 +1,7 @@
+# Local-only secret: live Anthropic API key for the Word sense AI filter.
+# Never commit or deploy this file.
+key.local.js
+
+# Build inputs / large source data (regenerate via build/ scripts)
+build/cmudict.dict
+build/ud-raw.parquet
