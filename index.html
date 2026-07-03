@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Technical Rhymer — search by pronunciation</title>
   <meta name="description" content="Technical Rhymer (technicalrhymer.org): look up a word's pronunciation, then find every word that rhymes or matches a phoneme pattern. Powered by the CMU Pronouncing Dictionary." />
+  <link rel="canonical" href="https://technicalrhymer.org/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Technical Rhymer" />
+  <meta property="og:title" content="Technical Rhymer — search by pronunciation" />
+  <meta property="og:description" content="Rhymes by sound, not spelling: phoneme-fragment search over the CMU Pronouncing Dictionary, plus slang and the new words of the 2020s." />
+  <meta property="og:url" content="https://technicalrhymer.org/" />
+  <meta name="twitter:card" content="summary" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6cff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 10v3'/%3E%3Cpath d='M6 6v11'/%3E%3Cpath d='M10 3v18'/%3E%3Cpath d='M14 8v7'/%3E%3Cpath d='M18 5v13'/%3E%3Cpath d='M22 10v3'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -255,23 +262,11 @@
               </span>
             </div>
           </div>
-          <div class="sense-ai">
-            <div class="input-shell">
-              <svg class="lead" aria-hidden="true"><use href="#ic-sparkles"></use></svg>
-              <input id="anthropicKey" type="password" placeholder="Anthropic API key (sk-ant-…) for AI mode" autocomplete="off" autocapitalize="off" spellcheck="false" />
-            </div>
-            <span class="seg" id="senseModel">
-              <button class="on" data-model="claude-opus-4-8" type="button">Opus 4.8</button>
-              <button data-model="claude-sonnet-4-6" type="button">Sonnet 4.6</button>
-              <button data-model="claude-haiku-4-5" type="button">Haiku 4.5</button>
-            </span>
-          </div>
           <div class="sense-hint">
-            With an API key, the filter asks <b>Claude</b> which rhymes are
-            <b>related</b> / <b>synonyms</b> / <b>opposites</b> of your word — so
-            <code>EH ZH ER</code> + “pirates” keeps <code>treasure</code>. Without a key it falls
-            back to offline word vectors + WordNet. The key is stored only in this browser and sent
-            only to api.anthropic.com.
+            The filter asks <b>Claude</b> which rhymes are <b>related</b> / <b>synonyms</b> /
+            <b>opposites</b> of your word — so <code>EH ZH ER</code> + “pirates” keeps
+            <code>treasure</code>. No key or account needed; requests are rate-limited, and if the
+            AI is busy it falls back to offline word vectors + WordNet.
             <span class="sense-status" id="senseStatus"></span>
           </div>
         </div>

@@ -329,9 +329,7 @@
   const senseWordEl = $("senseWord");
   const senseClearEl = $("senseClear");
   const senseStatusEl = $("senseStatus");
-  const anthropicKeyEl = $("anthropicKey");
   const senseRelBtns = Array.from(document.querySelectorAll("#senseRel button"));
-  const senseModelBtns = Array.from(document.querySelectorAll("#senseModel button"));
   const matchBtns = Array.from(document.querySelectorAll("#matchSeg button"));
   const sortBtns = Array.from(document.querySelectorAll("#sortSeg button"));
   const statusEl = $("status");
@@ -339,8 +337,7 @@
   let mode = "end";
   let sortMode = "common";
   let senseRel = "related";
-  let senseModel = "claude-opus-4-8";
-  const KEY_STORE = "rf_anthropic_key";
+  const senseModel = "claude-opus-4-8"; // local-dev direct calls only; the relay pins its own model
   const aiCache = new Map(); // cacheKey -> Set of matching words
   const AI_CANDIDATE_CAP = 200;
 
@@ -672,15 +669,34 @@
     senseStatusEl.classList.toggle("warn", !!warn);
   }
 
-  // ---- AI word-sense (Claude API, browser-direct) ----
+  // ---- AI word-sense ----
+  // Production: the site is static and keyless — AI calls go through the
+  // Technical Rhymer relay on runcabin.com, which holds the key server-side,
+  // pins a cheap model, rate-limits, and enforces a daily budget.
+  // Local dev: key.local.js (gitignored) sets RF_DEFAULT_KEY and we call
+  // Anthropic browser-direct instead.
+  function senseProxyUrl() {
+    return window.RF_SENSE_PROXY || "https://runcabin.com/api/rhymer/sense";
+  }
   function getApiKey() {
-    const k = (anthropicKeyEl && anthropicKeyEl.value || "").trim();
-    if (k) return k;
-    try {
-      const raw = localStorage.getItem(KEY_STORE); // null = never set, "" = explicitly cleared
-      if (raw !== null) return raw.trim();
-    } catch (e) { /* localStorage unavailable */ }
-    return (window.RF_DEFAULT_KEY || "").trim(); // local-only default (key.local.js)
+    return (window.RF_DEFAULT_KEY || "").trim(); // local-only (key.local.js)
+  }
+
+  async function proxySenseMatches(word, rel, candidates) {
+    const res = await fetch(senseProxyUrl(), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ word: word, rel: rel, candidates: candidates }),
+    });
+    if (!res.ok) {
+      let detail = "";
+      try { const j = await res.json(); detail = j.error || ""; } catch (e) { /* */ }
+      throw new Error("HTTP " + res.status + (detail ? " — " + detail : ""));
+    }
+    const data = await res.json();
+    const out = new Set();
+    (data.matches || []).forEach((w) => out.add(String(w).toLowerCase()));
+    return out;
   }
 
   const REL_PHRASE = {
@@ -751,10 +767,12 @@
     renderResults(kept, found.q, ctx);
   }
 
-  function aiFilterAndRender(tab, found, key) {
+  function aiFilterAndRender(tab, found) {
     const sense = tab.sense;
+    const key = getApiKey(); // local dev only; production uses the relay
+    const engine = key ? "direct:" + senseModel : "proxy";
     const cand = found.results.slice().sort(byCommon).slice(0, AI_CANDIDATE_CAP).map((e) => e.w);
-    const cacheKey = sense.rel + "|" + sense.word + "|" + senseModel + "|" + cand.join(",");
+    const cacheKey = sense.rel + "|" + sense.word + "|" + engine + "|" + cand.join(",");
     if (aiCache.has(cacheKey)) {
       const set = aiCache.get(cacheKey);
       applySenseFilter(tab, found, set, set.size.toLocaleString() + " of " + cand.length +
@@ -775,21 +793,24 @@
       resultsEl.innerHTML = '<div class="empty">' + asking + "</div>";
     }
     setSenseStatus("Asking Claude…");
-    aiSenseMatches(sense.word, sense.rel, cand, key, senseModel).then((raw) => {
+    const call = key
+      ? aiSenseMatches(sense.word, sense.rel, cand, key, senseModel)
+      : proxySenseMatches(sense.word, sense.rel, cand);
+    call.then((raw) => {
       const candSet = new Set(cand);
       const clean = new Set();
       raw.forEach((w) => { if (candSet.has(w)) clean.add(w); });
       aiCache.set(cacheKey, clean);
       if (activeTabId === tab.id) {
         applySenseFilter(tab, found, clean, clean.size.toLocaleString() + " of " + cand.length +
-          " are " + sense.rel + " to “" + sense.word + "” (AI · " + senseModel.replace("claude-", "") + ")");
+          " are " + sense.rel + " to “" + sense.word + "” (AI)");
       }
     }).catch((err) => {
       if (activeTabId !== tab.id) return;
-      setSenseStatus("AI error: " + err.message + " — showing unfiltered.", true);
-      const ctx = tabCtx(tab);
-      ctx.doubles = found.doubles;
-      renderResults(found.results, found.q, ctx);
+      // AI unavailable (rate limit, budget, offline…) — degrade to the
+      // bundled word-vector/WordNet filter instead of failing the search.
+      setSenseStatus("AI filter unavailable (" + err.message + ") — using the offline filter.", true);
+      offlineFilterAndRender(tab, found);
     });
   }
 
@@ -836,9 +857,7 @@
     const sense = tab.sense;
 
     if (sense && sense.word) {
-      const key = getApiKey();
-      if (key) aiFilterAndRender(tab, found, key);
-      else offlineFilterAndRender(tab, found);
+      aiFilterAndRender(tab, found); // relay (or local key); falls back to offline
       return;
     }
     setSenseStatus("");
@@ -1284,9 +1303,7 @@
     toTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: SMOOTH }));
   }
 
-  // word-sense panel
-  // only prefetch the (heavy) offline sense data when there's no API key to use AI
-  sensePanelEl.addEventListener("toggle", () => { if (sensePanelEl.open && !getApiKey()) loadSenseData(); });
+  // word-sense panel (offline bundles load lazily only if the AI path fails)
   let senseTimer = null;
   senseWordEl.addEventListener("input", () => {
     clearTimeout(senseTimer);
@@ -1305,21 +1322,6 @@
       if (senseWordEl.value.trim() && fragInput.value.trim()) doSearch();
     });
   });
-  senseModelBtns.forEach((b) => {
-    b.addEventListener("click", () => {
-      senseModelBtns.forEach((o) => o.classList.remove("on"));
-      b.classList.add("on");
-      senseModel = b.getAttribute("data-model");
-      try { localStorage.setItem("rf_sense_model", senseModel); } catch (e) { /* */ }
-      if (senseWordEl.value.trim() && fragInput.value.trim()) doSearch();
-    });
-  });
-  let keyTimer = null;
-  anthropicKeyEl.addEventListener("input", () => {
-    try { localStorage.setItem(KEY_STORE, anthropicKeyEl.value.trim()); } catch (e) { /* */ }
-    clearTimeout(keyTimer);
-    keyTimer = setTimeout(() => { if (senseWordEl.value.trim() && fragInput.value.trim()) doSearch(); }, 400);
-  });
   matchBtns.forEach((b) => {
     b.addEventListener("click", () => {
       matchBtns.forEach((o) => o.classList.remove("on"));
@@ -1337,25 +1339,8 @@
     });
   });
 
-  // restore saved API key + model
-  function restoreSenseSettings() {
-    try {
-      const k = localStorage.getItem(KEY_STORE); // null = never set, "" = user cleared
-      if (anthropicKeyEl) {
-        if (k !== null) anthropicKeyEl.value = k;                 // respect stored value (incl. cleared)
-        else if (window.RF_DEFAULT_KEY) anthropicKeyEl.value = window.RF_DEFAULT_KEY; // local default
-      }
-      const m = localStorage.getItem("rf_sense_model");
-      if (m) {
-        senseModel = m;
-        senseModelBtns.forEach((b) => b.classList.toggle("on", b.getAttribute("data-model") === m));
-      }
-    } catch (e) { /* localStorage unavailable */ }
-  }
-
   // ---- boot ----
   function boot() {
-    restoreSenseSettings();
     statusEl.innerHTML = '<span class="loading-pill"><span class="spinner"></span>Loading dictionary…</span>';
     // defer parse one frame so the loading state paints
     setTimeout(() => {

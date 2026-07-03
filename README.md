@@ -55,28 +55,28 @@ A collapsible **Word sense** panel filters the rhyme results by meaning. Enter a
 word and pick a relation (**Related** / **Synonym / like** / **Opposite**). There
 are two engines:
 
-**AI mode (recommended).** Paste an Anthropic API key into the panel and the
-filter asks **Claude** which rhymes are related/synonymous/opposite to your word,
-using real-world knowledge. This handles associations vectors can't:
-`EH ZH ER` + "pirates" → `treasure`. Pick the model (Opus 4.8 default, or Sonnet /
-Haiku for speed/cost). The call goes straight from your browser to
-`api.anthropic.com` (via `anthropic-dangerous-direct-browser-access`), so it works
-from `file://` too; the key is stored only in your browser's `localStorage` and
-sent only to Anthropic. Results are cached per (word, relation, model, candidate
-set), and the AI judges the top ~200 candidates by commonality.
+**AI mode (default, keyless).** The filter sends `{word, relation, top ~200
+candidates}` to the Technical Rhymer **relay** (`/api/rhymer/sense` on
+runcabin.com — `RhymerSenseController` in the Cabin repo), which asks **Claude**
+using a server-held key. Fixed-function by design: the prompt is built
+server-side from validated inputs, the model is pinned (Haiku-class), output is
+schema-forced and intersected with the submitted candidates, and it's guarded by
+per-IP rate limits + a global daily budget cap + a 6h response cache. Visitors
+never see or supply a key. `EH ZH ER` + "pirates" → `treasure`. Results are also
+cached client-side per (word, relation, engine, candidate set).
 
-For local convenience there's an optional **`key.local.js`** that sets
-`window.RF_DEFAULT_KEY` to pre-fill the field (this machine's copy uses the
-Anthropic key from Cabin's `scripts/start_cabin.ps1`). It is **gitignored and must
-never be deployed** — anyone who can load it can spend on that key. On a public
-copy, omit the file and let each user paste their own key (clearing the field
-disables AI and falls back to offline).
+**Local dev:** optional **`key.local.js`** sets `window.RF_DEFAULT_KEY` (this
+machine's copy uses the Anthropic key from Cabin's `scripts/start_cabin.ps1`) —
+when present the browser calls `api.anthropic.com` directly (via
+`anthropic-dangerous-direct-browser-access`), so AI mode works over `file://`
+without the relay. It is **gitignored and must never be deployed**. Override the
+relay URL with `window.RF_SENSE_PROXY` for testing against dev.
 
-**Offline fallback (no key).** Without a key the filter uses bundled data: GloVe
-word vectors for **Related** (cosine ≥ 0.45 — `grass` keeps `meadow`/`lawn`/`pasture`,
-drops `car`) and WordNet for **Synonym** / **Opposite**. This data
-(`vec-data.js`, `lex-data.js`) is lazy-loaded the first time you use the panel
-without a key.
+**Offline fallback.** If the relay is rate-limited, over budget, or unreachable,
+the filter degrades to bundled data: GloVe word vectors for **Related**
+(cosine ≥ 0.45 — `grass` keeps `meadow`/`lawn`/`pasture`, drops `car`) and
+WordNet for **Synonym** / **Opposite**. This data (`vec-data.js`, `lex-data.js`)
+is lazy-loaded the first time it's needed.
 
 The chosen sense (word + relation) is remembered per pinned tab.
 
