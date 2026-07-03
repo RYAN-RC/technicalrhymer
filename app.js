@@ -1,6 +1,7 @@
-/* Rhyme Finder — phoneme-suffix search over the CMU Pronouncing Dictionary.
-   Workflow: look up a word's ARPABET pronunciation, take the tail you want,
-   then search for every word whose pronunciation matches it. */
+/* Technical Rhymer (technicalrhymer.org) — phoneme-suffix search over the
+   CMU Pronouncing Dictionary. Workflow: look up a word's ARPABET pronunciation,
+   take the tail you want, then search for every word whose pronunciation
+   matches it. */
 
 (function () {
   "use strict";
@@ -11,6 +12,8 @@
   const freq = new Map();      // lowercased word -> zipf commonality score
   const udInfo = new Map();    // urban-dictionary term -> net vote score
   const udGenerated = new Set(); // ud terms whose pronunciation we auto-generated
+  const newInfo = new Map();   // new-this-decade term -> { year, score }
+  const newGenerated = new Set(); // new terms this file added to the index (approx pron)
 
   const VOWEL_DIGIT = /[0-2]$/;
   const VOWEL_BASE = new Set(["AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER", "EY", "IH", "IY", "OW", "OY", "UH", "UW"]);
@@ -66,6 +69,7 @@
       arr.push(p);
     }
     parseUD();
+    parseNew();
   }
 
   // Top-rated Urban Dictionary terms. Line: term \t ARPABET \t zipf \t udScore.
@@ -91,6 +95,31 @@
         if (!arr) { arr = []; byWord.set(term, arr); }
         arr.push(p);
         udGenerated.add(term);
+      }
+    }
+  }
+
+  // New words of the 2020s (also UD-sourced). Line: term \t ARPABET \t zipf \t
+  // score \t firstYear. None are in CMUdict, but some overlap the UD top-10k
+  // set above — those are already indexed, so we only record the badge info.
+  function parseNew() {
+    const raw = window.NEW_DATA || "";
+    if (!raw) return;
+    const lines = raw.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const parts = lines[i].split("\t");
+      if (parts.length < 5) continue;
+      const term = parts[0];
+      const p = parts[1];
+      const z = parseFloat(parts[2]) || 0;
+      const score = parseInt(parts[3], 10) || 0;
+      const year = parseInt(parts[4], 10) || 0;
+      newInfo.set(term, { year: year, score: score });
+      if (!byWord.has(term) && p) {
+        const keyNS = stripStress(p);
+        entries.push({ w: term, p: p, key: p, keyNS: keyNS, keyF: fuzzStr(p), keyNSF: fuzzStr(keyNS), syl: sylCount(p), z: z });
+        byWord.set(term, [p]);
+        newGenerated.add(term);
       }
     }
   }
@@ -347,8 +376,8 @@
     if (!prons || !prons.length) {
       notFound.innerHTML =
         "<b>“" + escapeHtml(q) + "”</b> isn’t in the dictionary. " +
-        "This build covers the CMU Pronouncing Dictionary (standard English) plus the " +
-        "top 10,000 Urban Dictionary terms. Try another spelling.";
+        "This build covers the CMU Pronouncing Dictionary (standard English), the " +
+        "top 10,000 Urban Dictionary terms, and 2,000 new words of the 2020s. Try another spelling.";
       notFound.classList.add("show");
       return;
     }
@@ -392,14 +421,19 @@
       ? ' <a class="ud-badge" href="' + udLink(word) + '" target="_blank" rel="noopener" title="View on Urban Dictionary (score ' +
         udInfo.get(word).toLocaleString() + ')">' + icon("ic-thumbs-up") + udInfo.get(word).toLocaleString() + icon("ic-external") + "</a>"
       : "";
-    const udNote = (isUd && udGenerated.has(word))
+    const nu = newInfo.get(word);
+    const newBadge = nu
+      ? ' <a class="new-badge" href="' + udLink(word) + '" target="_blank" rel="noopener" title="New this decade — first defined on Urban Dictionary in ' +
+        nu.year + '">' + icon("ic-sparkles") + "New · " + nu.year + "</a>"
+      : "";
+    const udNote = (udGenerated.has(word) || newGenerated.has(word))
       ? '<div class="pron-tip ud-note">' + icon("ic-thumbs-up") +
         "From <b style=\"color:var(--muted)\">Urban Dictionary</b> — pronunciation is auto-generated and approximate.</div>"
       : "";
     return (
       '<div class="pron-card" data-pron="' + escapeAttr(display) + '" data-tail="' + escapeAttr(tail) + '">' +
         '<div class="pron-top">' +
-          '<span class="pron-word">' + escapeHtml(word) + altBadge + udBadge + "</span>" +
+          '<span class="pron-word">' + escapeHtml(word) + altBadge + udBadge + newBadge + "</span>" +
           '<span class="syl-badge">' + sylCount(p) + " syllable" + (sylCount(p) === 1 ? "" : "s") + "</span>" +
           '<span class="pron-actions">' +
             '<button class="icon-btn js-speak" title="Hear it">' + icon("ic-volume") + "Say</button>" +
@@ -451,9 +485,9 @@
         e.stopPropagation();
         speak(word);
       });
-      // the UD link inside the card shouldn't trigger a fill
-      const udLinkEl = card.querySelector(".ud-badge");
-      if (udLinkEl) udLinkEl.addEventListener("click", (e) => e.stopPropagation());
+      // the UD / New badge links inside the card shouldn't trigger a fill
+      Array.from(card.querySelectorAll(".ud-badge, .new-badge")).forEach((a) =>
+        a.addEventListener("click", (e) => e.stopPropagation()));
     });
   }
 
@@ -815,13 +849,16 @@
     const pct = Math.max(0, Math.min(100, Math.round((e.z / 8) * 100)));
     const sylTxt = e.syl + " syll";
     const isUd = udInfo.has(e.w);
+    const nu = newInfo.get(e.w);
     const title = (e.z > 0 ? "commonality (Zipf) " + e.z.toFixed(2) : "rare / not in frequency data") +
       " · " + sylTxt + (isUd ? " · Urban Dictionary (score " + udInfo.get(e.w).toLocaleString() + ")" : "") +
+      (nu ? " · new this decade (first defined " + nu.year + ")" : "") +
       (dbl ? " · rhyme repeats ×" + dbl : "");
     const udTag = isUd ? ' <span class="ud-tag">UD</span>' : "";
+    const newTag = nu ? ' <span class="new-tag">’' + String(nu.year).slice(2) + "</span>" : "";
     const dblTag = dbl ? ' <span class="dbl-tag">×' + dbl + "</span>" : "";
     return '<button class="word-chip' + (dbl ? " is-double" : "") + '" data-w="' + escapeAttr(e.w) + '" title="' + escapeAttr(title) + '">' +
-      '<span class="chip-row"><span class="w">' + escapeHtml(e.w) + udTag + dblTag + "</span>" +
+      '<span class="chip-row"><span class="w">' + escapeHtml(e.w) + udTag + newTag + dblTag + "</span>" +
       '<span class="p">' + escapeHtml(e.p) + "</span></span>" +
       '<span class="freq-track"><span class="freq-fill" style="width:' + pct + '%"></span></span>' +
       "</button>";
@@ -1060,7 +1097,8 @@
         "<b style=\"color:var(--muted)\">" + entries.length.toLocaleString() +
         "</b> pronunciations loaded" + (ms ? " in " + ms + " ms" : "") +
         " · CMU Pronouncing Dictionary + " + udInfo.size.toLocaleString() +
-        " Urban Dictionary terms · ranked by commonality.";
+        " Urban Dictionary terms + " + newInfo.size.toLocaleString() +
+        " new words of the 2020s · ranked by commonality.";
       [wordInput, lookupBtn, fragInput, searchBtn].forEach((el) => el.removeAttribute("disabled"));
       loadTabs();
       renderTabBar();

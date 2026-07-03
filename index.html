@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rhyme Finder — search by pronunciation</title>
-  <meta name="description" content="Look up a word's pronunciation, then find every word that rhymes or matches a phoneme pattern. Powered by the CMU Pronouncing Dictionary." />
+  <title>Technical Rhymer — search by pronunciation</title>
+  <meta name="description" content="Technical Rhymer (technicalrhymer.org): look up a word's pronunciation, then find every word that rhymes or matches a phoneme pattern. Powered by the CMU Pronouncing Dictionary." />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6cff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 10v3'/%3E%3Cpath d='M6 6v11'/%3E%3Cpath d='M10 3v18'/%3E%3Cpath d='M14 8v7'/%3E%3Cpath d='M18 5v13'/%3E%3Cpath d='M22 10v3'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -51,6 +51,9 @@
       <symbol id="ic-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
       </symbol>
+      <symbol id="ic-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />
+      </symbol>
     </defs>
   </svg>
 
@@ -58,7 +61,8 @@
     <header>
       <div class="brand">
         <span class="mark"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v3" /><path d="M6 6v11" /><path d="M10 3v18" /><path d="M14 8v7" /><path d="M18 5v13" /><path d="M22 10v3" /></svg></span>
-        <h1>Rhyme Finder</h1>
+        <h1>Technical Rhymer</h1>
+        <a class="about-link" href="about.html"><svg aria-hidden="true"><use href="#ic-info"></use></svg>About</a>
       </div>
       <p class="tagline">
         Search by <b>sound</b>, not spelling. Look up a word's pronunciation, take the
@@ -214,12 +218,23 @@
         auto-generated and approximate. Urban Dictionary content is user-submitted and may be
         crude, offensive, or NSFW.
       </p>
+      <p style="margin:8px 0 0">
+        Terms marked <span class="new-tag" style="vertical-align:middle">’23</span> are from the
+        2,000 top-rated <b style="color:var(--muted)">new words of the 2020s</b> — terms first
+        (meaningfully) defined on Urban Dictionary in 2020 or later and absent from CMUdict, with
+        auto-generated approximate pronunciations. Coverage runs through Nov&nbsp;2023.
+      </p>
+      <p style="margin:8px 0 0">
+        <a href="about.html">About Technical Rhymer</a> — how the search, ranking, and datasets
+        are designed. <span style="color:var(--faint)">technicalrhymer.org</span>
+      </p>
     </footer>
   </div>
 
   <script src="cmudict-data.js"></script>
   <script src="freq-data.js"></script>
   <script src="ud-data.js"></script>
+  <script src="new-data.js"></script>
   <!-- optional local-only default API key (key.local.js is gitignored; absent on deploys) -->
   <script src="key.local.js" onerror="void 0"></script>
   <script src="app.js"></script>

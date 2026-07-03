@@ -1,8 +1,11 @@
-# Rhyme Finder
+# Technical Rhymer
 
-Search words by **sound, not spelling**. Look up a word's pronunciation, take the
-part you want to match, and find every word whose pronunciation matches it
-(rhymes, near-rhymes, assonance, etc.).
+**technicalrhymer.org** — search words by **sound, not spelling**. Look up a
+word's pronunciation, take the part you want to match, and find every word whose
+pronunciation matches it (rhymes, near-rhymes, assonance, etc.).
+
+The full design rationale lives on the site's [About page](about.html)
+(`about.html`).
 
 ## How it works
 
@@ -135,6 +138,20 @@ UD vote score and links to the definition on Urban Dictionary. Their
 pronunciations are **auto-generated** (g2p) and approximate, not human-verified.
 Urban Dictionary content is user-submitted and may be crude, offensive, or NSFW.
 
+### New words of the 2020s
+
+Coverage also includes the **2,000 top-rated new words of the decade** — terms
+whose first *meaningful* Urban Dictionary definition is dated 2020+ and that are
+absent from CMUdict. These get a teal **’2x** tag (the year they first appeared)
+and a **New · 20xx** badge on the lookup card. "First meaningful" is
+score-weighted: a term qualifies even with older definitions as long as those are
+marginal — max pre-2020 score ≤ max(20, 10% of its 2020s peak). That admits
+`rizz` (junk 2015 nickname def at −50 vs. the real 626-vote 2023 def) while
+keeping out `karen` (a genuinely popular 392-vote def from 2010). Pronunciations
+are g2p like the UD set, except vowel-less acronyms (`tds`, `smh`) which are
+spelled out as letter names. The source dataset ends **Nov 2023**, so 2024+
+coinages aren't included yet.
+
 ## Running it
 
 It's a standalone static site — no build step, no server required.
@@ -149,11 +166,13 @@ It's a standalone static site — no build step, no server required.
 | File              | What it is                                                        |
 | ----------------- | ----------------------------------------------------------------- |
 | `index.html`      | Markup + inline Lucide icon sprite                                |
+| `about.html`      | Design notes: why/how the search, ranking, and datasets work      |
 | `styles.css`      | Styling (dark theme, single accent hue)                           |
 | `app.js`          | Lookup + phoneme-suffix search logic                              |
 | `cmudict-data.js` | The baked dictionary (`window.CMU_DATA`, ~135k pronunciations)    |
 | `freq-data.js`    | Per-word commonality scores (`window.CMU_FREQ`, ~100k Zipf values) |
 | `ud-data.js`      | Top 10k Urban Dictionary terms (`window.UD_DATA`: term, ARPABET, zipf, score) |
+| `new-data.js`     | Top 2k new words of the 2020s (`window.NEW_DATA`: term, ARPABET, zipf, score, year) |
 | `vec-data.js`     | GloVe-50d int8 word vectors for the Word sense "related" filter (lazy) |
 | `lex-data.js`     | WordNet synonyms + antonyms for the Word sense "synonym/opposite" filter (lazy) |
 | `build/`          | Build scripts + sources (see below)                              |
@@ -177,6 +196,7 @@ pip install wordfreq pyarrow pandas g2p_en gensim nltk   # one-time
 python build_data.py     # cmudict.dict        -> cmudict-data.js (pronunciations)
 python build_freq.py     # cmudict.dict        -> freq-data.js    (commonality / Zipf)
 python build_ud.py       # ud-raw.parquet      -> ud-data.js      (top 10k UD terms)
+python build_new.py      # ud-raw.parquet      -> new-data.js     (top 2k new words of the 2020s)
 python build_vec.py      # GloVe (downloaded)  -> vec-data.js     (word vectors, Word sense)
 python build_lex.py      # WordNet (nltk)      -> lex-data.js     (synonyms/antonyms)
 ```

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — Technical Rhymer</title>
+  <meta name="description" content="How Technical Rhymer is designed: ARPABET phoneme search over CMUdict, commonality ranking, fuzzy sound matching, AI word-sense filtering, and a fully static architecture." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6cff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 10v3'/%3E%3Cpath d='M6 6v11'/%3E%3Cpath d='M10 3v18'/%3E%3Cpath d='M14 8v7'/%3E%3Cpath d='M18 5v13'/%3E%3Cpath d='M22 10v3'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="about-page">
+  <!-- Lucide icon sprite (line icons, currentColor) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="ic-audio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 10v3" /><path d="M6 6v11" /><path d="M10 3v18" /><path d="M14 8v7" /><path d="M18 5v13" /><path d="M22 10v3" />
+      </symbol>
+      <symbol id="ic-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m12 19-7-7 7-7" /><path d="M19 12H5" />
+      </symbol>
+      <symbol id="ic-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" />
+      </symbol>
+      <symbol id="ic-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 5H3" /><path d="M11 12H3" /><path d="M11 19H3" /><path d="M21 16V5" /><circle cx="18" cy="16" r="3" />
+      </symbol>
+      <symbol id="ic-brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 18V5" /><path d="M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4" /><path d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5" /><path d="M17.997 5.125a4 4 0 0 1 2.526 5.77" /><path d="M18 18a4 4 0 0 0 2-7.464" /><path d="M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517" /><path d="M6 18a4 4 0 0 1-2-7.464" /><path d="M6.003 5.125a4 4 0 0 0-2.526 5.77" />
+      </symbol>
+      <symbol id="ic-database" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M3 5V19A9 3 0 0 0 21 19V5" /><path d="M3 12A9 3 0 0 0 21 12" />
+      </symbol>
+      <symbol id="ic-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z" />
+      </symbol>
+      <symbol id="ic-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+      </symbol>
+      <symbol id="ic-book-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 7v14" /><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
+      </symbol>
+      <symbol id="ic-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" />
+      </symbol>
+      <symbol id="ic-waypoints" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m10.586 5.414-5.172 5.172" /><path d="m18.586 13.414-5.172 5.172" /><path d="M6 12h12" /><circle cx="12" cy="20" r="2" /><circle cx="12" cy="4" r="2" /><circle cx="20" cy="12" r="2" /><circle cx="4" cy="12" r="2" />
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="wrap">
+    <a class="back-link" href="index.html"><svg aria-hidden="true"><use href="#ic-arrow-left"></use></svg>Back to Technical Rhymer</a>
+
+    <header>
+      <div class="brand">
+        <span class="mark"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v3" /><path d="M6 6v11" /><path d="M10 3v18" /><path d="M14 8v7" /><path d="M18 5v13" /><path d="M22 10v3" /></svg></span>
+        <h1>About Technical Rhymer</h1>
+      </div>
+      <p class="tagline">
+        A rhyming dictionary that works the way rhyme actually works: on <b>sound</b>.
+        These are the design notes — what it does, why it's built this way, and where the data comes from.
+      </p>
+    </header>
+
+    <section class="step">
+      <div class="step-head">
+        <span class="ic"><svg aria-hidden="true"><use href="#ic-audio"></use></svg></span>
+        <h2>Why search by sound, not spelling</h2>
+      </div>
+      <p>
+        Rhyme lives in pronunciation, and English spelling is a famously unreliable witness to it:
+        <i>colonel</i> rhymes with <i>kernel</i>, <i>through</i> with <i>threw</i>, and <i>cough</i>,
+        <i>though</i>, and <i>tough</i> agree on almost nothing. Letter-based rhyme tools inherit all
+        of that noise. Technical Rhymer instead searches over <b>phonemes</b> — the actual sounds —
+        written in <b>ARPABET</b>, the notation used by the CMU Pronouncing Dictionary:
+        <i>orange</i> is <code>AO1 R AH0 N JH</code>.
+      </p>
+      <p>
+        Digits on vowels mark stress: <code>1</code> primary, <code>2</code> secondary,
+        <code>0</code> unstressed. A perfect rhyme is "same sounds from the last stressed vowel to the
+        end", which is exactly a <b>suffix match</b> on the phoneme string — that one observation is
+        the whole design. Look a word up, take the tail you care about, and search it.
+      </p>
+    </section>
+
+    <section class="step">
+      <div class="step-head">
+        <span class="ic"><svg aria-hidden="true"><use href="#ic-search"></use></svg></span>
+        <h2>How matching works</h2>
+      </div>
+      <p>
+        Every entry is indexed by its phoneme string, and a search scans all of them (a linear pass
+        over ~145k pronunciations takes tens of milliseconds — no clever index needed). The match
+        modes anchor the fragment: <b>Ends with</b> is the rhyme case, <b>Starts with</b> finds
+        alliterative twins, <b>Anywhere</b> and <b>Exact</b> do what they say. Two operators build
+        richer patterns: <code>*</code> requires parts in order with anything between
+        (<code>AO R * JH</code>), and <code>|</code> requires parts in any order. Listing a part
+        twice (<code>B | B</code>) demands it occur twice.
+      </p>
+      <p>
+        <b>Stress is ignored by default</b>: requiring stress digits to match eliminates most slant
+        rhymes people actually want, so exact-stress matching is the opt-in, not the default.
+        <b>Double rhymes</b> — words where the searched segment occurs twice or more, like
+        <i>rat-a-tat</i> for <code>AE T</code> — get split into their own section with a
+        <code>×N</code> badge, since a repeated rhyme is usually the better find.
+      </p>
+      <p>
+        <b>Fuzzy matching</b> (opt-in) treats like-sounding consonants as interchangeable for slant
+        rhymes. The classes are grouped by <b>manner and voicing</b> of articulation — so
+        <code>T</code>&harr;<code>K</code> match but <code>T</code>&harr;<code>D</code> (a voicing
+        change) do not:
+      </p>
+      <table class="fuzzy-table">
+        <tr><td>Voiceless stops</td><td><code>P T K</code></td></tr>
+        <tr><td>Voiced stops</td><td><code>B D G</code></td></tr>
+        <tr><td>Voiceless sibilants</td><td><code>S SH CH</code></td></tr>
+        <tr><td>Voiced sibilants</td><td><code>Z ZH JH</code></td></tr>
+        <tr><td>Voiceless fricatives</td><td><code>F TH</code></td></tr>
+        <tr><td>Voiced fricatives</td><td><code>V DH</code></td></tr>
+        <tr><td>Nasals</td><td><code>M N NG</code></td></tr>
+        <tr><td>Liquids</td><td><code>L R</code></td></tr>
+        <tr><td>Glides</td><td><code>W Y</code></td></tr>
+      </table>
+      <p>Vowels are never fuzzed — vowel identity is most of what makes a rhyme feel like one.</p>
+    </section>
+
+    <section class="step">
+      <div class="step-head">
+        <span class="ic"><svg aria-hidden="true"><use href="#ic-list"></use></svg></span>
+        <h2>Ranking: most common first</h2>
+      </div>
+      <p>
+        A rhyme search for a short tail can return thousands of words, and most of them are words
+        nobody would use. Results are therefore ranked by <b>commonality</b> — the
+        <a href="https://github.com/rspeer/wordfreq" target="_blank" rel="noopener">wordfreq</a>
+        project's Zipf scale, where ~7 is <i>the</i> and ~1 is deep obscurity. The thin bar under
+        each result is that score. Usable rhymes surface first; the exotic tail is still there at
+        the bottom. Sorting by syllable count or alphabetically is one click away.
+      </p>
+    </section>
+
+    <section class="step">
+      <div class="step-head">
+        <span class="ic"><svg aria-hidden="true"><use href="#ic-brain"></use></svg></span>
+        <h2>The word-sense filter</h2>
+      </div>
+      <p>
+        Rhyming is usually rhyming <i>about something</i>. The optional filter keeps only results
+        related to a word you name — searching <code>EH ZH ER</code> while writing about pirates
+        keeps <i>treasure</i>. It has two engines:
+      </p>
+      <ul>
+        <li>
+          <b>AI mode</b> <svg style="width:12px;height:12px;vertical-align:-1px" aria-hidden="true"><use href="#ic-sparkles"></use></svg> —
+          with an Anthropic API key, the browser asks Claude directly which of the top candidates
+          are related / synonyms / opposites. The call goes straight from your browser to
+          api.anthropic.com; there is no middle server. This is the primary engine because
+          real-world association ("pirates" &rarr; "treasure") is exactly what language models are
+          good at and word vectors are mediocre at.
+        </li>
+        <li>
+          <b>Offline mode</b> — with no key, "related" falls back to GloVe word vectors
+          (50-dimensional, int8-quantized to keep the file small) with a cosine-similarity cutoff,
+          and "synonym" / "opposite" use WordNet. The split exists because embeddings famously place
+          antonyms <i>close together</i> (<i>hot</i> and <i>cold</i> appear in identical contexts),
+          so cosine similarity can't tell likeness from opposition — a curated lexicon can.
+        </li>
+      </ul>
+    </section>
+
+    <section class="step">
+      <div class="step-head">
+        <span class="ic"><svg aria-hidden="true"><use href="#ic-database"></use></svg></span>
+        <h2>The dictionary</h2>
+      </div>
+      <p>Three layers, each honestly labeled in the UI:</p>
+      <ul>
+        <li>
+          <b>CMU Pronouncing Dictionary</b> — ~135k standard-English words with curated
+          pronunciations. The backbone.
+        </li>
+        <li>
+          <b>Urban Dictionary top 10,000</b> (gold <b style="color:var(--ud)">UD</b> badge) — the
+          highest-net-voted slang terms. Pronunciations for terms CMUdict lacks are auto-generated
+          with a grapheme-to-phoneme model, so they're approximate. UD content is user-submitted
+          and can be crude or NSFW; it's included as-is, with vote scores and links back to the
+          source for attribution.
+        </li>
+        <li>
+          <b>New words of the 2020s</b> (teal <b style="color:var(--new)">’2x</b> badge) — the
+          2,000 top-rated terms whose first meaningful Urban Dictionary definition appeared in 2020
+          or later and that don't exist in CMUdict. "First meaningful" matters: a raw
+          first-definition-date rule would exclude <i>rizz</i> because someone defined it as a
+          nickname in 2015 (scored &minus;50, against 626 for the real 2023 definition), so a term
+          qualifies as long as any pre-2020 definitions are marginal next to its 2020s peak.
+          Pronunciations are approximate: grapheme-to-phoneme for pronounceable terms, letter names
+          for vowel-less acronyms (<i>tds</i> &rarr; <code>T IY1 D IY1 EH1 S</code>). The source
+          dataset ends in November 2023, so the newest of the new isn't here yet.
+        </li>
+      </ul>
+    </section>
+
+    <section class="step">
+      <div class="step-head">
+        <span class="ic"><svg aria-hidden="true"><use href="#ic-wrench"></use></svg></span>
+        <h2>Engineering: aggressively static</h2>
+      </div>
+      <p>
+        The whole app is static files — no server, no backend, no database, no framework, no build
+        step at runtime. All dictionary data (~15&nbsp;MB across five bundles) is baked into plain
+        JavaScript files loaded with <code>&lt;script&gt;</code> tags, which means the app works
+        offline and even opened directly from disk over <code>file://</code>. The heavy word-vector
+        and WordNet bundles are lazy-loaded only if the offline sense filter is actually used.
+      </p>
+      <p>
+        Data files are regenerated by small Python scripts in <code>build/</code> (CMUdict parsing,
+        wordfreq scores, GloVe quantization, WordNet extraction, Urban Dictionary ranking and
+        grapheme-to-phoneme). The runtime never depends on them. Pinned result tabs, settings, and
+        the optional API key persist in <code>localStorage</code> only.
+      </p>
+    </section>
+
+    <section class="step">
+      <div class="step-head">
+        <span class="ic"><svg aria-hidden="true"><use href="#ic-shield"></use></svg></span>
+        <h2>Privacy</h2>
+      </div>
+      <p>
+        No accounts, no analytics, no cookies, no tracking. Nothing you type leaves your machine,
+        with one explicit exception: if you enable AI mode, your filter word and the candidate rhyme
+        list are sent to api.anthropic.com using your own API key. The key is stored in your
+        browser's <code>localStorage</code> and sent nowhere else.
+      </p>
+    </section>
+
+    <section class="step">
+      <div class="step-head">
+        <span class="ic"><svg aria-hidden="true"><use href="#ic-book-open"></use></svg></span>
+        <h2>Credits</h2>
+      </div>
+      <ul>
+        <li><a href="https://github.com/cmusphinx/cmudict" target="_blank" rel="noopener">CMU Pronouncing Dictionary</a> — pronunciations (ARPABET).</li>
+        <li><a href="https://github.com/rspeer/wordfreq" target="_blank" rel="noopener">wordfreq</a> — Zipf commonality scores.</li>
+        <li><a href="https://nlp.stanford.edu/projects/glove/" target="_blank" rel="noopener">GloVe</a> — offline word vectors (glove-wiki-gigaword-50).</li>
+        <li><a href="https://wordnet.princeton.edu/" target="_blank" rel="noopener">WordNet</a> — synonyms and antonyms.</li>
+        <li><a href="https://www.urbandictionary.com" target="_blank" rel="noopener">Urban Dictionary</a> — slang terms and vote scores (© their authors), via the <code>georgiyozhegov/urbandictionary-raw</code> dataset.</li>
+        <li><a href="https://github.com/Kyubyong/g2p" target="_blank" rel="noopener">g2p_en</a> — grapheme-to-phoneme for words CMUdict doesn't know.</li>
+        <li><a href="https://lucide.dev" target="_blank" rel="noopener">Lucide</a> — icons.</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p style="margin:0">
+        <a href="index.html">&larr; Back to Technical Rhymer</a>
+        <span style="color:var(--faint)"> · technicalrhymer.org</span>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
