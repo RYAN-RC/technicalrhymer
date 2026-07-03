@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px; height: 630px; overflow: hidden;
+    background: #0a0b10;
+    background-image: radial-gradient(900px 500px at 50% -20%, #17162a 0%, #0a0b10 60%);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: #e8eaf0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 34px;
+  }
+  .brand { display: flex; align-items: center; gap: 26px; }
+  .mark {
+    width: 108px; height: 108px; border-radius: 28px;
+    background: linear-gradient(160deg, #7c6cff 0%, #9d7bff 100%);
+    display: grid; place-items: center;
+    box-shadow: 0 24px 70px -18px rgba(124, 108, 255, 0.75);
+  }
+  .mark svg { width: 60px; height: 60px; color: #fff; }
+  h1 { font-size: 88px; font-weight: 800; letter-spacing: -0.02em; }
+  .tag { font-size: 34px; color: #9aa0ad; }
+  .tag b { color: #e8eaf0; font-weight: 650; }
+  .chips { display: flex; gap: 14px; margin-top: 6px; }
+  .chip {
+    font-family: "Cascadia Code", Consolas, monospace;
+    font-size: 30px; font-weight: 600; color: #9d7bff;
+    background: rgba(124, 108, 255, 0.13);
+    border: 2px solid rgba(124, 108, 255, 0.45);
+    border-radius: 12px; padding: 10px 20px;
+  }
+  .domain { font-size: 24px; color: #6b7280; letter-spacing: 0.04em; margin-top: 2px; }
+</style>
+</head>
+<body>
+  <div class="brand">
+    <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg></div>
+    <h1>Technical Rhymer</h1>
+  </div>
+  <div class="tag">Rhymes by <b>sound</b>, not spelling.</div>
+  <div class="chips">
+    <span class="chip">AO</span><span class="chip">R</span><span class="chip">AH</span><span class="chip">N</span><span class="chip">JH</span>
+  </div>
+  <div class="domain">technicalrhymer.org</div>
+</body>
+</html>

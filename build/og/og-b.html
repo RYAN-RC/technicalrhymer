@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px; height: 630px; overflow: hidden;
+    background: #0a0b10;
+    background-image: radial-gradient(900px 500px at 50% -20%, #17162a 0%, #0a0b10 60%);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: #e8eaf0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 30px;
+  }
+  .proof { display: flex; align-items: center; gap: 38px; }
+  .word { font-size: 96px; font-weight: 800; letter-spacing: -0.02em; }
+  .eq { font-size: 76px; font-weight: 300; color: #7c6cff; }
+  .chips { display: flex; gap: 12px; }
+  .chip {
+    font-family: "Cascadia Code", Consolas, monospace;
+    font-size: 34px; font-weight: 600; color: #9d7bff;
+    background: rgba(124, 108, 255, 0.13);
+    border: 2px solid rgba(124, 108, 255, 0.45);
+    border-radius: 12px; padding: 12px 22px;
+  }
+  .why { font-size: 30px; color: #9aa0ad; margin-top: 4px; }
+  .why b { color: #e8eaf0; font-weight: 650; }
+  .brand { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
+  .mark {
+    width: 46px; height: 46px; border-radius: 13px;
+    background: linear-gradient(160deg, #7c6cff 0%, #9d7bff 100%);
+    display: grid; place-items: center;
+  }
+  .mark svg { width: 26px; height: 26px; color: #fff; }
+  .brand span { font-size: 30px; font-weight: 700; }
+  .brand i { font-style: normal; font-size: 24px; color: #6b7280; margin-left: 6px; }
+</style>
+</head>
+<body>
+  <div class="proof">
+    <span class="word">colonel</span>
+    <span class="eq">=</span>
+    <span class="word">kernel</span>
+  </div>
+  <div class="chips">
+    <span class="chip">K</span><span class="chip">ER</span><span class="chip">N</span><span class="chip">AH</span><span class="chip">L</span>
+  </div>
+  <div class="why">A rhyming dictionary that searches by <b>sound</b>, not spelling.</div>
+  <div class="brand">
+    <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg></div>
+    <span>Technical Rhymer</span><i>technicalrhymer.org</i>
+  </div>
+</body>
+</html>
