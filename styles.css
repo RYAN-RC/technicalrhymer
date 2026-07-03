@@ -694,7 +694,7 @@ button.btn.ghost:hover { background: var(--surface-3); filter: none; }
 .to-top {
   position: fixed;
   right: 22px;
-  bottom: 22px;
+  bottom: 48px; /* clears the host's "Built with RunCabin" badge (bottom-right) */
   z-index: 10;
   display: grid;
   place-items: center;
@@ -991,7 +991,7 @@ footer a { color: var(--muted); }
   .seg button { padding: 8px 11px; white-space: nowrap; }
   .icon-btn { padding: 7px 11px; }
   .ph-grid { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); }
-  .to-top { right: 14px; bottom: 14px; }
+  .to-top { right: 14px; bottom: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
