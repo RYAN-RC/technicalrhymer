@@ -21,10 +21,12 @@
   const stripStress = (p) => p.replace(/[0-2]/g, "");
   const sylCount = (p) => (p.match(/[0-2]/g) || []).length;
 
-  // Fuzzy matching: "like-sounding" consonant classes (manner + voicing).
-  // Consonants in the same group are treated as interchangeable; each is mapped
-  // to its group's representative. Vowels and HH are left untouched.
-  const FUZZY_GROUPS = [
+  // Fuzzy matching: "like-sounding" consonant classes. The DEFAULTS group by
+  // manner + voicing; the user can regroup them (gear next to the Fuzzy
+  // toggle) and custom groups persist in localStorage. Consonants in the same
+  // group map to a shared representative; vowels are never fuzzed.
+  const ALL_CONSONANTS = ["B", "CH", "D", "DH", "F", "G", "HH", "JH", "K", "L", "M", "N", "NG", "P", "R", "S", "SH", "T", "TH", "V", "W", "Y", "Z", "ZH"];
+  const DEFAULT_FUZZY_GROUPS = [
     ["P", "T", "K"],        // voiceless stops
     ["B", "D", "G"],        // voiced stops
     ["S", "SH", "CH"],      // voiceless sibilants / affricate
@@ -35,10 +37,63 @@
     ["L", "R"],             // liquids
     ["W", "Y"],             // glides
   ];
-  const CONS_MAP = {};
-  FUZZY_GROUPS.forEach((g) => g.forEach((c) => { CONS_MAP[c] = g[0]; }));
+  const FUZZY_KEY = "rf_fuzzy_v1";
+
+  // Keep only known consonants, no duplicates across groups, groups of 2+.
+  // Any array input yields a config — INCLUDING the empty one, which is the
+  // legitimate "nothing fuzzes, every sound matches only itself" choice.
+  // Only a non-array (absent / corrupt storage) returns null → defaults.
+  function sanitizeFuzzyGroups(raw) {
+    if (!Array.isArray(raw)) return null;
+    const seen = new Set();
+    const out = [];
+    raw.forEach((g) => {
+      if (!Array.isArray(g)) return;
+      const grp = [];
+      g.forEach((c) => {
+        c = String(c).toUpperCase();
+        if (ALL_CONSONANTS.indexOf(c) < 0 || seen.has(c)) return;
+        seen.add(c);
+        grp.push(c);
+      });
+      if (grp.length >= 2) out.push(grp); // a group of one is just a loose sound
+    });
+    return out;
+  }
+
+  function loadFuzzyGroups() {
+    try {
+      return sanitizeFuzzyGroups(JSON.parse(localStorage.getItem(FUZZY_KEY) || "null"));
+    } catch (e) { return null; }
+  }
+
+  function buildConsMap(groups) {
+    const m = {};
+    groups.forEach((g) => g.forEach((c) => { m[c] = g[0]; }));
+    return m;
+  }
+
+  // order-insensitive comparison (group order and in-group order don't matter)
+  function fuzzyIsDefault(groups) {
+    const norm = (gs) => gs.map((g) => g.slice().sort().join(",")).sort().join("|");
+    return norm(groups) === norm(DEFAULT_FUZZY_GROUPS);
+  }
+
+  let fuzzyGroups = loadFuzzyGroups() || DEFAULT_FUZZY_GROUPS.map((g) => g.slice());
+  let CONS_MAP = buildConsMap(fuzzyGroups);
   const fuzzToken = (t) => (isVowelTok(t) ? t : (CONS_MAP[t] || t));
   const fuzzStr = (s) => s.split(" ").map(fuzzToken).join(" ");
+
+  // Recompute every entry's precomputed fuzzed keys after the groups change.
+  // ~145k entries x 2 strings; only runs on Apply, never on boot (boot parses
+  // with the loaded groups already in place).
+  function rebuildFuzzKeys() {
+    for (let i = 0; i < entries.length; i++) {
+      const e = entries[i];
+      e.keyF = fuzzStr(e.p);
+      e.keyNSF = fuzzStr(e.keyNS);
+    }
+  }
 
   function parseFreq() {
     const raw = window.CMU_FREQ || "";
@@ -1334,6 +1389,125 @@
     }
   }
 
+  // ---- slant-rhyme (fuzzy) group editor ----
+  const fuzzyDialog = $("fuzzyDialog");
+  const fzGroupsEl = $("fzGroups");
+  const fuzzyCustomTag = $("fuzzyCustomTag");
+  let fzEdit = null;   // working copy while the dialog is open
+  let fzPicked = null; // consonant currently "picked up"
+
+  function syncFuzzyTag() {
+    if (fuzzyCustomTag) fuzzyCustomTag.hidden = fuzzyIsDefault(fuzzyGroups);
+  }
+
+  function fzLoose(groups) {
+    const used = new Set();
+    groups.forEach((g) => g.forEach((c) => used.add(c)));
+    return ALL_CONSONANTS.filter((c) => !used.has(c));
+  }
+
+  function renderFzEditor() {
+    if (!fzGroupsEl) return;
+    fzGroupsEl.innerHTML = "";
+    const removeFromAll = (c) => fzEdit.forEach((g) => {
+      const i = g.indexOf(c);
+      if (i >= 0) g.splice(i, 1);
+    });
+    const mkChip = (c) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ph-key fz-chip" + (fzPicked === c ? " picked" : "");
+      b.title = fzPicked === c ? "Tap a group to move " + c + " there" : "Pick up " + c;
+      b.innerHTML = "<b></b>";
+      b.firstChild.textContent = c;
+      b.addEventListener("click", (e) => {
+        e.stopPropagation(); // don't also trigger the box's move handler
+        fzPicked = fzPicked === c ? null : c;
+        renderFzEditor();
+      });
+      return b;
+    };
+    const mkBox = (label, chips, drop) => {
+      const box = document.createElement("div");
+      box.className = "fz-box" + (fzPicked ? " droppable" : "");
+      const h = document.createElement("div");
+      h.className = "fz-box-label";
+      h.textContent = label;
+      box.appendChild(h);
+      const row = document.createElement("div");
+      row.className = "fz-row";
+      chips.forEach((c) => row.appendChild(mkChip(c)));
+      box.appendChild(row);
+      const doDrop = () => {
+        if (fzPicked == null) return;
+        drop(fzPicked);
+        fzPicked = null;
+        renderFzEditor();
+      };
+      box.addEventListener("click", doDrop);
+      if (fzPicked != null) {
+        // keyboard path: a picked-up chip must be droppable without a mouse
+        box.tabIndex = 0;
+        box.setAttribute("role", "button");
+        box.setAttribute("aria-label", "Move " + fzPicked + " to " + label);
+        box.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter" && e.key !== " ") return;
+          e.preventDefault();
+          doDrop();
+        });
+      }
+      return box;
+    };
+    fzEdit.forEach((g, gi) => {
+      fzGroupsEl.appendChild(mkBox("Group " + (gi + 1), g, (c) => { removeFromAll(c); g.push(c); }));
+    });
+    fzGroupsEl.appendChild(mkBox("Loose sounds — each matches only itself", fzLoose(fzEdit), removeFromAll));
+  }
+
+  function openFuzzyDialog() {
+    fzEdit = fuzzyGroups.map((g) => g.slice());
+    fzPicked = null;
+    renderFzEditor();
+    if (typeof fuzzyDialog.showModal === "function") fuzzyDialog.showModal();
+    else fuzzyDialog.setAttribute("open", "");
+  }
+  function closeFuzzyDialog() {
+    fzPicked = null;
+    if (fuzzyDialog.open) fuzzyDialog.close();
+    else fuzzyDialog.removeAttribute("open");
+  }
+
+  if (fuzzyDialog) {
+    $("fuzzyCfg").addEventListener("click", openFuzzyDialog);
+    $("fzClose").addEventListener("click", closeFuzzyDialog);
+    $("fzCancel").addEventListener("click", closeFuzzyDialog);
+    $("fzNewGroup").addEventListener("click", () => { if (fzEdit) { fzEdit.push([]); renderFzEditor(); } });
+    $("fzReset").addEventListener("click", () => {
+      if (!fzEdit) return;
+      fzEdit = DEFAULT_FUZZY_GROUPS.map((g) => g.slice());
+      fzPicked = null;
+      renderFzEditor();
+    });
+    $("fzDone").addEventListener("click", () => {
+      if (!fzEdit) return;
+      // groups need 2+ sounds; anything smaller falls loose (matches itself)
+      fuzzyGroups = fzEdit.map((g) => g.slice()).filter((g) => g.length >= 2);
+      CONS_MAP = buildConsMap(fuzzyGroups);
+      try {
+        if (fuzzyIsDefault(fuzzyGroups)) localStorage.removeItem(FUZZY_KEY);
+        else localStorage.setItem(FUZZY_KEY, JSON.stringify(fuzzyGroups));
+      } catch (e) { /* localStorage unavailable */ }
+      rebuildFuzzKeys();
+      syncFuzzyTag();
+      closeFuzzyDialog();
+      // refresh whatever the user is LOOKING AT — pinned tabs re-run search()
+      // against the rebuilt keys too, and live re-renders even when the box
+      // was cleared after its last search
+      if (activeTabId === "live" && fragInput.value.trim()) doSearch();
+      else { const t = tabById(activeTabId); if (t) renderTabContent(t); }
+    });
+  }
+
   // ---- back to top ----
   if (toTopBtn) {
     window.addEventListener("scroll", () => { toTopBtn.hidden = window.scrollY < 600; }, { passive: true });
@@ -1384,6 +1558,7 @@
   // ---- boot ----
   function boot() {
     loadPrefs(); // sticky settings first; a ?q= URL below still overrides
+    syncFuzzyTag();
     statusEl.innerHTML = '<span class="loading-pill"><span class="spinner"></span>Loading dictionary…</span>';
     // defer parse one frame so the loading state paints
     setTimeout(() => {

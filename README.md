@@ -109,8 +109,17 @@ still must match. The groups:
 | (HH matches only itself) | HH |
 
 Fuzzy works with every match-mode and with the `*` / `%` / `|` operators.
-The groups are defined in `FUZZY_GROUPS` in `app.js` — edit there to merge
-voicings or regroup.
+
+**The groups are user-configurable**: the gear button next to the Fuzzy toggle
+opens an editor (native `<dialog>`) where sounds move between groups
+tap-to-pick-up, tap-to-drop — including a "Loose sounds" bucket for consonants
+that should only match themselves (HH lives there by default). Custom groups
+persist in `localStorage` (`rf_fuzzy_v1`; cleared when they match the
+defaults), a **Reset to defaults** button restores the manner+voicing table
+above, and applying changes recomputes the precomputed fuzzed keys for all
+~145k entries (~fraction of a second, only on Apply). Groups need at least two
+sounds; leftovers fall loose. The shipped defaults live in
+`DEFAULT_FUZZY_GROUPS` in `app.js`.
 
 ### Result tabs
 

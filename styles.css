@@ -690,6 +690,94 @@ button.btn.ghost:hover { background: var(--surface-3); filter: none; }
 }
 .empty .ex-frag { font-family: var(--mono); letter-spacing: 0.02em; }
 
+/* ---------- slant-rhyme (fuzzy) group editor ---------- */
+#fuzzyCfg { padding: 4px 7px; }
+#fuzzyCfg svg { width: 14px; height: 14px; }
+#fuzzyCustomTag {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent-2);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+/* browsers without <dialog> render it as a plain visible element — hide the
+   closed state explicitly so the JS open/close fallback actually works */
+.fz-dialog:not([open]) { display: none; }
+.fz-dialog {
+  width: min(660px, calc(100vw - 28px));
+  max-height: min(84vh, 720px);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  padding: 18px 20px 20px;
+  box-shadow: var(--shadow-2);
+}
+.fz-dialog::backdrop { background: rgba(5, 6, 10, 0.72); }
+.fz-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+}
+.fz-head svg { width: 17px; height: 17px; color: var(--accent-2); flex: none; }
+.fz-head h2 { font-size: 16px; font-weight: 650; margin: 0; flex: 1; }
+.fz-head .clear-btn { position: static; transform: none; }
+.fz-hint {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--faint);
+  margin: 0 0 14px;
+}
+.fz-hint b { color: var(--muted); }
+.fz-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+.fz-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 9px 9px;
+  min-height: 58px;
+}
+.fz-box.droppable {
+  cursor: pointer;
+  border-style: dashed;
+  border-color: var(--accent-line);
+}
+.fz-box.droppable:hover { background: var(--accent-soft); }
+.fz-box-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--faint);
+  margin-bottom: 6px;
+}
+.fz-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.fz-chip { padding: 5px 8px 4px; }
+.fz-chip b { font-size: 12.5px; }
+.fz-chip.picked {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.fz-chip.picked b { color: var(--accent-2); }
+.fz-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.fz-actions .btn { padding: 9px 16px; font-size: 13.5px; }
+.fz-spacer { flex: 1; }
+
 /* back to top */
 .to-top {
   position: fixed;

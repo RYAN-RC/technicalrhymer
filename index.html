@@ -70,6 +70,12 @@
       <symbol id="ic-delete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z" /><path d="m12 9 6 6" /><path d="m18 9-6 6" />
       </symbol>
+      <symbol id="ic-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 5H3" /><path d="M12 19H3" /><path d="M14 3v4" /><path d="M16 17v4" /><path d="M21 12h-9" /><path d="M21 19h-5" /><path d="M21 5h-7" /><path d="M8 10v4" /><path d="M8 12H3" />
+      </symbol>
+      <symbol id="ic-rotate-ccw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />
+      </symbol>
     </defs>
   </svg>
 
@@ -168,6 +174,7 @@
             <span class="slider"></span>
           </label>
           <label for="fuzzy">Fuzzy &mdash; match similar-sounding consonants</label>
+          <button id="fuzzyCfg" class="icon-btn" type="button" title="Customize which consonants count as similar"><svg aria-hidden="true"><use href="#ic-sliders"></use></svg><span id="fuzzyCustomTag" hidden>custom</span></button>
         </div>
       </div>
       <div class="search-help">
@@ -305,6 +312,27 @@
       </p>
     </footer>
   </div>
+
+  <dialog id="fuzzyDialog" class="fz-dialog" aria-labelledby="fzTitle">
+    <div class="fz-head">
+      <svg aria-hidden="true"><use href="#ic-sliders"></use></svg>
+      <h2 id="fzTitle">Slant rhyme groups</h2>
+      <button id="fzClose" class="clear-btn" type="button" title="Close (Esc)" aria-label="Close"><svg aria-hidden="true"><use href="#ic-x"></use></svg></button>
+    </div>
+    <p class="fz-hint">
+      When <b>Fuzzy</b> is on, consonants in the same group are treated as the same sound.
+      Tap a sound to pick it up, then tap the group to move it to &mdash; or move it to
+      <b>Loose sounds</b> so it only matches itself. Vowels never fuzz: the vowel is the rhyme.
+    </p>
+    <div id="fzGroups" class="fz-groups"></div>
+    <div class="fz-actions">
+      <button id="fzNewGroup" class="icon-btn" type="button"><svg aria-hidden="true"><use href="#ic-plus"></use></svg>New group</button>
+      <button id="fzReset" class="icon-btn" type="button" title="Restore the default manner-and-voicing groups"><svg aria-hidden="true"><use href="#ic-rotate-ccw"></use></svg>Reset to defaults</button>
+      <span class="fz-spacer"></span>
+      <button id="fzCancel" class="btn ghost" type="button">Cancel</button>
+      <button id="fzDone" class="btn"><svg aria-hidden="true"><use href="#ic-sliders"></use></svg>Apply</button>
+    </div>
+  </dialog>
 
   <button id="toTop" class="to-top" type="button" title="Back to top" aria-label="Back to top" hidden>
     <svg aria-hidden="true"><use href="#ic-arrow-up"></use></svg>
