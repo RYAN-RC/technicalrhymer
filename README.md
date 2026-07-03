@@ -129,6 +129,26 @@ its frequency. Sort modes: *Most common* (default) · *By syllables* · *A–Z*.
 Match modes: *Ends with (rhyme)* · *Starts with* · *Anywhere* · *Exact*.
 *Ignore stress marks* (on by default) makes `AH0 N JH` and `AH1 N JH` match.
 
+### UX niceties
+
+- **Phoneme keyboard** — a collapsible tap-to-build panel under the search box
+  with all 39 ARPABET sounds (each with an example word), the `*` / `|`
+  operators, undo-last-sound, and clear.
+- **Match highlighting** — result chips highlight exactly which phonemes
+  matched your fragment.
+- **Example chips** — one-tap examples under the lookup box and in the blank
+  results state.
+- **Actionable empty states** — "no matches" offers one-tap fixes (switch to
+  Anywhere, turn on Fuzzy, clear the sense filter…).
+- **Shareable URLs** — searches sync to `?q=…` (plus mode/fuzzy/stress/sort and
+  sense settings), and the tab title follows the query.
+- **Copy list** — copies the visible result words, one per line.
+- **Keyboard** — `/` focuses lookup from anywhere; `Esc` clears the focused
+  box; `Enter` searches.
+- Clear (×) buttons in both inputs, auto-growing search box, back-to-top
+  button, screen-reader announcements for result counts, and reduced-motion
+  support.
+
 ### Slang (Urban Dictionary)
 
 Coverage includes the **top 10,000 highest-rated Urban Dictionary terms** (ranked

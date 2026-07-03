@@ -54,6 +54,15 @@
       <symbol id="ic-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />
       </symbol>
+      <symbol id="ic-arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m5 12 7-7 7 7" /><path d="M12 19V5" />
+      </symbol>
+      <symbol id="ic-keyboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 8h.01" /><path d="M12 12h.01" /><path d="M14 8h.01" /><path d="M16 12h.01" /><path d="M18 8h.01" /><path d="M6 8h.01" /><path d="M7 16h10" /><path d="M8 12h.01" /><rect width="20" height="16" x="2" y="4" rx="2" />
+      </symbol>
+      <symbol id="ic-delete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z" /><path d="m12 9 6 6" /><path d="m18 9-6 6" />
+      </symbol>
     </defs>
   </svg>
 
@@ -81,8 +90,16 @@
         <div class="input-shell">
           <svg class="lead" aria-hidden="true"><use href="#ic-search"></use></svg>
           <input id="wordInput" type="text" placeholder="Type a word, e.g. orange" autocomplete="off" autocapitalize="off" spellcheck="false" disabled />
+          <button id="wordClear" class="clear-btn" type="button" title="Clear (Esc)" aria-label="Clear word" hidden><svg aria-hidden="true"><use href="#ic-x"></use></svg></button>
         </div>
         <button id="lookupBtn" class="btn" disabled><svg aria-hidden="true"><use href="#ic-audio"></use></svg>Look up</button>
+      </div>
+      <div class="examples" id="lookupExamples">
+        <span>Try</span>
+        <button type="button" class="ex-chip" data-w="orange">orange</button>
+        <button type="button" class="ex-chip" data-w="colonel">colonel</button>
+        <button type="button" class="ex-chip" data-w="rizz">rizz</button>
+        <button type="button" class="ex-chip" data-w="doomscrolling">doomscrolling</button>
       </div>
       <div class="options">
         <div class="opt">
@@ -109,6 +126,7 @@
       <div class="field">
         <div class="input-shell">
           <textarea id="fragInput" rows="1" placeholder="e.g. AH N JH   ·   AO R * JH (in order)   ·   AO | JH (any order)" autocomplete="off" spellcheck="false" disabled></textarea>
+          <button id="fragClear" class="clear-btn" type="button" title="Clear (Esc)" aria-label="Clear search" hidden><svg aria-hidden="true"><use href="#ic-x"></use></svg></button>
         </div>
         <button id="searchBtn" class="btn" disabled><svg aria-hidden="true"><use href="#ic-search"></use></svg>Search</button>
       </div>
@@ -149,7 +167,69 @@
         <b>*</b> or <b>%</b> = parts in that order with anything between (e.g.
         <code>AO R * AH N JH</code>). <b>|</b> = parts in any order (e.g.
         <code>AO R | JH</code>). Match buttons anchor the ends of an ordered query.
+        Press <b>/</b> to jump to lookup.
       </div>
+
+      <details id="phonePanel" class="sense-panel phone-panel">
+        <summary>
+          <svg aria-hidden="true"><use href="#ic-keyboard"></use></svg>
+          Phoneme keyboard <span class="sense-opt">tap sounds to build a search</span>
+          <svg class="chev" aria-hidden="true"><use href="#ic-arrow-down"></use></svg>
+        </summary>
+        <div class="phone-body">
+          <div class="ph-group-label">Vowels</div>
+          <div class="ph-grid">
+            <button type="button" class="ph-key" data-ph="AA"><b>AA</b><span>odd</span></button>
+            <button type="button" class="ph-key" data-ph="AE"><b>AE</b><span>at</span></button>
+            <button type="button" class="ph-key" data-ph="AH"><b>AH</b><span>hut</span></button>
+            <button type="button" class="ph-key" data-ph="AO"><b>AO</b><span>ought</span></button>
+            <button type="button" class="ph-key" data-ph="AW"><b>AW</b><span>cow</span></button>
+            <button type="button" class="ph-key" data-ph="AY"><b>AY</b><span>hide</span></button>
+            <button type="button" class="ph-key" data-ph="EH"><b>EH</b><span>Ed</span></button>
+            <button type="button" class="ph-key" data-ph="ER"><b>ER</b><span>hurt</span></button>
+            <button type="button" class="ph-key" data-ph="EY"><b>EY</b><span>ate</span></button>
+            <button type="button" class="ph-key" data-ph="IH"><b>IH</b><span>it</span></button>
+            <button type="button" class="ph-key" data-ph="IY"><b>IY</b><span>eat</span></button>
+            <button type="button" class="ph-key" data-ph="OW"><b>OW</b><span>oat</span></button>
+            <button type="button" class="ph-key" data-ph="OY"><b>OY</b><span>toy</span></button>
+            <button type="button" class="ph-key" data-ph="UH"><b>UH</b><span>hood</span></button>
+            <button type="button" class="ph-key" data-ph="UW"><b>UW</b><span>two</span></button>
+          </div>
+          <div class="ph-group-label">Consonants</div>
+          <div class="ph-grid">
+            <button type="button" class="ph-key" data-ph="B"><b>B</b><span>be</span></button>
+            <button type="button" class="ph-key" data-ph="CH"><b>CH</b><span>cheese</span></button>
+            <button type="button" class="ph-key" data-ph="D"><b>D</b><span>dee</span></button>
+            <button type="button" class="ph-key" data-ph="DH"><b>DH</b><span>thee</span></button>
+            <button type="button" class="ph-key" data-ph="F"><b>F</b><span>fee</span></button>
+            <button type="button" class="ph-key" data-ph="G"><b>G</b><span>green</span></button>
+            <button type="button" class="ph-key" data-ph="HH"><b>HH</b><span>he</span></button>
+            <button type="button" class="ph-key" data-ph="JH"><b>JH</b><span>gee</span></button>
+            <button type="button" class="ph-key" data-ph="K"><b>K</b><span>key</span></button>
+            <button type="button" class="ph-key" data-ph="L"><b>L</b><span>lee</span></button>
+            <button type="button" class="ph-key" data-ph="M"><b>M</b><span>me</span></button>
+            <button type="button" class="ph-key" data-ph="N"><b>N</b><span>knee</span></button>
+            <button type="button" class="ph-key" data-ph="NG"><b>NG</b><span>ping</span></button>
+            <button type="button" class="ph-key" data-ph="P"><b>P</b><span>pee</span></button>
+            <button type="button" class="ph-key" data-ph="R"><b>R</b><span>read</span></button>
+            <button type="button" class="ph-key" data-ph="S"><b>S</b><span>sea</span></button>
+            <button type="button" class="ph-key" data-ph="SH"><b>SH</b><span>she</span></button>
+            <button type="button" class="ph-key" data-ph="T"><b>T</b><span>tea</span></button>
+            <button type="button" class="ph-key" data-ph="TH"><b>TH</b><span>theta</span></button>
+            <button type="button" class="ph-key" data-ph="V"><b>V</b><span>vee</span></button>
+            <button type="button" class="ph-key" data-ph="W"><b>W</b><span>we</span></button>
+            <button type="button" class="ph-key" data-ph="Y"><b>Y</b><span>yield</span></button>
+            <button type="button" class="ph-key" data-ph="Z"><b>Z</b><span>zee</span></button>
+            <button type="button" class="ph-key" data-ph="ZH"><b>ZH</b><span>seizure</span></button>
+          </div>
+          <div class="ph-ops">
+            <button type="button" class="ph-key op" data-ph="*" title="parts in this order, anything between"><b>*</b><span>in order</span></button>
+            <button type="button" class="ph-key op" data-ph="|" title="parts in any order"><b>|</b><span>any order</span></button>
+            <button type="button" class="ph-key op" data-act="back" title="Remove the last sound"><svg aria-hidden="true"><use href="#ic-delete"></use></svg><span>undo</span></button>
+            <button type="button" class="ph-key op" data-act="clear" title="Clear the search box"><svg aria-hidden="true"><use href="#ic-x"></use></svg><span>clear</span></button>
+          </div>
+        </div>
+      </details>
 
       <details id="sensePanel" class="sense-panel">
         <summary>
@@ -202,7 +282,7 @@
     </section>
 
     <footer>
-      <div id="status">Loading…</div>
+      <div id="status" aria-live="polite">Loading…</div>
       <p style="margin:10px 0 0">
         Pronunciations: <a href="https://github.com/cmusphinx/cmudict" target="_blank" rel="noopener">CMU Pronouncing Dictionary</a>
         (~135k standard English words). ARPABET notation — digits on vowels mark stress
@@ -230,6 +310,11 @@
       </p>
     </footer>
   </div>
+
+  <button id="toTop" class="to-top" type="button" title="Back to top" aria-label="Back to top" hidden>
+    <svg aria-hidden="true"><use href="#ic-arrow-up"></use></svg>
+  </button>
+  <div id="announce" class="sr-only" aria-live="polite"></div>
 
   <script src="cmudict-data.js"></script>
   <script src="freq-data.js"></script>

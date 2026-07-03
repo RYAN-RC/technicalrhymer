@@ -307,8 +307,15 @@
 
   // ---- DOM ----
   const $ = (id) => document.getElementById(id);
+  const SMOOTH = (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth";
   const wordInput = $("wordInput");
   const lookupBtn = $("lookupBtn");
+  const wordClear = $("wordClear");
+  const fragClear = $("fragClear");
+  const phonePanel = $("phonePanel");
+  const toTopBtn = $("toTop");
+  const announceEl = $("announce");
+  const lookupExamples = $("lookupExamples");
   const pronResult = $("pronResult");
   const notFound = $("notFound");
   const fragInput = $("fragInput");
@@ -355,6 +362,8 @@
   // fill the search box with a pronunciation (no search) — the "drop it below" action
   function fillSearchBox(v) {
     fragInput.value = v;
+    autoGrow();
+    syncClearBtns();
     fragInput.focus();
     try { fragInput.setSelectionRange(v.length, v.length); } catch (e) { /* */ }
   }
@@ -413,7 +422,7 @@
       let cls = "ph";
       if (isVowel) cls += " vowel";
       if (isPrimary) cls += " stress1";
-      phHtml += '<span class="' + cls + '" data-i="' + i + '">' + tk + "</span>";
+      phHtml += '<button type="button" tabindex="-1" class="' + cls + '" data-i="' + i + '">' + tk + "</button>";
     });
     const altBadge = altNum ? ' <span class="syl-badge">alt ' + altNum + "</span>" : "";
     const isUd = udInfo.has(word);
@@ -494,8 +503,10 @@
   // ---- step 2: search ----
   function sendToSearch(fragmentRaw) {
     fragInput.value = fragmentRaw;
+    autoGrow();
+    syncClearBtns();
     doSearch();
-    fragInput.scrollIntoView({ behavior: "smooth", block: "center" });
+    fragInput.scrollIntoView({ behavior: SMOOTH, block: "center" });
   }
 
   // running a search (or changing any control) drives the LIVE tab and shows it
@@ -510,6 +521,61 @@
     activeTabId = "live";
     renderTabBar();
     renderTabContent(live);
+    syncUrl(live);
+  }
+
+  // keep the address bar + tab title shareable: ?q=AH+N+JH&m=any&f=1&s=0&sort=alpha
+  const BASE_TITLE = document.title;
+  function syncUrl(live) {
+    const raw = live.raw.trim();
+    document.title = raw ? raw.replace(/\s+/g, " ").toUpperCase() + " · Technical Rhymer" : BASE_TITLE;
+    if (!window.history || !history.replaceState) return;
+    const p = new URLSearchParams();
+    if (raw) {
+      p.set("q", raw.replace(/\s+/g, " "));
+      if (live.mode !== "end") p.set("m", live.mode);
+      if (live.fuzzy) p.set("f", "1");
+      if (!live.ignoreStress) p.set("s", "0");
+      if (live.sort !== "common") p.set("sort", live.sort);
+      if (live.sense && live.sense.word) {
+        p.set("w", live.sense.word);
+        if (live.sense.rel !== "related") p.set("r", live.sense.rel);
+      }
+    }
+    const qs = p.toString();
+    try {
+      history.replaceState(null, "", qs ? "?" + qs : location.pathname);
+    } catch (e) { /* file:// or sandbox — fine without shareable URLs */ }
+  }
+
+  // restore a shared/bookmarked search from the URL (called once, after data load)
+  function restoreFromUrl() {
+    let p;
+    try { p = new URLSearchParams(location.search); } catch (e) { return false; }
+    const q = (p.get("q") || "").trim();
+    if (!q) return false;
+    const setSeg = (btns, attr, val) =>
+      btns.forEach((b) => b.classList.toggle("on", b.getAttribute(attr) === val));
+    const m = p.get("m");
+    if (m && ["end", "start", "any", "exact"].indexOf(m) >= 0) { mode = m; setSeg(matchBtns, "data-mode", m); }
+    fuzzyEl.checked = p.get("f") === "1";
+    const stressOn = p.get("s") !== "0";
+    stripStress1El.checked = stressOn;
+    ignoreStressEl.checked = stressOn;
+    const so = p.get("sort");
+    if (so && ["common", "syllable", "alpha"].indexOf(so) >= 0) { sortMode = so; setSeg(sortBtns, "data-sort", so); }
+    const w = (p.get("w") || "").trim().toLowerCase();
+    if (w) {
+      senseWordEl.value = w;
+      const r = p.get("r");
+      if (r && ["related", "synonym", "opposite"].indexOf(r) >= 0) { senseRel = r; setSeg(senseRelBtns, "data-rel", r); }
+      sensePanelEl.open = true;
+    }
+    fragInput.value = q;
+    autoGrow();
+    syncClearBtns();
+    doSearch();
+    return true;
   }
 
   function tabById(id) { return tabs.find((t) => t.id === id); }
@@ -668,16 +734,21 @@
     return out;
   }
 
+  // ctx fields shared by every render call for a tab
+  function tabCtx(tab) {
+    return { sort: tab.sort, fuzzy: tab.fuzzy, ignoreStress: tab.ignoreStress, mode: tab.mode, live: !!tab.live };
+  }
+
   function applySenseFilter(tab, found, keptSet, label) {
     const kept = found.results.filter((e) => keptSet.has(e.w));
     const keptWords = new Set(kept.map((e) => e.w));
     const dbl = new Map();
     found.doubles.forEach((v, k) => { if (keptWords.has(k)) dbl.set(k, v); });
     setSenseStatus(label);
-    renderResults(kept, found.q, {
-      sort: tab.sort, fuzzy: tab.fuzzy, doubles: dbl,
-      sense: { rel: tab.sense.rel, w: tab.sense.word },
-    });
+    const ctx = tabCtx(tab);
+    ctx.doubles = dbl;
+    ctx.sense = { rel: tab.sense.rel, w: tab.sense.word };
+    renderResults(kept, found.q, ctx);
   }
 
   function aiFilterAndRender(tab, found, key) {
@@ -690,8 +761,19 @@
         " are " + sense.rel + " to “" + sense.word + "” (AI)");
       return;
     }
-    resultsEl.innerHTML = '<div class="empty">Asking Claude which rhymes are ' +
-      escapeHtml(sense.rel) + " to “" + escapeHtml(sense.word) + "”…</div>";
+    // keep the current results visible but dimmed while Claude thinks;
+    // only fall back to a bare message when there's nothing rendered yet
+    const asking = "Asking Claude which rhymes are " + escapeHtml(sense.rel) +
+      " to “" + escapeHtml(sense.word) + "”…";
+    if (resultsEl.childElementCount) {
+      resultsEl.classList.add("filtering");
+      const pill = document.createElement("div");
+      pill.className = "filter-pill";
+      pill.innerHTML = '<span class="spinner"></span>' + asking;
+      resultsEl.prepend(pill);
+    } else {
+      resultsEl.innerHTML = '<div class="empty">' + asking + "</div>";
+    }
     setSenseStatus("Asking Claude…");
     aiSenseMatches(sense.word, sense.rel, cand, key, senseModel).then((raw) => {
       const candSet = new Set(cand);
@@ -705,7 +787,9 @@
     }).catch((err) => {
       if (activeTabId !== tab.id) return;
       setSenseStatus("AI error: " + err.message + " — showing unfiltered.", true);
-      renderResults(found.results, found.q, { sort: tab.sort, fuzzy: tab.fuzzy, doubles: found.doubles });
+      const ctx = tabCtx(tab);
+      ctx.doubles = found.doubles;
+      renderResults(found.results, found.q, ctx);
     });
   }
 
@@ -718,7 +802,9 @@
     const ctx = senseContext(tab.sense);
     if (ctx && !ctx.ok) {
       setSenseStatus(ctx.reason + " — showing unfiltered. (Add an API key for smarter results.)", true);
-      renderResults(found.results, found.q, { sort: tab.sort, fuzzy: tab.fuzzy, doubles: found.doubles });
+      const rctx = tabCtx(tab);
+      rctx.doubles = found.doubles;
+      renderResults(found.results, found.q, rctx);
       return;
     }
     const keptSet = new Set(found.results.filter((e) => sensePass(e.w, ctx)).map((e) => e.w));
@@ -726,10 +812,23 @@
       found.results.length.toLocaleString() + " are " + ctx.rel + " to “" + ctx.w + "” (offline)");
   }
 
+  // one-tap fragment examples for the blank state
+  const FRAG_EXAMPLES = [
+    { f: "AH N JH", hint: "the orange tail" },
+    { f: "EH ZH ER", hint: "treasure, measure…" },
+    { f: "UH K IY", hint: "cookie, rookie…" },
+    { f: "AO R * JH", hint: "AO R then JH, in order" },
+  ];
+
   function renderTabContent(tab) {
+    resultsEl.classList.remove("filtering");
     resultsEl.innerHTML = "";
     if (!tab || !tab.raw.trim()) {
-      resultsEl.innerHTML = '<div class="empty">Type or paste a pronunciation fragment above — e.g. <code>AH N JH</code>.</div>';
+      const chips = FRAG_EXAMPLES.map((x) =>
+        '<button type="button" class="ex-chip ex-frag" data-frag="' + escapeAttr(x.f) +
+        '" title="' + escapeAttr(x.hint) + '">' + escapeHtml(x.f) + "</button>").join("");
+      resultsEl.innerHTML = '<div class="empty">Type or paste a pronunciation fragment above — or try one:' +
+        '<div class="empty-actions">' + chips + "</div></div>";
       setSenseStatus("");
       return;
     }
@@ -743,14 +842,16 @@
       return;
     }
     setSenseStatus("");
-    renderResults(found.results, found.q, { sort: tab.sort, fuzzy: tab.fuzzy, doubles: found.doubles });
+    const ctx = tabCtx(tab);
+    ctx.doubles = found.doubles;
+    renderResults(found.results, found.q, ctx);
   }
 
   function showTab(id) {
     activeTabId = id;
     renderTabBar();
     renderTabContent(tabById(id));
-    resultsEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    resultsEl.scrollIntoView({ behavior: SMOOTH, block: "nearest" });
   }
 
   function tabTitle(tab) {
@@ -845,6 +946,40 @@
 
   const RENDER_CAP = 2500;
 
+  // highlight context for the render pass: which fragment tokens matched.
+  // Set by renderResults, read by chipHtml. { segs (match-space), fuzzy, ignoreStress }
+  let HL = null;
+  let lastWords = []; // words currently listed, in display order (for "Copy list")
+
+  // token indices covered by any (non-overlapping) occurrence of any segment
+  function hlIndices(tokens, segs) {
+    const idx = new Set();
+    for (let s = 0; s < segs.length; s++) {
+      const seg = segs[s];
+      let i = 0;
+      while (i + seg.length <= tokens.length) {
+        const k = indexOfSub(tokens, seg, i);
+        if (k < 0) break;
+        for (let j = k; j < k + seg.length; j++) idx.add(j);
+        i = k + seg.length;
+      }
+    }
+    return idx;
+  }
+
+  // pronunciation display for a chip, with the matched tokens highlighted.
+  // Match keys and display pron have identical token counts (fuzz/strip are 1:1).
+  function pronHtml(e) {
+    const disp = e.p.split(" ");
+    if (!HL) return escapeHtml(e.p);
+    const key = HL.fuzzy
+      ? (HL.ignoreStress ? e.keyNSF : e.keyF)
+      : (HL.ignoreStress ? e.keyNS : e.key);
+    const idx = hlIndices(key.split(" "), HL.segs);
+    if (!idx.size) return escapeHtml(e.p);
+    return disp.map((t, i) => (idx.has(i) ? '<em class="hl">' + escapeHtml(t) + "</em>" : escapeHtml(t))).join(" ");
+  }
+
   function chipHtml(e, dbl) {
     const pct = Math.max(0, Math.min(100, Math.round((e.z / 8) * 100)));
     const sylTxt = e.syl + " syll";
@@ -859,7 +994,7 @@
     const dblTag = dbl ? ' <span class="dbl-tag">×' + dbl + "</span>" : "";
     return '<button class="word-chip' + (dbl ? " is-double" : "") + '" data-w="' + escapeAttr(e.w) + '" title="' + escapeAttr(title) + '">' +
       '<span class="chip-row"><span class="w">' + escapeHtml(e.w) + udTag + newTag + dblTag + "</span>" +
-      '<span class="p">' + escapeHtml(e.p) + "</span></span>" +
+      '<span class="p">' + pronHtml(e) + "</span></span>" +
       '<span class="freq-track"><span class="freq-fill" style="width:' + pct + '%"></span></span>' +
       "</button>";
   }
@@ -883,7 +1018,8 @@
   }
 
   function renderResults(matches, q, ctx) {
-    ctx = ctx || { sort: sortMode, fuzzy: fuzzyEl.checked };
+    ctx = ctx || { sort: sortMode, fuzzy: fuzzyEl.checked, ignoreStress: ignoreStressEl.checked };
+    resultsEl.classList.remove("filtering");
     const sort = ctx.sort;
     const doubles = (ctx.doubles instanceof Map) ? ctx.doubles : new Map();
     const disp = q ? queryDisplay(q) : "";
@@ -892,9 +1028,23 @@
         ? "No rhymes are <b>" + escapeHtml(ctx.sense.rel) + "</b> to “<b>" + escapeHtml(ctx.sense.w) +
           "</b>”. Try a broader relation, a different word, or turn on <b>Fuzzy</b>."
         : "Try fewer phonemes, switch matching to <b>Anywhere</b>, or toggle <b>Ignore stress</b>.";
+      // one-tap fixes — only offered on the live tab, where the controls apply
+      const acts = [];
+      if (ctx.live) {
+        if (ctx.sense) {
+          acts.push('<button type="button" class="ex-chip js-act" data-act="sense-clear">Clear the sense filter</button>');
+          if (ctx.sense.rel !== "related") acts.push('<button type="button" class="ex-chip js-act" data-act="sense-related">Broaden to “Related”</button>');
+        } else {
+          if (ctx.mode && ctx.mode !== "any") acts.push('<button type="button" class="ex-chip js-act" data-act="mode-any">Match “Anywhere”</button>');
+          if (!ctx.fuzzy) acts.push('<button type="button" class="ex-chip js-act" data-act="fuzzy-on">Turn on Fuzzy</button>');
+          if (ctx.ignoreStress === false) acts.push('<button type="button" class="ex-chip js-act" data-act="stress-on">Ignore stress</button>');
+        }
+      }
       resultsEl.innerHTML =
         '<div class="results-meta">No matches for <span class="frag">' + escapeHtml(disp) + "</span></div>" +
-        '<div class="empty">' + hint + "</div>";
+        '<div class="empty">' + hint +
+        (acts.length ? '<div class="empty-actions">' + acts.join("") + "</div>" : "") + "</div>";
+      if (announceEl) announceEl.textContent = "No matches for " + disp;
       return;
     }
 
@@ -906,6 +1056,15 @@
     const doubleList = doubles.size ? sorted.filter((e) => doubles.has(e.w)) : [];
     const singleList = doubles.size ? sorted.filter((e) => !doubles.has(e.w)) : sorted;
 
+    // arm the matched-fragment highlighter for this render pass
+    if (q) {
+      HL = {
+        segs: ctx.fuzzy ? q.segs.map((s) => s.map(fuzzToken)) : q.segs,
+        fuzzy: !!ctx.fuzzy,
+        ignoreStress: ctx.ignoreStress !== false,
+      };
+    }
+
     const total = sorted.length;
     const sortLabel = sort === "common" ? "most common first"
       : sort === "syllable" ? "by syllables, then common" : "A–Z";
@@ -916,7 +1075,9 @@
     const meta =
       '<div class="results-meta">' + icon("ic-list") +
       "<span><b style=\"color:var(--text)\">" + total.toLocaleString() + "</b> match" + (total === 1 ? "" : "es") +
-      " for <span class=\"frag\">" + escapeHtml(disp) + "</span> · " + sortLabel + fuzzNote + senseNote + "</span></div>";
+      " for <span class=\"frag\">" + escapeHtml(disp) + "</span> · " + sortLabel + fuzzNote + senseNote + "</span>" +
+      '<button type="button" class="icon-btn js-copy-list" title="Copy the listed words, one per line">' +
+      icon("ic-copy") + "Copy list</button></div>";
 
     let dblSection = "";
     if (doubleList.length) {
@@ -937,12 +1098,16 @@
     }
 
     resultsEl.innerHTML = meta + dblSection + body + note;
+    HL = null;
+    lastWords = doubleList.slice(0, RENDER_CAP).concat(singleList.slice(0, RENDER_CAP)).map((e) => e.w);
+    if (announceEl) announceEl.textContent = total.toLocaleString() + " match" + (total === 1 ? "" : "es") + " for " + disp;
 
     Array.from(resultsEl.querySelectorAll(".word-chip")).forEach((chip) => {
       chip.addEventListener("click", () => {
         wordInput.value = chip.getAttribute("data-w");
+        syncClearBtns();
         doLookup();
-        document.querySelector("header").scrollIntoView({ behavior: "smooth", block: "start" });
+        document.querySelector("header").scrollIntoView({ behavior: SMOOTH, block: "start" });
       });
     });
   }
@@ -1014,6 +1179,110 @@
   });
   ignoreStressEl.addEventListener("change", () => setIgnoreStress(ignoreStressEl.checked));
   fuzzyEl.addEventListener("change", () => { if (fragInput.value.trim()) doSearch(); });
+
+  // ---- input quality-of-life: auto-grow, clear buttons, shortcuts ----
+  function autoGrow() {
+    fragInput.style.height = "auto";
+    fragInput.style.height = Math.min(fragInput.scrollHeight, 140) + "px";
+  }
+  function syncClearBtns() {
+    if (wordClear) wordClear.hidden = !wordInput.value;
+    if (fragClear) fragClear.hidden = !fragInput.value;
+  }
+  function clearWord() {
+    wordInput.value = "";
+    syncClearBtns();
+    doLookup(); // empty query hides the pron result
+    wordInput.focus();
+  }
+  function clearFrag() {
+    fragInput.value = "";
+    autoGrow();
+    syncClearBtns();
+    doSearch(); // renders the blank-state examples + resets URL/title
+    fragInput.focus();
+  }
+  if (wordClear) wordClear.addEventListener("click", clearWord);
+  if (fragClear) fragClear.addEventListener("click", clearFrag);
+  wordInput.addEventListener("keydown", (e) => { if (e.key === "Escape" && wordInput.value) { e.preventDefault(); clearWord(); } });
+  fragInput.addEventListener("keydown", (e) => { if (e.key === "Escape" && fragInput.value) { e.preventDefault(); clearFrag(); } });
+  fragInput.addEventListener("input", () => { autoGrow(); syncClearBtns(); });
+  wordInput.addEventListener("input", syncClearBtns);
+
+  // "/" jumps to the lookup box from anywhere (unless already typing)
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    e.preventDefault();
+    wordInput.focus();
+    wordInput.select();
+  });
+
+  // ---- example chips under the lookup box ----
+  if (lookupExamples) {
+    lookupExamples.addEventListener("click", (e) => {
+      const b = e.target.closest(".ex-chip[data-w]");
+      if (!b) return;
+      wordInput.value = b.getAttribute("data-w");
+      syncClearBtns();
+      doLookup(true);
+    });
+  }
+
+  // ---- phoneme keyboard: tap sounds/operators to build the search box ----
+  if (phonePanel) {
+    phonePanel.addEventListener("click", (e) => {
+      const key = e.target.closest(".ph-key");
+      if (!key) return;
+      const act = key.getAttribute("data-act");
+      if (act === "clear") {
+        fragInput.value = "";
+      } else if (act === "back") {
+        const toks = fragInput.value.trim().split(/\s+/).filter(Boolean);
+        toks.pop();
+        fragInput.value = toks.length ? toks.join(" ") + " " : "";
+      } else {
+        const ph = key.getAttribute("data-ph");
+        const v = fragInput.value;
+        fragInput.value = v + (v && !/\s$/.test(v) ? " " : "") + ph + " ";
+      }
+      autoGrow();
+      syncClearBtns();
+    });
+  }
+
+  // ---- delegated actions inside the results area ----
+  resultsEl.addEventListener("click", (e) => {
+    const frag = e.target.closest(".ex-frag");
+    if (frag) { sendToSearch(frag.getAttribute("data-frag")); return; }
+    const copyBtn = e.target.closest(".js-copy-list");
+    if (copyBtn) { if (lastWords.length) copyText(lastWords.join("\n"), copyBtn); return; }
+    const act = e.target.closest(".js-act");
+    if (act) runEmptyAction(act.getAttribute("data-act"));
+  });
+  function runEmptyAction(a) {
+    if (a === "mode-any") {
+      const b = matchBtns.find((x) => x.getAttribute("data-mode") === "any");
+      if (b) b.click();
+    } else if (a === "fuzzy-on") {
+      fuzzyEl.checked = true;
+      doSearch();
+    } else if (a === "stress-on") {
+      setIgnoreStress(true);
+    } else if (a === "sense-clear") {
+      senseClearEl.click();
+    } else if (a === "sense-related") {
+      const b = senseRelBtns.find((x) => x.getAttribute("data-rel") === "related");
+      if (b) b.click();
+    }
+  }
+
+  // ---- back to top ----
+  if (toTopBtn) {
+    window.addEventListener("scroll", () => { toTopBtn.hidden = window.scrollY < 600; }, { passive: true });
+    toTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: SMOOTH }));
+  }
 
   // word-sense panel
   // only prefetch the (heavy) offline sense data when there's no API key to use AI
@@ -1102,7 +1371,11 @@
       [wordInput, lookupBtn, fragInput, searchBtn].forEach((el) => el.removeAttribute("disabled"));
       loadTabs();
       renderTabBar();
-      wordInput.focus();
+      syncClearBtns();
+      if (!restoreFromUrl()) {
+        renderTabContent(tabs[0]); // blank state with tap-to-try examples
+        wordInput.focus();
+      }
     }, 30);
   }
 
