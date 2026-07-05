@@ -476,7 +476,7 @@
       notFound.innerHTML =
         "<b>“" + escapeHtml(q) + "”</b> isn’t in the dictionary. " +
         "This build covers the CMU Pronouncing Dictionary (standard English), the " +
-        "top 10,000 Urban Dictionary terms, and 2,000 new words of the 2020s. Try another spelling.";
+        "top 10,000 Urban Dictionary terms, and 2,000+ new words of the 2020s. Try another spelling.";
       notFound.classList.add("show");
       return;
     }
@@ -522,7 +522,7 @@
       : "";
     const nu = newInfo.get(word);
     const newBadge = nu
-      ? ' <a class="new-badge" href="' + udLink(word) + '" target="_blank" rel="noopener" title="New this decade — first defined on Urban Dictionary in ' +
+      ? ' <a class="new-badge" href="' + udLink(word) + '" target="_blank" rel="noopener" title="New this decade — mainstream since ' +
         nu.year + '">' + icon("ic-sparkles") + "New · " + nu.year + "</a>"
       : "";
     const udNote = (udGenerated.has(word) || newGenerated.has(word))
@@ -1097,7 +1097,7 @@
     const nu = newInfo.get(e.w);
     const title = (e.z > 0 ? "commonality (Zipf) " + e.z.toFixed(2) : "rare / not in frequency data") +
       " · " + sylTxt + (isUd ? " · Urban Dictionary (score " + udInfo.get(e.w).toLocaleString() + ")" : "") +
-      (nu ? " · new this decade (first defined " + nu.year + ")" : "") +
+      (nu ? " · new this decade (mainstream since " + nu.year + ")" : "") +
       (dbl ? " · rhyme repeats ×" + dbl : "");
     const udTag = isUd ? ' <span class="ud-tag">UD</span>' : "";
     const newTag = nu ? ' <span class="new-tag">’' + String(nu.year).slice(2) + "</span>" : "";

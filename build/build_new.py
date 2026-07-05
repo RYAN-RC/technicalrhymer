@@ -43,6 +43,95 @@ DECADE_START = "2020-01-01"
 PRE_MAX_ABS = 20    # pre-2020 defs scoring at or under this never disqualify
 PRE_MAX_FRAC = 0.10 # ... nor does a pre-2020 peak under 10% of the 2020s peak
 
+# Hand-curated iconic 2020s terms the scored scrape misses: its coverage ends
+# Nov 2023 (everything 2024+), standalone forms sometimes lost out to
+# compounds (skibidi vs "skibidi rizz"), and the junk-def rule above ate a
+# few whose strings had well-scored older meanings (mogging, gooner, unc).
+# Curated 2026-07-05; every term verified to exist on Urban Dictionary via
+# the public API, which no longer exposes vote counts — so score is written
+# as 0 (the app never displays a score for NEW-only terms) and commonality
+# is hand-assigned instead of pseudo_zipf: 3.5 = era-defining, 3.2 = major,
+# ~2.9-3.0 = solid, <2.9 = niche-but-iconic. Year = when it went mainstream
+# (not first-def date — many strings have ancient unrelated defs). Pron None
+# = g2p like the auto set; overridden where g2p mangles (acronyms, digits,
+# meme coinages).
+MANUAL = [
+    # (term, year, zipf, ARPABET override or None)
+    # 2020
+    ("vibe check", 2020, 3.2, None),
+    ("glizzy", 2020, 3.2, None),
+    ("hits different", 2020, 3.2, None),
+    ("main character", 2020, 3.2, None),
+    ("deadass", 2020, 3.5, "D EH1 D AE2 S"),
+    ("baddie", 2020, 3.5, None),
+    # 2021
+    ("understood the assignment", 2021, 3.0, None),
+    ("cheugy", 2021, 2.9, "CH UW1 G IY0"),
+    ("caught in 4k", 2021, 3.2, "K AO1 T IH0 N F AO1 R K EY1"),
+    ("rent free", 2021, 3.2, None),
+    ("fr fr", 2021, 3.2, None),
+    ("ratioed", 2021, 3.0, "R EY1 SH IY0 OW0 D"),
+    # 2022
+    ("quiet quitting", 2022, 3.0, None),
+    ("situationship", 2022, 3.5, "S IH2 CH UW0 EY1 SH AH0 N SH IH2 P"),
+    ("unalive", 2022, 3.2, "AH2 N AH0 L AY1 V"),
+    ("it's giving", 2022, 3.2, None),
+    ("goofy ahh", 2022, 3.2, "G UW1 F IY0 AA1"),
+    ("soft launch", 2022, 3.0, None),
+    ("hard launch", 2022, 2.9, None),
+    # 2023
+    ("skibidi", 2023, 3.5, "S K IH1 B IH0 D IY0"),
+    ("gyat", 2023, 3.5, "G Y AA1 T"),
+    ("gyatt", 2023, 3.5, "G Y AA1 T"),
+    ("mewing", 2023, 3.2, "M Y UW1 IH0 NG"),
+    ("looksmaxxing", 2023, 3.2, "L UH1 K S M AE2 K S IH0 NG"),
+    ("mogging", 2023, 3.2, "M AA1 G IH0 NG"),
+    ("rizzler", 2023, 3.2, "R IH1 Z L ER0"),
+    ("girl dinner", 2023, 3.2, None),
+    ("girl math", 2023, 2.9, None),
+    ("boy math", 2023, 2.9, None),
+    ("roman empire", 2023, 3.0, None),
+    ("beige flag", 2023, 2.9, None),
+    ("canon event", 2023, 3.2, None),
+    ("bombastic side eye", 2023, 2.9, None),
+    ("yapping", 2023, 3.2, None),
+    ("gooning", 2023, 3.2, None),
+    ("gooner", 2023, 3.2, None),
+    ("let him cook", 2023, 3.2, None),
+    ("hopecore", 2023, 2.7, "HH OW1 P K AO1 R"),
+    ("core memory", 2023, 3.0, None),
+    # 2024
+    ("brat summer", 2024, 3.0, None),
+    ("very demure", 2024, 3.0, None),
+    ("hawk tuah", 2024, 3.2, "HH AO1 K T UW1 AH0"),
+    ("aura points", 2024, 3.2, None),
+    ("brainrot", 2024, 3.5, "B R EY1 N R AA1 T"),
+    ("brain rot", 2024, 3.5, None),
+    ("huzz", 2024, 3.2, "HH AH1 Z"),
+    ("crash out", 2024, 3.2, None),
+    ("crashout", 2024, 3.2, "K R AE1 SH AW1 T"),
+    ("chat is this real", 2024, 3.0, None),
+    ("pluh", 2024, 2.7, "P L AH1"),
+    ("unc", 2024, 3.2, "AH1 NG K"),
+    ("side quest", 2024, 3.0, None),
+    # 2025
+    ("six seven", 2025, 3.5, None),
+    ("67", 2025, 3.5, "S IH1 K S S EH1 V AH0 N"),
+    ("clanker", 2025, 3.2, None),
+    ("aura farming", 2025, 3.2, None),
+    ("tralalero tralala", 2025, 3.0, "T R AA0 L AA0 L EH1 R OW0 T R AA0 L AA0 L AA1"),
+    ("ballerina cappuccina", 2025, 2.9, "B AE2 L ER0 IY1 N AH0 K AA2 P UW0 CH IY1 N AH0"),
+    ("tung tung tung sahur", 2025, 2.9, "T UH1 NG T UH1 NG T UH1 NG S AA0 HH UW1 R"),
+    ("italian brainrot", 2025, 3.0, "IH0 T AE1 L Y AH0 N B R EY1 N R AA1 T"),
+    ("sybau", 2025, 3.0, "EH1 S W AY1 B IY1 EY1 Y UW1"),
+    ("pmo", 2025, 3.2, "P IY1 EH1 M OW1"),
+    ("ts pmo", 2025, 3.0, "T IY1 EH1 S P IY1 EH1 M OW1"),
+    ("low taper fade", 2025, 3.0, None),
+    ("ragebait", 2025, 3.2, "R EY1 JH B EY1 T"),
+    ("bruzz", 2025, 2.9, "B R AH1 Z"),
+    ("glorp", 2025, 2.7, "G L AO1 R P"),
+]
+
 ok_re = re.compile(r"^[a-z0-9][a-z0-9 '.\-]*$")
 has_letter = re.compile(r"[a-z]")
 alt_re = re.compile(r"\(\d+\)$")
@@ -139,6 +228,7 @@ def arpabet(term):
 
 
 lines = []
+emitted = set()
 for i, t in enumerate(ranked):
     ph = arpabet(t)
     if not ph:
@@ -146,8 +236,28 @@ for i, t in enumerate(ranked):
     z = max(zipf_frequency(t, "en"), pseudo_zipf(post[t]))
     year = int(first20[t][:4])  # first sighting this decade
     lines.append("%s\t%s\t%.2f\t%d\t%d" % (t, ph, z, post[t], year))
+    emitted.add(t)
     if (i + 1) % 500 == 0:
         print(f"  g2p {i + 1}/{len(ranked)}")
+
+# ---- 5. manual additions (see MANUAL above) ----
+added = 0
+for t, year, z_hand, pron in MANUAL:
+    if t in emitted:
+        print(f"  manual SKIP (auto set already has it): {t!r}")
+        continue
+    if t in cmu_words:
+        print(f"  manual SKIP (in CMUdict, already resolves): {t!r}")
+        continue
+    ph = pron or arpabet(t)
+    if not ph:
+        print(f"  manual SKIP (no pronunciation): {t!r}")
+        continue
+    z = max(zipf_frequency(t, "en"), z_hand)
+    lines.append("%s\t%s\t%.2f\t%d\t%d" % (t, ph, z, 0, year))
+    emitted.add(t)
+    added += 1
+print(f"manual terms added         : {added}/{len(MANUAL)}")
 
 blob = "\n".join(lines)
 assert "`" not in blob and "${" not in blob, "unexpected template-literal char"
@@ -155,7 +265,9 @@ assert "`" not in blob and "${" not in blob, "unexpected template-literal char"
 with open(OUT, "w", encoding="utf-8") as f:
     f.write("// New words of the 2020s: top-rated Urban Dictionary terms first (meaningfully)\n")
     f.write("// defined 2020+ and absent from CMUdict.\n")
-    f.write("// Source dataset: georgiyozhegov/urbandictionary-raw (coverage through Nov 2023).\n")
+    f.write("// Source dataset: georgiyozhegov/urbandictionary-raw (coverage through Nov 2023),\n")
+    f.write("// plus a hand-curated set of iconic terms through 2026 (score 0 = unscored;\n")
+    f.write("// the UD API stopped exposing vote counts).\n")
     f.write("// Pronunciations via g2p_en — approximate. Format per line:\n")
     f.write("// term\\tARPABET\\tzipf\\tUDscore\\tfirstYear\n")
     f.write("window.NEW_DATA = `")
