@@ -21,11 +21,14 @@
   const stripStress = (p) => p.replace(/[0-2]/g, "");
   const sylCount = (p) => (p.match(/[0-2]/g) || []).length;
 
-  // Fuzzy matching: "like-sounding" consonant classes. The DEFAULTS group by
+  // Fuzzy matching: "like-sounding" sound classes. Consonant DEFAULTS group by
   // manner + voicing; the user can regroup them (gear next to the Fuzzy
-  // toggle) and custom groups persist in localStorage. Consonants in the same
-  // group map to a shared representative; vowels are never fuzzed.
+  // toggle) and custom groups persist in localStorage. Sounds in the same
+  // group map to a shared representative. Vowel groups exist too but ship
+  // UNSEEDED — the vowel is the rhyme, so by default every vowel matches only
+  // itself; grouping vowels (say EH with IH) is a deliberate user choice.
   const ALL_CONSONANTS = ["B", "CH", "D", "DH", "F", "G", "HH", "JH", "K", "L", "M", "N", "NG", "P", "R", "S", "SH", "T", "TH", "V", "W", "Y", "Z", "ZH"];
+  const ALL_VOWELS = ["AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER", "EY", "IH", "IY", "OW", "OY", "UH", "UW"];
   const DEFAULT_FUZZY_GROUPS = [
     ["P", "T", "K"],        // voiceless stops
     ["B", "D", "G"],        // voiced stops
@@ -37,13 +40,15 @@
     ["L", "R"],             // liquids
     ["W", "Y"],             // glides
   ];
+  const DEFAULT_VOWEL_GROUPS = [];   // intentionally unseeded — see above
   const FUZZY_KEY = "rf_fuzzy_v1";
+  const VOWEL_FUZZY_KEY = "rf_fuzzyv_v1";
 
-  // Keep only known consonants, no duplicates across groups, groups of 2+.
-  // Any array input yields a config — INCLUDING the empty one, which is the
-  // legitimate "nothing fuzzes, every sound matches only itself" choice.
-  // Only a non-array (absent / corrupt storage) returns null → defaults.
-  function sanitizeFuzzyGroups(raw) {
+  // Keep only sounds from the given alphabet, no duplicates across groups,
+  // groups of 2+. Any array input yields a config — INCLUDING the empty one,
+  // which is the legitimate "nothing fuzzes, every sound matches only itself"
+  // choice. Only a non-array (absent / corrupt storage) returns null → defaults.
+  function sanitizeFuzzyGroups(raw, alphabet) {
     if (!Array.isArray(raw)) return null;
     const seen = new Set();
     const out = [];
@@ -52,7 +57,7 @@
       const grp = [];
       g.forEach((c) => {
         c = String(c).toUpperCase();
-        if (ALL_CONSONANTS.indexOf(c) < 0 || seen.has(c)) return;
+        if (alphabet.indexOf(c) < 0 || seen.has(c)) return;
         seen.add(c);
         grp.push(c);
       });
@@ -61,27 +66,41 @@
     return out;
   }
 
-  function loadFuzzyGroups() {
+  function loadGroups(storageKey, alphabet) {
     try {
-      return sanitizeFuzzyGroups(JSON.parse(localStorage.getItem(FUZZY_KEY) || "null"));
+      return sanitizeFuzzyGroups(JSON.parse(localStorage.getItem(storageKey) || "null"), alphabet);
     } catch (e) { return null; }
   }
 
-  function buildConsMap(groups) {
+  function buildRepMap(groups) {
     const m = {};
     groups.forEach((g) => g.forEach((c) => { m[c] = g[0]; }));
     return m;
   }
 
   // order-insensitive comparison (group order and in-group order don't matter)
-  function fuzzyIsDefault(groups) {
+  function groupsEqual(a, b) {
     const norm = (gs) => gs.map((g) => g.slice().sort().join(",")).sort().join("|");
-    return norm(groups) === norm(DEFAULT_FUZZY_GROUPS);
+    return norm(a) === norm(b);
   }
+  const fuzzyIsDefault = (groups) => groupsEqual(groups, DEFAULT_FUZZY_GROUPS);
+  const vowelsIsDefault = (groups) => groupsEqual(groups, DEFAULT_VOWEL_GROUPS);
 
-  let fuzzyGroups = loadFuzzyGroups() || DEFAULT_FUZZY_GROUPS.map((g) => g.slice());
-  let CONS_MAP = buildConsMap(fuzzyGroups);
-  const fuzzToken = (t) => (isVowelTok(t) ? t : (CONS_MAP[t] || t));
+  let fuzzyGroups = loadGroups(FUZZY_KEY, ALL_CONSONANTS) || DEFAULT_FUZZY_GROUPS.map((g) => g.slice());
+  let vowelGroups = loadGroups(VOWEL_FUZZY_KEY, ALL_VOWELS) || DEFAULT_VOWEL_GROUPS.map((g) => g.slice());
+  let CONS_MAP = buildRepMap(fuzzyGroups);
+  let VOW_MAP = buildRepMap(vowelGroups);
+  // Vowel tokens may carry a stress digit (AO1) — fuzz the base, keep the
+  // digit, so stressed/unstressed keys stay aligned and syllables count true.
+  const fuzzToken = (t) => {
+    if (isVowelTok(t)) {
+      const hasDigit = VOWEL_DIGIT.test(t);
+      const base = hasDigit ? t.slice(0, -1) : t;
+      const rep = VOW_MAP[base];
+      return rep ? (hasDigit ? rep + t.slice(-1) : rep) : t;
+    }
+    return CONS_MAP[t] || t;
+  };
   const fuzzStr = (s) => s.split(" ").map(fuzzToken).join(" ");
 
   // Recompute every entry's precomputed fuzzed keys after the groups change.
@@ -1390,46 +1409,55 @@
   }
 
   // ---- slant-rhyme (fuzzy) group editor ----
+  // Two independent sections: consonants (seeded defaults) and vowels
+  // (unseeded — all loose until the user groups them). A picked-up sound can
+  // only drop into boxes of its own section, so a vowel can never land in a
+  // consonant group or vice versa.
   const fuzzyDialog = $("fuzzyDialog");
   const fzGroupsEl = $("fzGroups");
+  const fzvGroupsEl = $("fzvGroups");
   const fuzzyCustomTag = $("fuzzyCustomTag");
-  let fzEdit = null;   // working copy while the dialog is open
-  let fzPicked = null; // consonant currently "picked up"
+  let fzEdit = null;      // consonant working copy while the dialog is open
+  let fzvEdit = null;     // vowel working copy
+  let fzPicked = null;    // sound currently "picked up"
+  let fzPickedSet = null; // which section it came from: "cons" | "vows"
 
   function syncFuzzyTag() {
-    if (fuzzyCustomTag) fuzzyCustomTag.hidden = fuzzyIsDefault(fuzzyGroups);
+    if (fuzzyCustomTag) fuzzyCustomTag.hidden = fuzzyIsDefault(fuzzyGroups) && vowelsIsDefault(vowelGroups);
   }
 
-  function fzLoose(groups) {
+  function fzLoose(groups, alphabet) {
     const used = new Set();
     groups.forEach((g) => g.forEach((c) => used.add(c)));
-    return ALL_CONSONANTS.filter((c) => !used.has(c));
+    return alphabet.filter((c) => !used.has(c));
   }
 
-  function renderFzEditor() {
-    if (!fzGroupsEl) return;
-    fzGroupsEl.innerHTML = "";
-    const removeFromAll = (c) => fzEdit.forEach((g) => {
+  function renderFzSection(rootEl, edit, alphabet, setName, looseLabel) {
+    if (!rootEl) return;
+    rootEl.innerHTML = "";
+    const picked = fzPickedSet === setName ? fzPicked : null;
+    const removeFromAll = (c) => edit.forEach((g) => {
       const i = g.indexOf(c);
       if (i >= 0) g.splice(i, 1);
     });
     const mkChip = (c) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "ph-key fz-chip" + (fzPicked === c ? " picked" : "");
-      b.title = fzPicked === c ? "Tap a group to move " + c + " there" : "Pick up " + c;
+      b.className = "ph-key fz-chip" + (picked === c ? " picked" : "");
+      b.title = picked === c ? "Tap a group to move " + c + " there" : "Pick up " + c;
       b.innerHTML = "<b></b>";
       b.firstChild.textContent = c;
       b.addEventListener("click", (e) => {
         e.stopPropagation(); // don't also trigger the box's move handler
-        fzPicked = fzPicked === c ? null : c;
+        if (fzPicked === c && fzPickedSet === setName) { fzPicked = null; fzPickedSet = null; }
+        else { fzPicked = c; fzPickedSet = setName; }
         renderFzEditor();
       });
       return b;
     };
     const mkBox = (label, chips, drop) => {
       const box = document.createElement("div");
-      box.className = "fz-box" + (fzPicked ? " droppable" : "");
+      box.className = "fz-box" + (picked ? " droppable" : "");
       const h = document.createElement("div");
       h.className = "fz-box-label";
       h.textContent = label;
@@ -1439,17 +1467,18 @@
       chips.forEach((c) => row.appendChild(mkChip(c)));
       box.appendChild(row);
       const doDrop = () => {
-        if (fzPicked == null) return;
-        drop(fzPicked);
+        if (picked == null) return;
+        drop(picked);
         fzPicked = null;
+        fzPickedSet = null;
         renderFzEditor();
       };
       box.addEventListener("click", doDrop);
-      if (fzPicked != null) {
+      if (picked != null) {
         // keyboard path: a picked-up chip must be droppable without a mouse
         box.tabIndex = 0;
         box.setAttribute("role", "button");
-        box.setAttribute("aria-label", "Move " + fzPicked + " to " + label);
+        box.setAttribute("aria-label", "Move " + picked + " to " + label);
         box.addEventListener("keydown", (e) => {
           if (e.key !== "Enter" && e.key !== " ") return;
           e.preventDefault();
@@ -1458,21 +1487,29 @@
       }
       return box;
     };
-    fzEdit.forEach((g, gi) => {
-      fzGroupsEl.appendChild(mkBox("Group " + (gi + 1), g, (c) => { removeFromAll(c); g.push(c); }));
+    edit.forEach((g, gi) => {
+      rootEl.appendChild(mkBox("Group " + (gi + 1), g, (c) => { removeFromAll(c); g.push(c); }));
     });
-    fzGroupsEl.appendChild(mkBox("Loose sounds — each matches only itself", fzLoose(fzEdit), removeFromAll));
+    rootEl.appendChild(mkBox(looseLabel, fzLoose(edit, alphabet), removeFromAll));
+  }
+
+  function renderFzEditor() {
+    renderFzSection(fzGroupsEl, fzEdit, ALL_CONSONANTS, "cons", "Loose sounds — each matches only itself");
+    renderFzSection(fzvGroupsEl, fzvEdit, ALL_VOWELS, "vows", "Loose vowels — each matches only itself");
   }
 
   function openFuzzyDialog() {
     fzEdit = fuzzyGroups.map((g) => g.slice());
+    fzvEdit = vowelGroups.map((g) => g.slice());
     fzPicked = null;
+    fzPickedSet = null;
     renderFzEditor();
     if (typeof fuzzyDialog.showModal === "function") fuzzyDialog.showModal();
     else fuzzyDialog.setAttribute("open", "");
   }
   function closeFuzzyDialog() {
     fzPicked = null;
+    fzPickedSet = null;
     if (fuzzyDialog.open) fuzzyDialog.close();
     else fuzzyDialog.removeAttribute("open");
   }
@@ -1482,20 +1519,27 @@
     $("fzClose").addEventListener("click", closeFuzzyDialog);
     $("fzCancel").addEventListener("click", closeFuzzyDialog);
     $("fzNewGroup").addEventListener("click", () => { if (fzEdit) { fzEdit.push([]); renderFzEditor(); } });
+    $("fzvNewGroup").addEventListener("click", () => { if (fzvEdit) { fzvEdit.push([]); renderFzEditor(); } });
     $("fzReset").addEventListener("click", () => {
       if (!fzEdit) return;
       fzEdit = DEFAULT_FUZZY_GROUPS.map((g) => g.slice());
+      fzvEdit = DEFAULT_VOWEL_GROUPS.map((g) => g.slice());   // = all vowels loose
       fzPicked = null;
+      fzPickedSet = null;
       renderFzEditor();
     });
     $("fzDone").addEventListener("click", () => {
       if (!fzEdit) return;
       // groups need 2+ sounds; anything smaller falls loose (matches itself)
       fuzzyGroups = fzEdit.map((g) => g.slice()).filter((g) => g.length >= 2);
-      CONS_MAP = buildConsMap(fuzzyGroups);
+      vowelGroups = fzvEdit.map((g) => g.slice()).filter((g) => g.length >= 2);
+      CONS_MAP = buildRepMap(fuzzyGroups);
+      VOW_MAP = buildRepMap(vowelGroups);
       try {
         if (fuzzyIsDefault(fuzzyGroups)) localStorage.removeItem(FUZZY_KEY);
         else localStorage.setItem(FUZZY_KEY, JSON.stringify(fuzzyGroups));
+        if (vowelsIsDefault(vowelGroups)) localStorage.removeItem(VOWEL_FUZZY_KEY);
+        else localStorage.setItem(VOWEL_FUZZY_KEY, JSON.stringify(vowelGroups));
       } catch (e) { /* localStorage unavailable */ }
       rebuildFuzzKeys();
       syncFuzzyTag();
@@ -1555,6 +1599,135 @@
     });
   });
 
+  // ---- drop your best line (the wall) ----
+  // Backend = /api/rhymer/lines on runcabin.com — a fixed-function relay next
+  // to the sense proxy: it AI-checks every submission for spam before it goes
+  // on the wall (see RhymerLinesController in the Cabin repo). The whole
+  // section stays hidden unless the wall GET answers, so the page still works
+  // over file:// and degrades cleanly if the endpoint is down or not yet
+  // deployed.
+  const PEN_KEY = "rf_penname";
+  function linesApiUrl() {
+    return window.RF_LINES_URL || "https://runcabin.com/api/rhymer/lines";
+  }
+
+  function lineWhen(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return "";
+    const opts = { month: "short", day: "numeric" };
+    if (d.getFullYear() !== new Date().getFullYear()) opts.year = "numeric";
+    return d.toLocaleDateString(undefined, opts);
+  }
+
+  function lineCard(entry, fresh) {
+    const fig = document.createElement("figure");
+    fig.className = "line-card" + (fresh ? " fresh" : "");
+    const q = document.createElement("blockquote");
+    q.textContent = entry.line;           // textContent only — never HTML
+    const cap = document.createElement("figcaption");
+    const pen = document.createElement("span");
+    pen.className = "line-pen";
+    pen.textContent = "— " + entry.penName;
+    const when = document.createElement("span");
+    when.className = "line-when";
+    when.textContent = lineWhen(entry.at);
+    cap.append(pen, when);
+    fig.append(q, cap);
+    return fig;
+  }
+
+  function renderWall(lines) {
+    const wall = $("linesWall");
+    wall.textContent = "";
+    if (!lines.length) {
+      const empty = document.createElement("p");
+      empty.className = "lines-empty";
+      empty.textContent = "The wall is fresh — no lines yet. Yours could be the first.";
+      wall.appendChild(empty);
+      return;
+    }
+    lines.forEach((l) => wall.appendChild(lineCard(l, false)));
+  }
+
+  function linesNoteSet(msg, kind) {
+    const note = $("linesNote");
+    note.textContent = msg;
+    note.classList.remove("ok", "err");
+    if (kind) note.classList.add(kind);
+  }
+
+  function initLines() {
+    const panel = $("linesPanel");
+    const form = $("linesForm");
+    const penEl = $("penName");
+    const lineEl = $("lineInput");
+    const btn = $("lineSubmit");
+    if (!panel || !form) return;
+
+    let request;
+    try {
+      request = fetch(linesApiUrl());
+    } catch (e) { return; }   // file:// quirks — keep the section hidden
+    request
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("wall " + r.status))))
+      .then((data) => {
+        renderWall(data.lines || []);
+        // Reveal BEFORE touching localStorage: with cookies/site-data blocked,
+        // even reading window.localStorage throws, and we must not let a lost
+        // pen-name prefill hide the whole (successfully rendered) wall.
+        panel.hidden = false;
+        try { penEl.value = localStorage.getItem(PEN_KEY) || ""; } catch (e) {}
+      })
+      .catch(() => {});       // backend absent — section stays hidden
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const penName = penEl.value.trim();
+      const line = lineEl.value.trim();
+      if (penName.length < 1) { linesNoteSet("Pick a pen name first.", "err"); penEl.focus(); return; }
+      if (line.length < 4) { linesNoteSet("That line needs a few more syllables.", "err"); lineEl.focus(); return; }
+
+      btn.disabled = true;
+      btn.classList.add("busy");
+      linesNoteSet("Checking your line…");
+
+      fetch(linesApiUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ penName: penName, line: line }),
+      })
+        .then((r) => {
+          if (r.status === 429) throw new Error("slow-down");
+          return r.json().then((d) => ({ http: r.status, d }));
+        })
+        .then(({ http, d }) => {
+          if (d.status === "approved") {
+            try { localStorage.setItem(PEN_KEY, penName); } catch (e) {}
+            const wall = $("linesWall");
+            const empty = wall.querySelector(".lines-empty");
+            if (empty) empty.remove();
+            wall.prepend(lineCard({ penName: d.penName, line: d.line, at: d.at }, true));
+            lineEl.value = "";
+            linesNoteSet("That's a bar — it's on the wall.", "ok");
+            if (announceEl) announceEl.textContent = "Your line is on the wall.";
+          } else if (d.status === "rejected") {
+            linesNoteSet(d.reason || "That one didn't make the wall.", "err");
+          } else {
+            linesNoteSet(d.error || "Couldn't check your line right now — try again in a minute.", "err");
+          }
+        })
+        .catch((err) => {
+          linesNoteSet(err && err.message === "slow-down"
+            ? "Easy — three drops a minute. Give it a moment."
+            : "Couldn't reach the wall — try again in a minute.", "err");
+        })
+        .finally(() => {
+          btn.disabled = false;
+          btn.classList.remove("busy");
+        });
+    });
+  }
+
   // ---- boot ----
   function boot() {
     loadPrefs(); // sticky settings first; a ?q= URL below still overrides
@@ -1572,6 +1745,7 @@
         " Urban Dictionary terms + " + newInfo.size.toLocaleString() +
         " new words of the 2020s · ranked by commonality.";
       [wordInput, lookupBtn, fragInput, searchBtn].forEach((el) => el.removeAttribute("disabled"));
+      initLines();   // best-lines wall — reveals itself only if the API answers
       loadTabs();
       renderTabBar();
       syncClearBtns();

@@ -81,6 +81,15 @@
       <symbol id="ic-rotate-ccw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />
       </symbol>
+      <symbol id="ic-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m11 7.601-5.994 8.19a1 1 0 0 0 .1 1.298l.817.818a1 1 0 0 0 1.314.087L15.09 12" /><path d="M16.5 21.174C15.5 20.5 14.372 20 13 20c-2.058 0-3.928 2.356-6 2-2.072-.356-2.775-3.369-1.5-4.5" /><circle cx="16" cy="7" r="5" />
+      </symbol>
+      <symbol id="ic-feather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z" /><path d="M16 8 2 22" /><path d="M17.5 15H9" />
+      </symbol>
+      <symbol id="ic-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3.714 3.048a.498.498 0 0 0-.683.627l2.843 7.627a2 2 0 0 1 0 1.396l-2.842 7.627a.498.498 0 0 0 .682.627l18-8.5a.5.5 0 0 0 0-.904z" /><path d="M6 12h16" />
+      </symbol>
     </defs>
   </svg>
 
@@ -288,6 +297,35 @@
       <div id="results" class="results"></div>
     </section>
 
+    <!-- BEST LINES WALL — stays hidden until the wall API answers, so the page
+         works file:// and degrades cleanly if the backend is down. -->
+    <section id="linesPanel" class="step lines-panel" hidden>
+      <div class="step-head">
+        <span class="step-num lines-num"><svg aria-hidden="true"><use href="#ic-mic"></use></svg></span>
+        <h2>Drop your best line</h2>
+        <span class="hint">every line is AI-checked for spam</span>
+      </div>
+      <div id="linesWall" class="lines-wall"></div>
+      <form id="linesForm" class="lines-form">
+        <div class="lines-inputs">
+          <div class="input-shell lines-pen">
+            <svg class="lead" aria-hidden="true"><use href="#ic-feather"></use></svg>
+            <input id="penName" type="text" maxlength="24" placeholder="Pen name" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="input-shell">
+            <svg class="lead" aria-hidden="true"><use href="#ic-mic"></use></svg>
+            <input id="lineInput" type="text" maxlength="200" placeholder="One bar. Make it count." autocomplete="off" />
+          </div>
+          <button id="lineSubmit" class="btn" type="submit"><svg aria-hidden="true"><use href="#ic-send"></use></svg>Drop it</button>
+        </div>
+        <div class="lines-note" id="linesNote" aria-live="polite">
+          Found the perfect rhyme? Put it to work. Approved bars are stored and shown publicly on
+          the wall — an AI bouncer turns away spam, links, and lines aimed at real people.
+          <a href="about.html#privacy">What's stored</a>.
+        </div>
+      </form>
+    </section>
+
     <footer>
       <div id="status" aria-live="polite">Loading…</div>
       <p style="margin:10px 0 0">
@@ -330,14 +368,23 @@
       <button id="fzClose" class="clear-btn" type="button" title="Close (Esc)" aria-label="Close"><svg aria-hidden="true"><use href="#ic-x"></use></svg></button>
     </div>
     <p class="fz-hint">
-      When <b>Fuzzy</b> is on, consonants in the same group are treated as the same sound.
+      When <b>Fuzzy</b> is on, sounds in the same group are treated as the same sound.
       Tap a sound to pick it up, then tap the group to move it to &mdash; or move it to
-      <b>Loose sounds</b> so it only matches itself. Vowels never fuzz: the vowel is the rhyme.
+      <b>Loose</b> so it only matches itself. Vowels start loose &mdash; the vowel is the
+      rhyme &mdash; but you can group similar-sounding vowels too for looser slant rhymes.
     </p>
-    <div id="fzGroups" class="fz-groups"></div>
-    <div class="fz-actions">
+    <div class="fz-sec-head">
+      <span>Consonants</span>
       <button id="fzNewGroup" class="icon-btn" type="button"><svg aria-hidden="true"><use href="#ic-plus"></use></svg>New group</button>
-      <button id="fzReset" class="icon-btn" type="button" title="Restore the default manner-and-voicing groups"><svg aria-hidden="true"><use href="#ic-rotate-ccw"></use></svg>Reset to defaults</button>
+    </div>
+    <div id="fzGroups" class="fz-groups"></div>
+    <div class="fz-sec-head">
+      <span>Vowels</span>
+      <button id="fzvNewGroup" class="icon-btn" type="button"><svg aria-hidden="true"><use href="#ic-plus"></use></svg>New group</button>
+    </div>
+    <div id="fzvGroups" class="fz-groups"></div>
+    <div class="fz-actions">
+      <button id="fzReset" class="icon-btn" type="button" title="Restore defaults: manner-and-voicing consonant groups, all vowels loose"><svg aria-hidden="true"><use href="#ic-rotate-ccw"></use></svg>Reset to defaults</button>
       <span class="fz-spacer"></span>
       <button id="fzCancel" class="btn ghost" type="button">Cancel</button>
       <button id="fzDone" class="btn"><svg aria-hidden="true"><use href="#ic-sliders"></use></svg>Apply</button>

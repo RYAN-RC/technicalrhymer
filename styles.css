@@ -759,6 +759,21 @@ button.btn.ghost:hover { background: var(--surface-3); filter: none; }
   color: var(--faint);
   margin-bottom: 6px;
 }
+.fz-sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 16px 0 8px;
+}
+.fz-sec-head span {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.fz-sec-head .icon-btn { padding: 6px 10px; font-size: 12.5px; }
 .fz-row { display: flex; flex-wrap: wrap; gap: 5px; }
 .fz-chip { padding: 5px 8px 4px; }
 .fz-chip b { font-size: 12.5px; }
@@ -985,6 +1000,70 @@ footer .ud-badge { font-size: 11px; }
   font-size: 14px;
 }
 
+/* ---------- best lines wall ---------- */
+.lines-panel { margin-top: 22px; }
+.lines-panel .lines-num svg { width: 14px; height: 14px; }
+.lines-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.line-card {
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent-line);
+  border-radius: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.line-card.fresh {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.line-card blockquote {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.line-card figcaption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+}
+.line-card .line-pen {
+  color: var(--accent-2);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.line-card .line-when { color: var(--faint); white-space: nowrap; }
+.lines-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 14px 4px;
+  color: var(--faint);
+  font-size: 13.5px;
+  text-align: center;
+}
+.lines-inputs { display: flex; gap: 10px; }
+.lines-inputs .lines-pen { flex: 0 1 190px; min-width: 130px; }
+.lines-note {
+  margin-top: 10px;
+  color: var(--faint);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.lines-note.ok { color: var(--good); }
+.lines-note.err { color: var(--warn); }
+#lineSubmit.busy { opacity: 0.6; }
+
 /* ---------- footer ---------- */
 footer {
   margin-top: 40px;
@@ -1080,6 +1159,9 @@ footer a { color: var(--muted); }
   .icon-btn { padding: 7px 11px; }
   .ph-grid { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); }
   .to-top { right: 14px; bottom: 44px; }
+  .lines-inputs { flex-direction: column; }
+  .lines-inputs .lines-pen { flex: 1 1 auto; }
+  .lines-wall { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
