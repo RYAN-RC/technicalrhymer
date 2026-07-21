@@ -108,21 +108,12 @@
         Every entry is indexed by its phoneme string, and a search scans all of them (a linear pass
         over ~145k pronunciations takes tens of milliseconds — no clever index needed). The match
         modes anchor the fragment: <b>Ends with</b> is the rhyme case, <b>Starts with</b> finds
-        alliterative twins, <b>Anywhere</b> and <b>Exact</b> do what they say. Two operators build
+        alliterative twins, <b>Anywhere</b> and <b>Exact</b> do what they say. The fifth mode,
+        <b>Sounds like</b>, doesn't anchor a fragment at all &mdash; it compares whole
+        pronunciations, and gets its own section below. Two operators build
         richer patterns: <code>*</code> requires parts in order with anything between
         (<code>AO R * JH</code>), and <code>|</code> requires parts in any order. Listing a part
         twice (<code>B | B</code>) demands it occur twice.
-      </p>
-      <p>
-        <b>Sounds like</b> is a different animal: instead of anchoring a fragment, it compares the
-        whole pronunciation against every entry with a <b>phonetically weighted edit distance</b>.
-        Substituting a vowel for a nearby vowel is cheap (the cost comes from articulatory distance,
-        and a diphthong is scored as its start&rarr;glide trajectory, so <code>AY</code> sits between
-        <code>AA</code> and <code>IY</code>); consonants are priced by place, manner, and voicing;
-        and a vowel never trades cheaply for a consonant. A word qualifies when its distance is
-        within <code>max(2, len/3)</code> of the shorter pronunciation &mdash; a linear pass with a
-        length prefilter and early abandon keeps it fast. Stress and the Fuzzy toggle don&rsquo;t
-        apply in this mode; closeness is already the cost model.
       </p>
       <p>
         <b>Stress is ignored by default</b>: requiring stress digits to match eliminates most slant
@@ -164,6 +155,56 @@
         ships with no groups at all, but if your ear hears <code>EH</code> and <code>IH</code> as
         cousins you can group them for looser slant rhymes. Custom groups persist in your browser,
         and <b>Reset to defaults</b> brings back the table above (and sets every vowel loose again).
+      </p>
+    </section>
+
+    <section class="step">
+      <div class="step-head">
+        <span class="ic"><svg aria-hidden="true"><use href="#ic-audio"></use></svg></span>
+        <h2>Sounds like: whole-word closeness</h2>
+      </div>
+      <p>
+        The anchored modes ask "which words <i>contain</i> this sound?" <b>Sounds like</b> asks a
+        different question: "which words sound like this one, <i>overall</i>?" Put a whole
+        pronunciation in the box &mdash; looking a word up drops it there for you &mdash; pick
+        <b>Sounds like</b>, and you get near-homophones and whole-word slant rhymes:
+        <code>T R EH ZH ER</code> (<i>treasure</i>) surfaces <i>pleasure</i> and <i>pressure</i>,
+        <code>K ER N AH L</code> (<i>colonel</i>) surfaces <i>kernel</i> and then <i>kennel</i>,
+        including matches no anchored fragment would ever catch.
+      </p>
+      <p>
+        Under the hood it's an edit distance over phonemes &mdash; the fewest changes needed to
+        turn one pronunciation into the other &mdash; except swapping two sounds isn't a flat
+        price: it costs <b>how far apart your mouth is</b> when making them. Vowels are scored by
+        tongue position and lip rounding, and a diphthong counts as its start&rarr;glide path, so
+        <code>AY</code> (<i>hide</i>) sits partway between <code>AA</code> (<i>odd</i>) and
+        <code>IY</code> (<i>eat</i>). Consonants are priced by place, manner, and voicing &mdash;
+        the same physics as the fuzzy classes above, but on a sliding scale instead of in-or-out
+        of a group. A vowel never trades cheaply for a consonant, and dropping or inserting a
+        sound costs about a full point &mdash; except the schwa (<code>AH</code>), which comes and
+        goes cheaply, because in real speech it does. Some example prices:
+      </p>
+      <table class="fuzzy-table">
+        <tr><td>Neighboring vowels</td><td><code>IY</code> &harr; <code>IH</code> (<i>eat/it</i>)</td><td>0.30</td></tr>
+        <tr><td>Diphthong to its start, short glide</td><td><code>EY</code> &harr; <code>EH</code> (<i>ate/Ed</i>)</td><td>0.28</td></tr>
+        <tr><td>Diphthong to its start, long glide</td><td><code>AY</code> &harr; <code>AA</code> (<i>hide/odd</i>)</td><td>0.62</td></tr>
+        <tr><td>Stop sliding along the mouth</td><td><code>P</code> &harr; <code>T</code></td><td>0.28</td></tr>
+        <tr><td>Voicing flip</td><td><code>T</code> &harr; <code>D</code></td><td>0.42</td></tr>
+        <tr><td>Sibilant shift</td><td><code>S</code> &harr; <code>SH</code></td><td>0.19</td></tr>
+        <tr><td>Liquid for liquid</td><td><code>L</code> &harr; <code>R</code></td><td>0.32</td></tr>
+        <tr><td>Vowel for consonant</td><td><code>AE</code> &harr; <code>S</code></td><td>1.00</td></tr>
+        <tr><td>Dropping a schwa</td><td><code>AH</code> &rarr; <i>(gone)</i></td><td>0.60</td></tr>
+      </table>
+      <p>
+        A word makes the list when its total distance stays within <code>max(2, len&nbsp;/&nbsp;3)</code>,
+        where <i>len</i> is the shorter of the two pronunciations &mdash; longer words earn more
+        slack. Results order <b>closest first</b> (in half-point bands, with the usual
+        commonality ranking inside each band), and hovering any result shows its exact distance.
+        Stress marks and the Fuzzy toggle don't apply in this mode: closeness already <i>is</i>
+        the model. And it's still the same brute-force honesty as everything else here &mdash; one
+        linear pass over all ~146k pronunciations, made fast by skipping words whose length can't
+        fit under the threshold and abandoning a comparison the moment it goes over budget
+        (tens of milliseconds, no index).
       </p>
     </section>
 
