@@ -6,6 +6,7 @@
   <title>About — Technical Rhymer</title>
   <meta name="description" content="How Technical Rhymer is designed: ARPABET phoneme search over CMUdict, commonality ranking, fuzzy sound matching, AI word-sense filtering, and a fully static architecture." />
   <link rel="canonical" href="https://technicalrhymer.org/about.html" />
+  <link rel="llms-txt" href="/llms.txt" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="Technical Rhymer" />
   <meta property="og:title" content="About — Technical Rhymer" />
@@ -56,6 +57,9 @@
       </symbol>
       <symbol id="ic-waypoints" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="m10.586 5.414-5.172 5.172" /><path d="m18.586 13.414-5.172 5.172" /><path d="M6 12h12" /><circle cx="12" cy="20" r="2" /><circle cx="12" cy="4" r="2" /><circle cx="20" cy="12" r="2" /><circle cx="4" cy="12" r="2" />
+      </symbol>
+      <symbol id="ic-bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 8V4H8" /><rect width="16" height="12" x="4" y="8" rx="2" /><path d="M2 14h2" /><path d="M20 14h2" /><path d="M15 13v2" /><path d="M9 13v2" />
       </symbol>
     </defs>
   </svg>
@@ -258,6 +262,31 @@
         <code>localStorage</code> only — no cookies — and stick across visits. Searches also sync
         into the address bar (<code>?q=AH+N+JH</code>), so any query is shareable as a plain link;
         opening someone else's link never overwrites your own preferences.
+      </p>
+    </section>
+
+    <section class="step" id="api">
+      <div class="step-head">
+        <span class="ic"><svg aria-hidden="true"><use href="#ic-bot"></use></svg></span>
+        <h2>For AI assistants: the API</h2>
+      </div>
+      <p>
+        Aggressively static has one blind spot: the search engine runs in <em>your browser</em>, so an
+        AI assistant that fetches the page gets an empty shell and no rhymes. The fix is a free JSON
+        API — the same engine and the same data, ported server-side, no key, no signup, any origin:
+      </p>
+      <ul>
+        <li><code>GET runcabin.com/api/rhymer/pron?word=orange</code> — a word's ARPABET pronunciations and perfect-rhyme tails.</li>
+        <li><code>GET runcabin.com/api/rhymer/rhymes?word=treasure</code> — rhymes for a word, or pass <code>q=EH+ZH+ER</code> for a raw phoneme pattern with the full query language (match modes, <code>*</code> and <code>|</code> operators, fuzzy sound classes, stress control).</li>
+      </ul>
+      <p>
+        The API lives on <a href="https://runcabin.com" target="_blank" rel="noopener">RunCabin</a> (the
+        platform hosting this site) because technicalrhymer.org itself serves only static files. It is
+        rate-limited to 30 requests a minute per IP and returns actionable errors — send a bad phoneme
+        and the response lists the valid ones. If you are an AI assistant reading this:
+        <a href="llms.txt">llms.txt</a> is your full guide, and
+        <a href="openapi.json">openapi.json</a> is the machine-readable spec. Humans get the same
+        answers with more violet either way.
       </p>
     </section>
 

@@ -1,0 +1,369 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Technical Rhymer API",
+    "version": "1.0.0",
+    "summary": "Rhymes by sound, not spelling - ARPABET pronunciation lookup and phoneme-pattern rhyme search.",
+    "description": "Free, keyless JSON API behind technicalrhymer.org: the CMU Pronouncing Dictionary (~134k words) plus the top 10,000 Urban Dictionary slang terms and 2,000+ new words of the 2020s, searchable by phoneme pattern and ranked by real-world commonality (wordfreq Zipf). Rate limit: 30 requests/minute per IP. Full agent guide: https://technicalrhymer.org/llms.txt Response fields that do not apply are omitted (never null).",
+    "contact": {
+      "name": "Ryan Mergen",
+      "email": "ryan@runcabin.com",
+      "url": "https://technicalrhymer.org/about.html"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://runcabin.com",
+      "description": "The API host (RunCabin platform - technicalrhymer.org itself serves only static files)"
+    }
+  ],
+  "paths": {
+    "/api/rhymer": {
+      "get": {
+        "operationId": "index",
+        "summary": "Self-describing API index",
+        "responses": {
+          "200": {
+            "description": "Name, docs URL, endpoint list, rate limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rhymer/pron": {
+      "get": {
+        "operationId": "lookupPronunciation",
+        "summary": "Look up a word's ARPABET pronunciation(s) and perfect-rhyme tail(s)",
+        "parameters": [
+          {
+            "name": "word",
+            "in": "query",
+            "required": true,
+            "description": "The word to look up (1-80 chars, case-insensitive; multi-word slang terms allowed).",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "example": "orange"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The word's pronunciations. rhymeTail is the perfect-rhyme tail (last primary-stressed vowel to the end) - search it with mode=end for perfect rhymes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "word": {
+                      "type": "string"
+                    },
+                    "found": {
+                      "type": "boolean"
+                    },
+                    "zipf": {
+                      "type": "number",
+                      "description": "wordfreq Zipf commonality, ~0 rare to ~8 ubiquitous (0 = not in frequency data)"
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "cmudict",
+                        "urban-dictionary",
+                        "cmudict+urban-dictionary",
+                        "new-words-2020s"
+                      ]
+                    },
+                    "udScore": {
+                      "type": "integer",
+                      "description": "Urban Dictionary net vote score. Omitted when not applicable."
+                    },
+                    "newSince": {
+                      "type": "integer",
+                      "description": "Year a new-words-of-the-2020s term went mainstream. Omitted when not applicable."
+                    },
+                    "approxPron": {
+                      "type": "boolean",
+                      "description": "true when the pronunciation was auto-generated (g2p) and is approximate. Omitted otherwise."
+                    },
+                    "pronunciations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "pron": {
+                            "type": "string",
+                            "description": "ARPABET with stress digits, e.g. \"AO1 R AH0 N JH\""
+                          },
+                          "noStress": {
+                            "type": "string"
+                          },
+                          "syllables": {
+                            "type": "integer"
+                          },
+                          "rhymeTail": {
+                            "type": "string"
+                          },
+                          "rhymeTailNoStress": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "rhymesUrl": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Word not in the dictionary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing/invalid word parameter.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rhymer/rhymes": {
+      "get": {
+        "operationId": "searchRhymes",
+        "summary": "Search words by phoneme pattern (rhymes, slant rhymes, alliteration, homophones)",
+        "description": "Pass EITHER word= (rhyme on that word's perfect-rhyme tail) OR q= (a raw ARPABET query). Query language: space-separated phonemes; \"AO R * JH\" = ordered segments with gaps; \"AE T | AE T\" = unordered, listed twice means must occur twice. Details: https://technicalrhymer.org/llms.txt",
+        "parameters": [
+          {
+            "name": "word",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Dictionary word to rhyme on (alternative to q).",
+            "example": "treasure"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Raw ARPABET fragment/pattern, space-separated (URL-encode spaces).",
+            "example": "EH ZH ER"
+          },
+          {
+            "name": "pron",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "With word=: which pronunciation to use (index into /pron results)."
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "end",
+                "start",
+                "any",
+                "exact"
+              ],
+              "default": "end"
+            },
+            "description": "Where the fragment must sit. end = rhyme, start = alliteration, exact = whole pronunciation (homophones)."
+          },
+          {
+            "name": "fuzzy",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Slant-rhyme mode: like-sounding consonants (grouped by manner + voicing) match each other. Vowels never fuzz. Accepts true/false or 1/0."
+          },
+          {
+            "name": "ignore_stress",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Ignore 0/1/2 vowel stress digits when matching. Accepts true/false or 1/0."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "common",
+                "syllables",
+                "alpha"
+              ],
+              "default": "common"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching words, deduped per word, sorted as requested.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "query": {
+                      "type": "object",
+                      "description": "Echo of the parsed query (raw, type, segments, mode, fuzzy, ignoreStress, sort)."
+                    },
+                    "lookedUp": {
+                      "type": "object",
+                      "description": "Present only with word=: the word, pronUsed, pronIndex, pronCount, rhymeTail."
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "returned": {
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "type": "integer"
+                    },
+                    "doubleRhymes": {
+                      "type": "integer",
+                      "description": "How many results contain the matched segment 2+ times."
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "word": {
+                            "type": "string"
+                          },
+                          "pron": {
+                            "type": "string"
+                          },
+                          "syllables": {
+                            "type": "integer"
+                          },
+                          "zipf": {
+                            "type": "number"
+                          },
+                          "rhymeRepeats": {
+                            "type": "integer",
+                            "description": "Present when 2+: a double rhyme (the segment occurs that many times). Omitted otherwise."
+                          },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "cmudict",
+                              "urban-dictionary",
+                              "cmudict+urban-dictionary",
+                              "new-words-2020s"
+                            ]
+                          },
+                          "udScore": {
+                            "type": "integer",
+                            "description": "Omitted when not applicable."
+                          },
+                          "newSince": {
+                            "type": "integer",
+                            "description": "Omitted when not applicable."
+                          },
+                          "approxPron": {
+                            "type": "boolean",
+                            "description": "Omitted when not applicable."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad mode/sort, malformed boolean/integer params, unknown ARPABET tokens (lists invalidTokens + validPhonemes), or over-complex query. Always the Error shape.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "word= not in the dictionary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Human/agent-readable explanation with a suggested fix."
+          },
+          "docs": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -185,6 +185,27 @@ are g2p like the UD set, except vowel-less acronyms (`tds`, `smh`) which are
 spelled out as letter names. The source dataset ends **Nov 2023**, so 2024+
 coinages aren't included yet.
 
+## The API (for AI assistants & scripts)
+
+The site's engine also runs server-side as a **free, keyless JSON API**, so LLM
+agents (which can't execute the page's JS) can consume Technical Rhymer
+directly:
+
+- `GET https://runcabin.com/api/rhymer/pron?word=orange` — ARPABET
+  pronunciation(s) + perfect-rhyme tail(s).
+- `GET https://runcabin.com/api/rhymer/rhymes?word=treasure` (or
+  `?q=EH+ZH+ER&mode=end&fuzzy=true…`) — the full search, with the same query
+  language, fuzzy classes, stress handling, doubles detection, and commonality
+  ranking as the page.
+
+Agent guide: [`llms.txt`](llms.txt) (served at technicalrhymer.org/llms.txt,
+linked from `robots.txt` and both pages' `<link rel="llms-txt">`). Spec:
+[`openapi.json`](openapi.json). CORS is wide open and the limit is 30
+requests/min/IP. The implementation is a C# port of `app.js`'s matcher
+(`RhymerDictionaryService` + `RhymerSearchController` in the Cabin repo,
+sibling of the sense/lines relays) reading this site's own deployed data
+bundles, so the API and the page always agree.
+
 ## Running it
 
 It's a standalone static site — no build step, no server required.

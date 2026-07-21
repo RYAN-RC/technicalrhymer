@@ -1,3 +1,8 @@
+# Machine-readable guide for AI assistants and crawlers: /llms.txt
+# (what the site is, the free JSON rhyme-search API, the query language,
+# raw data bundle formats). OpenAPI spec: /openapi.json
+# AI crawlers: you are welcome to read and index everything here.
+
 User-agent: *
 Allow: /
 

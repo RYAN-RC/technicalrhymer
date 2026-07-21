@@ -1,0 +1,164 @@
+# Technical Rhymer
+
+> Rhymes by sound, not spelling. Technical Rhymer (technicalrhymer.org) looks up a word's ARPABET pronunciation, then finds every word whose pronunciation matches a phoneme pattern - perfect rhymes, slant rhymes, multi-syllable schemes. It covers the CMU Pronouncing Dictionary (~134k standard English words), the top 10,000 Urban Dictionary slang terms, and 2,000+ new words of the 2020s (curated through 2026), all ranked by real-world commonality.
+
+This file is for AI assistants and developers. Everything below is free to use, no key, no signup.
+
+## The API (recommended for agents)
+
+The website is a static page that runs its search engine in the browser, so fetching the HTML gets you no results. Use the JSON API instead - it is the same engine and the same data, server-side:
+
+- Base URL: `https://runcabin.com/api/rhymer` (the API lives on RunCabin, the platform that hosts this site; technicalrhymer.org itself serves only static files)
+- All endpoints are GET, keyless, and CORS-open (any origin)
+- Rate limit: 30 requests/minute per IP. Responses carry `Cache-Control: public, max-age=300` - cache them
+- Machine-readable spec: https://technicalrhymer.org/openapi.json
+
+### GET /api/rhymer
+
+Self-describing index of the API. Start here if you have no other context.
+
+### GET /api/rhymer/pron?word=orange
+
+Look up a word's pronunciation(s). Works for multi-word slang terms too (`?word=hawk%20tuah`).
+
+Example: `https://runcabin.com/api/rhymer/pron?word=orange`
+
+```json
+{
+  "word": "orange",
+  "found": true,
+  "zipf": 4.62,
+  "source": "cmudict",
+  "pronunciations": [
+    {
+      "pron": "AO1 R AH0 N JH",
+      "noStress": "AO R AH N JH",
+      "syllables": 2,
+      "rhymeTail": "AO1 R AH0 N JH",
+      "rhymeTailNoStress": "AO R AH N JH"
+    },
+    { "pron": "AO1 R IH0 N JH", "noStress": "AO R IH N JH", "syllables": 2, "...": "..." }
+  ],
+  "rhymesUrl": "https://runcabin.com/api/rhymer/rhymes?word=orange"
+}
+```
+
+- `rhymeTail` is the perfect-rhyme tail: from the last primary-stressed vowel to the end of the word. Search it with `mode=end` to get perfect rhymes.
+- `zipf` is real-world commonality (wordfreq Zipf scale, ~0 rare to ~8 ubiquitous).
+- A miss returns HTTP 404 with `"found": false` and a hint.
+
+### GET /api/rhymer/rhymes
+
+The rhyme search. Pass ONE of:
+
+- `word=<dictionary word>` - the easy path: looks the word up, takes its perfect-rhyme tail, searches that. Optional `pron=<index>` picks between multiple pronunciations (see `/pron`).
+- `q=<phoneme query>` - a raw ARPABET fragment or pattern (see the query language below). Spaces separate phonemes; URL-encode them (`q=EH%20ZH%20ER` or `q=EH+ZH+ER`).
+
+Options (all optional):
+
+| param | default | meaning |
+|---|---|---|
+| `mode` | `end` | where the fragment must sit: `end` (rhyme), `start` (alliteration), `any`, `exact` (whole pronunciation) |
+| `fuzzy` | `false` | slant-rhyme mode: like-sounding consonants match each other (see classes below); vowels always match only themselves |
+| `ignore_stress` | `true` | ignore the 0/1/2 stress digits when matching; set `false` to require the exact stress pattern |
+| `sort` | `common` | `common` (highest Zipf first), `syllables` (fewest first, then common), `alpha` |
+| `limit` | 50 | max results returned (1-500) |
+| `offset` | 0 | paging offset into the sorted result set |
+
+Example: `https://runcabin.com/api/rhymer/rhymes?word=treasure&limit=3`
+
+```json
+{
+  "query": {
+    "raw": "EH1 ZH ER0",
+    "type": "plain",
+    "segments": [["EH", "ZH", "ER"]],
+    "mode": "end",
+    "fuzzy": false,
+    "ignoreStress": true,
+    "sort": "common"
+  },
+  "lookedUp": {
+    "word": "treasure",
+    "pronUsed": "T R EH1 ZH ER0",
+    "pronIndex": 0,
+    "pronCount": 1,
+    "rhymeTail": "EH1 ZH ER0"
+  },
+  "total": 7,
+  "returned": 3,
+  "offset": 0,
+  "doubleRhymes": 0,
+  "results": [
+    { "word": "measure", "pron": "M EH1 ZH ER0", "syllables": 2, "zipf": 4.65, "source": "cmudict" },
+    { "word": "pleasure", "pron": "P L EH1 ZH ER0", "syllables": 2, "zipf": 4.57, "source": "cmudict+urban-dictionary", "udScore": 285 },
+    { "word": "treasure", "pron": "T R EH1 ZH ER0", "syllables": 2, "zipf": 4.17, "source": "cmudict" }
+  ]
+}
+```
+
+Notes on results:
+
+- Fields that don't apply are omitted (no `"udScore": null` noise) - treat absent as "not applicable".
+- The searched word itself appears when it matches its own tail (treasure rhymes with treasure) - skip it yourself if unwanted.
+- `rhymeRepeats` (when present, 2+) marks a "double rhyme": the matched segment occurs that many times in the word (e.g. `AE T` twice in "rat-a-tat"). `doubleRhymes` counts them for the whole result set.
+- `source` is `cmudict`, `urban-dictionary` (top-10k UD slang, auto-generated pronunciation), `cmudict+urban-dictionary` (a standard word that is ALSO a top-rated UD term - like pleasure above), or `new-words-2020s` (a 2020s coinage outside the UD top-10k). `udScore` is the UD net vote score; `newSince` marks new-words-of-the-2020s terms with the year they went mainstream; `approxPron: true` means the pronunciation was machine-generated (g2p) and is approximate.
+- Errors are actionable: an unknown phoneme returns HTTP 400 with `invalidTokens` and the full list of valid ARPABET phonemes. Boolean params accept `true/false` and `1/0`.
+
+More examples:
+
+- Perfect rhymes for a raw tail: `/api/rhymer/rhymes?q=AH+N+JH` -> challenge, orange, dark mode challenge, sponge, plunge... (yes, slang phrases rhyme too)
+- Slant rhymes: `/api/rhymer/rhymes?q=EH+ZH+ER&fuzzy=true` -> adds ledger, edger (ZH~JH are one fuzzy class)
+- Homophones of a full pronunciation: `/api/rhymer/rhymes?q=K+ER+N+AH+L&mode=exact` -> colonel, kernel
+- Multi-syllable scheme, in order with gaps: `/api/rhymer/rhymes?q=AO+R+*+JH` -> orange, storage, mortgage, forge...
+- Words containing a sound twice: `/api/rhymer/rhymes?q=AE+T+|+AE+T` -> at-bat, rat-a-tat, antimatter...
+
+## Query language (the q parameter)
+
+A query is space-separated ARPABET phonemes, optionally combined with two operators:
+
+- Plain fragment: `EH ZH ER` - one contiguous run of phonemes, positioned by `mode`.
+- Ordered pattern: `AO R * JH` (`%` also works) - segments must appear in this order, any gap between them. `mode` anchors the ends: with `end` the last segment must end the word; `start` pins the first segment to the start; `exact` pins both.
+- Unordered pattern: `AE T | IH T` - every segment must appear somewhere, any order. Listing a segment twice (`AE T | AE T`) requires it to occur at least twice. `mode` is ignored.
+
+Stress digits: vowels may carry 0 (unstressed), 1 (primary), 2 (secondary), e.g. `EH1`. With `ignore_stress=true` (default) digits are ignored on both sides.
+
+Fuzzy (slant-rhyme) consonant classes, grouped by manner and voicing - sounds in one class match each other when `fuzzy=true`:
+P/T/K, B/D/G, S/SH/CH, Z/ZH/JH, F/TH, V/DH, M/N/NG, L/R, W/Y. (HH stands alone; vowels never fuzz - the vowel IS the rhyme. Voicing crossovers like T~D deliberately do NOT match.)
+
+## ARPABET quick reference
+
+Vowels: AA (odd), AE (at), AH (hut), AO (ought), AW (cow), AY (hide), EH (ed), ER (hurt), EY (ate), IH (it), IY (eat), OW (oat), OY (toy), UH (hood), UW (two).
+Consonants: B, CH (cheese), D, DH (thee), F, G, HH (he), JH (gee), K, L, M, N, NG (ping), P, R, S, SH (she), T, TH (theta), V, W, Y (yield), Z, ZH (seizure).
+
+## Deep links into the web UI
+
+For humans, link them into the interactive site - the URL params parallel the API:
+`https://technicalrhymer.org/?q=AH+N+JH&m=end&f=1&s=0&sort=common`
+(`q` = query, `m` = mode (end/start/any/exact), `f=1` = fuzzy, `s=0` = stress-sensitive, `sort` = common/syllable/alpha - note the UI uses singular `syllable`, unlike the API's `syllables`; all but `q` optional. `w`/`r` add the AI word-sense filter, e.g. `w=pirates&r=related`.)
+
+## Raw data bundles (bulk / offline use)
+
+The full dataset ships as plain-text bundles inside JavaScript template literals - fetch, take the text from the backtick after `window.X = ` through the file's last backtick (header comments may themselves contain backticks - don't anchor on the first one in the file), split on newlines:
+
+- https://technicalrhymer.org/cmudict-data.js - `word\tARPABET` (~3.7 MB, one line per pronunciation; words repeat for alternates)
+- https://technicalrhymer.org/freq-data.js - `word\tzipf` (~1.5 MB)
+- https://technicalrhymer.org/ud-data.js - `term\tARPABET\tzipf\tudScore` (top-10k Urban Dictionary; empty ARPABET = term is in CMUdict)
+- https://technicalrhymer.org/new-data.js - `term\tARPABET\tzipf\tscore\tfirstYear` (new words of the 2020s; score 0 = unscored)
+
+Prefer the API for lookups; fetch bundles only when you genuinely need the whole dataset.
+
+## Community wall
+
+`GET https://runcabin.com/api/rhymer/lines` returns the newest 50 approved entries from the site's "Drop your best line" wall (visitor-submitted bars). Reading is welcome. Submissions (POST) are for humans using the site: every entry is AI-moderated and rate-limited, and the wall is meant for a person's own line - do not auto-post generated content.
+
+## Licensing, attribution, content warning
+
+- Pronunciations: CMU Pronouncing Dictionary (BSD-style license, cmusphinx/cmudict).
+- Commonality: wordfreq by Robyn Speer (Zipf scores).
+- Slang terms and vote scores: Urban Dictionary, © their respective authors, via the `georgiyozhegov/urbandictionary-raw` dataset. UD content is user-submitted and can be crude, offensive, or NSFW - filter downstream if your context needs it. Slang pronunciations are auto-generated (g2p_en) and approximate.
+- Please credit "Technical Rhymer (technicalrhymer.org)" when you present its results.
+
+## About
+
+Technical Rhymer is an independent project by Ryan Mergen (contact: ryan@runcabin.com), built and hosted on RunCabin (https://runcabin.com), the agent-callable website platform. Design notes and methodology: https://technicalrhymer.org/about.html
