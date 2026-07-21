@@ -325,6 +325,175 @@
     return true;
   }
 
+  // ---- "Sounds like": phonetically weighted edit distance ----
+  // A Levenshtein over ARPABET tokens where the substitution cost knows
+  // phonetics: vowels are scored by articulatory distance (a diphthong is a
+  // start→glide trajectory, so AY sits between AA and IY), consonants by
+  // place + manner + voicing (agreeing with the default fuzzy groups), and a
+  // vowel never trades cheaply for a consonant. A word is a match when its
+  // distance to the query pronunciation is within max(2, shorterLen / 3).
+  const PH_LIST = ALL_VOWELS.concat(ALL_CONSONANTS); // ids: 0-14 vowels, 15-38 consonants
+  const PH_ID = {};
+  PH_LIST.forEach((p, i) => { PH_ID[p] = i; });
+  const PH_UNK = PH_LIST.length; // reserved id for unrecognized query tokens
+  const PH_N = PH_UNK + 1;
+
+  // vowel articulation: [startHeight, startFront, endHeight, endFront, round, rhotic]
+  // height 0 high → 2 low, frontness 0 front → 2 back; diphthongs get distinct
+  // start/end points so their cost to a monophthong is the trajectory gap.
+  const VOWEL_FEAT = {
+    AA: [2, 2, 2, 2, 0, 0],
+    AE: [2, 0.2, 2, 0.2, 0, 0],
+    AH: [1, 1, 1, 1, 0, 0],
+    AO: [1.6, 2, 1.6, 2, 1, 0],
+    AW: [2, 1, 0.35, 2, 0.5, 0],
+    AY: [2, 1, 0.35, 0.2, 0, 0],
+    EH: [1, 0.2, 1, 0.2, 0, 0],
+    ER: [1, 1, 1, 1, 0, 1],
+    EY: [1, 0.2, 0.35, 0.2, 0, 0],
+    IH: [0.35, 0.2, 0.35, 0.2, 0, 0],
+    IY: [0, 0, 0, 0, 0, 0],
+    OW: [1, 2, 0.35, 2, 1, 0],
+    OY: [1.6, 2, 0.35, 0.2, 0.5, 0],
+    UH: [0.35, 2, 0.35, 2, 1, 0],
+    UW: [0, 2, 0, 2, 1, 0],
+  };
+  // consonant articulation: [place 0 lips → 7 glottis, manner, voiced, sibilant]
+  const CONS_FEAT = {
+    P: [0, 0, 0, 0], B: [0, 0, 1, 0], T: [3, 0, 0, 0], D: [3, 0, 1, 0], K: [6, 0, 0, 0], G: [6, 0, 1, 0],
+    CH: [4, 1, 0, 1], JH: [4, 1, 1, 1],
+    F: [1, 2, 0, 0], V: [1, 2, 1, 0], TH: [2, 2, 0, 0], DH: [2, 2, 1, 0],
+    S: [3, 2, 0, 1], Z: [3, 2, 1, 1], SH: [4, 2, 0, 1], ZH: [4, 2, 1, 1], HH: [7, 2, 0, 0],
+    M: [0, 3, 1, 0], N: [3, 3, 1, 0], NG: [6, 3, 1, 0],
+    L: [3, 4, 1, 0], R: [4, 4, 1, 0],
+    W: [6, 5, 1, 0], Y: [5, 5, 1, 0],
+  };
+  const MANNER_DIST = [ // stop, affricate, fricative, nasal, liquid, glide
+    [0, 0.3, 0.6, 0.55, 0.8, 0.9],
+    [0.3, 0, 0.3, 0.7, 0.85, 0.9],
+    [0.6, 0.3, 0, 0.7, 0.8, 0.85],
+    [0.55, 0.7, 0.7, 0, 0.7, 0.8],
+    [0.8, 0.85, 0.8, 0.7, 0, 0.45],
+    [0.9, 0.9, 0.85, 0.8, 0.45, 0],
+  ];
+
+  const SND_SUB = new Float64Array(PH_N * PH_N); // substitution cost, flat [a*PH_N+b]
+  const SND_DEL = new Float64Array(PH_N);        // insert/delete cost per phoneme
+  (function buildSoundCosts() {
+    const vcost = (a, b) => {
+      const start = Math.hypot(a[0] - b[0], (a[1] - b[1]) * 0.9);
+      const end = Math.hypot(a[2] - b[2], (a[3] - b[3]) * 0.9);
+      return Math.min(0.95, 0.2 + 0.26 * (start + end) / 2 +
+        0.18 * Math.abs(a[4] - b[4]) + 0.3 * Math.abs(a[5] - b[5]));
+    };
+    const ccost = (a, b) => Math.min(1,
+      0.14 + 0.32 * (Math.abs(a[0] - b[0]) / 7) + 0.42 * MANNER_DIST[a[1]][b[1]] +
+      0.28 * Math.abs(a[2] - b[2]) + 0.12 * Math.abs(a[3] - b[3]));
+    for (let i = 0; i < PH_N; i++) {
+      for (let j = 0; j < PH_N; j++) {
+        let c;
+        if (i === j) c = 0;
+        else if (i === PH_UNK || j === PH_UNK) c = 1;
+        else {
+          const va = VOWEL_FEAT[PH_LIST[i]], vb = VOWEL_FEAT[PH_LIST[j]];
+          if (va && vb) c = vcost(va, vb);
+          else if (!va && !vb) c = ccost(CONS_FEAT[PH_LIST[i]], CONS_FEAT[PH_LIST[j]]);
+          else c = 1; // vowel <-> consonant
+        }
+        SND_SUB[i * PH_N + j] = c;
+      }
+    }
+    // phonology the feature math can't see
+    const pair = (a, b, c) => {
+      SND_SUB[PH_ID[a] * PH_N + PH_ID[b]] = c;
+      SND_SUB[PH_ID[b] * PH_N + PH_ID[a]] = c;
+    };
+    pair("L", "R", 0.32);  // lateral vs rhotic is audible — dearer than bare features say
+    pair("R", "ER", 0.35); // the r-colored vowel ~ the consonant
+    pair("Y", "IY", 0.45); pair("Y", "IH", 0.55); // glides ~ their syllabic twins
+    pair("W", "UW", 0.45); pair("W", "UH", 0.55);
+    for (let i = 0; i < PH_N; i++) SND_DEL[i] = i < ALL_VOWELS.length ? 0.95 : 0.85;
+    SND_DEL[PH_ID.AH] = 0.6; // schwa comes and goes cheaply
+    SND_DEL[PH_ID.HH] = 0.7;
+    SND_DEL[PH_UNK] = 1;
+  })();
+  const SND_MIN_DEL = 0.6; // cheapest insert/delete — length-gap lower bound
+
+  // token-id index over all entries, built once on first sounds-like search
+  // (keyNS never changes after boot). Flat typed arrays, ~1MB for 146k prons.
+  let SND_IDX = null;
+  function buildSoundIndex() {
+    const off = new Int32Array(entries.length);
+    const len = new Uint8Array(entries.length);
+    const lists = new Array(entries.length);
+    let total = 0;
+    for (let i = 0; i < entries.length; i++) {
+      const toks = entries[i].keyNS.split(" ");
+      lists[i] = toks;
+      off[i] = total;
+      len[i] = Math.min(toks.length, 255);
+      total += len[i];
+    }
+    const flat = new Uint8Array(total);
+    for (let i = 0; i < entries.length; i++) {
+      const toks = lists[i], base = off[i], n = len[i];
+      for (let j = 0; j < n; j++) {
+        const id = PH_ID[toks[j]];
+        flat[base + j] = id === undefined ? PH_UNK : id;
+      }
+    }
+    SND_IDX = { flat: flat, off: off, len: len };
+  }
+
+  // one pass over the whole dictionary → [{ e, d }] in dictionary order.
+  // Cheap length prefilter, then a two-row DP that abandons an entry as soon
+  // as a whole row exceeds its threshold.
+  function soundsLikePass(qToks) {
+    if (!SND_IDX) buildSoundIndex();
+    const m = Math.min(qToks.length, 64);
+    const qIds = new Uint8Array(m);
+    for (let j = 0; j < m; j++) {
+      const id = PH_ID[qToks[j]];
+      qIds[j] = id === undefined ? PH_UNK : id;
+    }
+    let prev = new Float64Array(m + 1);
+    let curr = new Float64Array(m + 1);
+    const flat = SND_IDX.flat, offs = SND_IDX.off, lens = SND_IDX.len;
+    const out = [];
+    for (let idx = 0; idx < entries.length; idx++) {
+      const n = lens[idx];
+      const minLen = n < m ? n : m;
+      const thr = minLen / 3 > 2 ? minLen / 3 : 2;
+      const gap = n > m ? n - m : m - n;
+      if (gap * SND_MIN_DEL > thr) continue;
+      prev[0] = 0;
+      for (let j = 1; j <= m; j++) prev[j] = prev[j - 1] + SND_DEL[qIds[j - 1]];
+      const base = offs[idx];
+      let alive = true;
+      for (let i = 1; i <= n; i++) {
+        const ai = flat[base + i - 1];
+        const delA = SND_DEL[ai];
+        const srow = ai * PH_N;
+        curr[0] = prev[0] + delA;
+        let rowMin = curr[0];
+        for (let j = 1; j <= m; j++) {
+          const qj = qIds[j - 1];
+          let v = prev[j - 1] + SND_SUB[srow + qj];
+          const up = prev[j] + delA;
+          if (up < v) v = up;
+          const left = curr[j - 1] + SND_DEL[qj];
+          if (left < v) v = left;
+          curr[j] = v;
+          if (v < rowMin) rowMin = v;
+        }
+        if (rowMin > thr) { alive = false; break; }
+        const t = prev; prev = curr; curr = t;
+      }
+      if (alive && prev[m] <= thr + 1e-9) out.push({ e: entries[idx], d: prev[m] });
+    }
+    return out;
+  }
+
   function search(rawFrag, opts) {
     const ignoreStress = opts.ignoreStress;
     const fuzzy = opts.fuzzy;
@@ -339,6 +508,25 @@
     const out = [];
     const seen = new Set();
     const doubles = new Map(); // word -> times the rhyme repeats (>= 2)
+
+    if (mode === "near") {
+      // whole box = one pronunciation; operators are ignored, stress is
+      // always stripped, and the fuzzy toggle is moot — closeness IS the
+      // cost model here.
+      const qToks = [];
+      q.segs.forEach((s) => s.forEach((t) => qToks.push(t.replace(/[0-2]$/, ""))));
+      const dists = new Map(); // word -> weighted sound distance
+      const hits = soundsLikePass(qToks);
+      for (let i = 0; i < hits.length; i++) {
+        const e = hits[i].e, d = hits[i].d;
+        if (seen.has(e.w)) {
+          if (d < dists.get(e.w)) dists.set(e.w, d); // closer alternate pron
+          continue;
+        }
+        seen.add(e.w); out.push(e); dists.set(e.w, d);
+      }
+      return { results: out, q: q, doubles: doubles, dists: dists };
+    }
 
     if (q.type === "plain") {
       const frag = segs[0].join(" ");
@@ -452,7 +640,7 @@
     let p = null;
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null"); } catch (e) { /* */ }
     if (!p) return;
-    if (["end", "start", "any", "exact"].indexOf(p.mode) >= 0) { mode = p.mode; setSeg(matchBtns, "data-mode", mode); }
+    if (["end", "start", "any", "exact", "near"].indexOf(p.mode) >= 0) { mode = p.mode; setSeg(matchBtns, "data-mode", mode); }
     if (["common", "syllable", "alpha"].indexOf(p.sort) >= 0) { sortMode = p.sort; setSeg(sortBtns, "data-sort", sortMode); }
     fuzzyEl.checked = !!p.fuzzy;
     const on = p.ignoreStress !== false;
@@ -664,7 +852,7 @@
     const q = (p.get("q") || "").trim();
     if (!q) return false;
     const m = p.get("m");
-    if (m && ["end", "start", "any", "exact"].indexOf(m) >= 0) { mode = m; setSeg(matchBtns, "data-mode", m); }
+    if (m && ["end", "start", "any", "exact", "near"].indexOf(m) >= 0) { mode = m; setSeg(matchBtns, "data-mode", m); }
     fuzzyEl.checked = p.get("f") === "1";
     const stressOn = p.get("s") !== "0";
     stripStress1El.checked = stressOn;
@@ -873,6 +1061,7 @@
     setSenseStatus(label);
     const ctx = tabCtx(tab);
     ctx.doubles = dbl;
+    ctx.dists = found.dists;
     ctx.sense = { rel: tab.sense.rel, w: tab.sense.word };
     renderResults(kept, found.q, ctx);
   }
@@ -935,6 +1124,7 @@
       setSenseStatus(ctx.reason + " — showing unfiltered. (Add an API key for smarter results.)", true);
       const rctx = tabCtx(tab);
       rctx.doubles = found.doubles;
+      rctx.dists = found.dists;
       renderResults(found.results, found.q, rctx);
       return;
     }
@@ -973,6 +1163,7 @@
     setSenseStatus("");
     const ctx = tabCtx(tab);
     ctx.doubles = found.doubles;
+    ctx.dists = found.dists;
     renderResults(found.results, found.q, ctx);
   }
 
@@ -1078,6 +1269,7 @@
   // highlight context for the render pass: which fragment tokens matched.
   // Set by renderResults, read by chipHtml. { segs (match-space), fuzzy, ignoreStress }
   let HL = null;
+  let DISTS = null; // word -> weighted sound distance (sounds-like renders only)
   let lastWords = []; // words currently listed, in display order (for "Copy list")
 
   // token indices covered by any (non-overlapping) occurrence of any segment
@@ -1117,7 +1309,8 @@
     const title = (e.z > 0 ? "commonality (Zipf) " + e.z.toFixed(2) : "rare / not in frequency data") +
       " · " + sylTxt + (isUd ? " · Urban Dictionary (score " + udInfo.get(e.w).toLocaleString() + ")" : "") +
       (nu ? " · new this decade (mainstream since " + nu.year + ")" : "") +
-      (dbl ? " · rhyme repeats ×" + dbl : "");
+      (dbl ? " · rhyme repeats ×" + dbl : "") +
+      (DISTS && DISTS.has(e.w) ? " · sound distance " + DISTS.get(e.w).toFixed(2) : "");
     const udTag = isUd ? ' <span class="ud-tag">UD</span>' : "";
     const newTag = nu ? ' <span class="new-tag">’' + String(nu.year).slice(2) + "</span>" : "";
     const dblTag = dbl ? ' <span class="dbl-tag">×' + dbl + "</span>" : "";
@@ -1147,15 +1340,18 @@
   }
 
   function renderResults(matches, q, ctx) {
-    ctx = ctx || { sort: sortMode, fuzzy: fuzzyEl.checked, ignoreStress: ignoreStressEl.checked };
+    ctx = ctx || { sort: sortMode, fuzzy: fuzzyEl.checked, ignoreStress: ignoreStressEl.checked, mode: mode };
     resultsEl.classList.remove("filtering");
     const sort = ctx.sort;
+    const near = ctx.mode === "near";
     const doubles = (ctx.doubles instanceof Map) ? ctx.doubles : new Map();
     const disp = q ? queryDisplay(q) : "";
     if (!matches.length) {
       const hint = ctx.sense
         ? "No rhymes are <b>" + escapeHtml(ctx.sense.rel) + "</b> to “<b>" + escapeHtml(ctx.sense.w) +
           "</b>”. Try a broader relation, a different word, or turn on <b>Fuzzy</b>."
+        : near
+        ? "Nothing sounds close enough. Trim the pronunciation to its core, or switch matching to <b>Anywhere</b> to find it inside longer words."
         : "Try fewer phonemes, switch matching to <b>Anywhere</b>, or toggle <b>Ignore stress</b>.";
       // one-tap fixes — only offered on the live tab, where the controls apply
       const acts = [];
@@ -1163,6 +1359,9 @@
         if (ctx.sense) {
           acts.push('<button type="button" class="ex-chip js-act" data-act="sense-clear">Clear the sense filter</button>');
           if (ctx.sense.rel !== "related") acts.push('<button type="button" class="ex-chip js-act" data-act="sense-related">Broaden to “Related”</button>');
+        } else if (near) {
+          // fuzzy/stress toggles don't apply in sounds-like mode
+          acts.push('<button type="button" class="ex-chip js-act" data-act="mode-any">Match “Anywhere”</button>');
         } else {
           if (ctx.mode && ctx.mode !== "any") acts.push('<button type="button" class="ex-chip js-act" data-act="mode-any">Match “Anywhere”</button>');
           if (!ctx.fuzzy) acts.push('<button type="button" class="ex-chip js-act" data-act="fuzzy-on">Turn on Fuzzy</button>');
@@ -1177,9 +1376,19 @@
       return;
     }
 
-    // sort by the chosen mode (most common first by default)
+    // sort by the chosen mode (most common first by default). Sounds-like
+    // results order by distance band first (half-point steps), so the closest
+    // sound-alikes lead and the chosen sort ranks within each band.
+    DISTS = near && (ctx.dists instanceof Map) ? ctx.dists : null;
     const cmp = sort === "alpha" ? byAlpha : sort === "syllable" ? bySyllable : byCommon;
-    const sorted = matches.slice().sort(cmp);
+    let sorted;
+    if (DISTS) {
+      const D = DISTS;
+      const band = (e) => Math.round((D.get(e.w) || 0) * 2);
+      sorted = matches.slice().sort((a, b) => (band(a) - band(b)) || cmp(a, b));
+    } else {
+      sorted = matches.slice().sort(cmp);
+    }
 
     // split off "double rhymes" — words where a rhyme segment repeats (×2+)
     const doubleList = doubles.size ? sorted.filter((e) => doubles.has(e.w)) : [];
@@ -1195,16 +1404,18 @@
     }
 
     const total = sorted.length;
-    const sortLabel = sort === "common" ? "most common first"
+    const baseSortLabel = sort === "common" ? "most common first"
       : sort === "syllable" ? "by syllables, then common" : "A–Z";
-    const fuzzNote = ctx.fuzzy ? " · <span class=\"fuzz-note\">fuzzy sounds</span>" : "";
+    const sortLabel = near ? "closest first, then " + baseSortLabel : baseSortLabel;
+    const fuzzNote = (ctx.fuzzy && !near) ? " · <span class=\"fuzz-note\">fuzzy sounds</span>" : "";
+    const nearNote = near ? " · <span class=\"fuzz-note\">sound-alikes, close in pronunciation</span>" : "";
     const senseNote = ctx.sense ? " · <span class=\"fuzz-note\">" + escapeHtml(ctx.sense.rel) +
       " “" + escapeHtml(ctx.sense.w) + "”</span>" : "";
 
     const meta =
       '<div class="results-meta">' + icon("ic-list") +
       "<span><b style=\"color:var(--text)\">" + total.toLocaleString() + "</b> match" + (total === 1 ? "" : "es") +
-      " for <span class=\"frag\">" + escapeHtml(disp) + "</span> · " + sortLabel + fuzzNote + senseNote + "</span>" +
+      " for <span class=\"frag\">" + escapeHtml(disp) + "</span> · " + sortLabel + fuzzNote + nearNote + senseNote + "</span>" +
       '<button type="button" class="icon-btn js-copy-list" title="Copy the listed words, one per line">' +
       icon("ic-copy") + "Copy list</button></div>";
 
@@ -1228,6 +1439,7 @@
 
     resultsEl.innerHTML = meta + dblSection + body + note;
     HL = null;
+    DISTS = null;
     lastWords = doubleList.slice(0, RENDER_CAP).concat(singleList.slice(0, RENDER_CAP)).map((e) => e.w);
     if (announceEl) announceEl.textContent = total.toLocaleString() + " match" + (total === 1 ? "" : "es") + " for " + disp;
 

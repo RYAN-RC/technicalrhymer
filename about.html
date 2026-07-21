@@ -114,6 +114,17 @@
         twice (<code>B | B</code>) demands it occur twice.
       </p>
       <p>
+        <b>Sounds like</b> is a different animal: instead of anchoring a fragment, it compares the
+        whole pronunciation against every entry with a <b>phonetically weighted edit distance</b>.
+        Substituting a vowel for a nearby vowel is cheap (the cost comes from articulatory distance,
+        and a diphthong is scored as its start&rarr;glide trajectory, so <code>AY</code> sits between
+        <code>AA</code> and <code>IY</code>); consonants are priced by place, manner, and voicing;
+        and a vowel never trades cheaply for a consonant. A word qualifies when its distance is
+        within <code>max(2, len/3)</code> of the shorter pronunciation &mdash; a linear pass with a
+        length prefilter and early abandon keeps it fast. Stress and the Fuzzy toggle don&rsquo;t
+        apply in this mode; closeness is already the cost model.
+      </p>
+      <p>
         <b>Stress is ignored by default</b>: requiring stress digits to match eliminates most slant
         rhymes people actually want, so exact-stress matching is the opt-in, not the default.
         <b>Double rhymes</b> — words where the searched segment occurs twice or more, like
