@@ -100,6 +100,19 @@ MANUAL = [
     ("let him cook", 2023, 3.2, None),
     ("hopecore", 2023, 2.7, "HH OW1 P K AO1 R"),
     ("core memory", 2023, 3.0, None),
+    # second curation round 2026-07-28 — every term validated against the UD
+    # API (exact-match definitions with the years shown in the session notes)
+    ("opps", 2021, 3.2, None),
+    ("dogwater", 2021, 2.9, "D AO1 G W AO1 T ER0"),
+    ("zaza", 2021, 3.0, "Z AA1 Z AA0"),
+    ("girlboss", 2021, 3.2, "G ER1 L B AO1 S"),
+    ("griddy", 2022, 3.0, "G R IH1 D IY0"),
+    ("skibidi toilet", 2023, 3.2, "S K IH1 B IH0 D IY0 T OY1 L AH0 T"),
+    ("nepo baby", 2023, 3.2, "N EH1 P OW0 B EY1 B IY0"),
+    ("bed rotting", 2023, 2.9, None),
+    ("grimace shake", 2023, 3.0, None),
+    ("corecore", 2023, 2.7, "K AO1 R K AO2 R"),
+    ("baby gronk", 2023, 2.9, None),
     # 2024
     ("brat summer", 2024, 3.0, None),
     ("very demure", 2024, 3.0, None),
@@ -114,6 +127,10 @@ MANUAL = [
     ("pluh", 2024, 2.7, "P L AH1"),
     ("unc", 2024, 3.2, "AH1 NG K"),
     ("side quest", 2024, 3.0, None),
+    ("ai slop", 2024, 3.2, "EY1 AY1 S L AA1 P"),
+    ("chill guy", 2024, 3.0, None),
+    ("mob wife", 2024, 2.9, None),
+    ("boysober", 2024, 2.7, "B OY1 S OW1 B ER0"),
     # 2025
     ("six seven", 2025, 3.5, None),
     ("67", 2025, 3.5, "S IH1 K S S EH1 V AH0 N"),
@@ -130,6 +147,9 @@ MANUAL = [
     ("ragebait", 2025, 3.2, "R EY1 JH B EY1 T"),
     ("bruzz", 2025, 2.9, "B R AH1 Z"),
     ("glorp", 2025, 2.7, "G L AO1 R P"),
+    ("sigma boy", 2025, 3.0, None),
+    ("vibe coding", 2025, 3.2, None),
+    ("bombardino crocodilo", 2025, 2.9, "B AA2 M B AA0 R D IY1 N OW0 K R OW2 K OW0 D IY1 L OW0"),
 ]
 
 ok_re = re.compile(r"^[a-z0-9][a-z0-9 '.\-]*$")

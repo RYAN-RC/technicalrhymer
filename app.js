@@ -733,8 +733,8 @@
 
     if (!prons || !prons.length) {
       const sugg = spellSuggestions(q);
-      const coverage = "This build covers the CMU Pronouncing Dictionary (standard English), the " +
-        "top 10,000 Urban Dictionary terms, and 2,000+ new words of the 2020s.";
+      const coverage = "This build covers the CMU Pronouncing Dictionary (standard English), " +
+        "10,000+ Urban Dictionary terms, and 2,000+ new words of the 2020s.";
       notFound.innerHTML =
         "<b>“" + escapeHtml(q) + "”</b> isn’t in the dictionary." +
         (sugg.length
@@ -783,9 +783,13 @@
     });
     const altBadge = altNum ? ' <span class="syl-badge">alt ' + altNum + "</span>" : "";
     const isUd = udInfo.has(word);
+    // rescued terms carry a meaningless dump score (0 or negative) — show a
+    // plain "UD" badge instead of the number
+    const udScore = isUd ? udInfo.get(word) : 0;
     const udBadge = isUd
-      ? ' <a class="ud-badge" href="' + udLink(word) + '" target="_blank" rel="noopener" title="View on Urban Dictionary (score ' +
-        udInfo.get(word).toLocaleString() + ')">' + icon("ic-thumbs-up") + udInfo.get(word).toLocaleString() + icon("ic-external") + "</a>"
+      ? ' <a class="ud-badge" href="' + udLink(word) + '" target="_blank" rel="noopener" title="Urban Dictionary definition' +
+        (udScore > 0 ? " (score " + udScore.toLocaleString() + ")" : "") + '">' + icon("ic-thumbs-up") +
+        (udScore > 0 ? udScore.toLocaleString() : "UD") + icon("ic-external") + "</a>"
       : "";
     const nu = newInfo.get(word);
     const newBadge = nu
@@ -805,6 +809,7 @@
             '<button class="icon-btn js-speak" title="Hear it">' + icon("ic-volume") + "Say</button>" +
             '<button class="icon-btn js-copy" title="Copy full pronunciation">' + icon("ic-copy") + "Copy</button>" +
             '<button class="icon-btn js-rhyme" title="Search rhymes (from the stressed vowel)">' + icon("ic-scissors") + "Rhyme</button>" +
+            '<button class="icon-btn js-define" title="What does it mean?">' + icon("ic-book-open") + "Define</button>" +
           "</span>" +
         "</div>" +
         '<div class="phonemes">' + phHtml + "</div>" +
@@ -850,6 +855,10 @@
       card.querySelector(".js-speak").addEventListener("click", (e) => {
         e.stopPropagation();
         speak(word);
+      });
+      card.querySelector(".js-define").addEventListener("click", (e) => {
+        e.stopPropagation();
+        openDefDialog(word);
       });
       // the UD / New badge links open the on-site definition dialog instead of
       // leaving (modified clicks keep normal link behavior) — and never fill
@@ -1373,7 +1382,8 @@
     const isUd = udInfo.has(e.w);
     const nu = newInfo.get(e.w);
     const title = (e.z > 0 ? "commonality (Zipf) " + e.z.toFixed(2) : "rare / not in frequency data") +
-      " · " + sylTxt + (isUd ? " · Urban Dictionary (score " + udInfo.get(e.w).toLocaleString() + ")" : "") +
+      " · " + sylTxt +
+      (isUd ? " · Urban Dictionary" + (udInfo.get(e.w) > 0 ? " (score " + udInfo.get(e.w).toLocaleString() + ")" : "") : "") +
       (nu ? " · new this decade (mainstream since " + nu.year + ")" : "") +
       (dbl ? " · rhyme repeats ×" + dbl : "") +
       (DISTS && DISTS.has(e.w) ? " · sound distance " + DISTS.get(e.w).toFixed(2) : "");
@@ -1842,18 +1852,27 @@
     });
   }
 
-  // ---- Urban Dictionary definitions, without leaving the site ----
-  // UD's public JSON API is CORS-open, so a click on a UD badge/tag pulls the
-  // term's definitions into a native dialog (our styling, no ads) instead of
-  // bouncing the visitor to urbandictionary.com. The link out lives in the
-  // dialog footer; a failed fetch falls back to offering UD itself.
+  // ---- definitions, without leaving the site ----
+  // Two CORS-open sources feed one dialog: Urban Dictionary's JSON API for
+  // slang, Wiktionary's REST API for standard English. A click on a UD
+  // badge/tag or the Define button pulls the definitions into a native dialog
+  // (our styling, no ads) instead of bouncing the visitor off-site. The link
+  // out lives in the dialog footer; a failed fetch falls back to a link.
   const udDialog = $("udDialog");
   const udBodyEl = $("udBody");
   const udTermEl = $("udTerm");
+  const udSrcEl = $("udSrc");
   const udOutEl = $("udOut");
+  const udFootUdEl = $("udFootUd");
+  const udFootWikEl = $("udFootWik");
+  const wikOutEl = $("wikOut");
   const UD_API = "https://api.urbandictionary.com/v0/define?term=";
+  const WIK_API = "https://en.wiktionary.org/api/rest_v1/page/definition/";
   const UD_DEFS_SHOWN = 3;
+  const WIK_POS_SHOWN = 4;      // parts of speech per term
+  const WIK_DEFS_SHOWN = 5;     // senses per part of speech
   const udDefCache = new Map(); // term -> API list sorted by thumbs-up
+  const wikDefCache = new Map(); // term -> PoS blocks (null = page not found)
   let udSeq = 0;                // ignore a slow response after another open/close
 
   function udEl(tag, cls, text) {
@@ -1907,15 +1926,31 @@
     }
   }
 
-  function openUdDialog(term) {
-    if (!udDialog) { window.open(udLink(term), "_blank", "noopener"); return; }
+  // shared dialog boot: title, source label + matching footer, loading state
+  function defDialogStart(term, src) {
     const seq = ++udSeq;
     udTermEl.textContent = term;
-    udOutEl.href = udLink(term);
+    udSrcEl.textContent = "on " + src;
+    udFootUdEl.hidden = src !== "Urban Dictionary";
+    udFootWikEl.hidden = src !== "Wiktionary";
     udBodyEl.innerHTML = "";
     udBodyEl.appendChild(udEl("p", "ud-status", "Fetching definitions…"));
     if (typeof udDialog.showModal === "function") { if (!udDialog.open) udDialog.showModal(); }
     else udDialog.setAttribute("open", "");
+    return seq;
+  }
+
+  // slang (UD-sourced terms) reads best on Urban Dictionary; everything else
+  // gets the regular dictionary
+  function openDefDialog(term) {
+    if (udGenerated.has(term) || newGenerated.has(term)) openUdDialog(term);
+    else openWikDialog(term);
+  }
+
+  function openUdDialog(term) {
+    if (!udDialog) { window.open(udLink(term), "_blank", "noopener"); return; }
+    const seq = defDialogStart(term, "Urban Dictionary");
+    udOutEl.href = udLink(term);
     const cached = udDefCache.get(term);
     if (cached) { renderUdDefs(term, cached); return; }
     fetch(UD_API + encodeURIComponent(term))
@@ -1932,6 +1967,90 @@
         const p = udEl("p", "ud-status", "Couldn’t reach Urban Dictionary — ");
         const a = udEl("a", null, "open it there instead");
         a.href = udLink(term);
+        a.target = "_blank";
+        a.rel = "noopener";
+        p.appendChild(a);
+        p.appendChild(document.createTextNode("."));
+        udBodyEl.appendChild(p);
+      });
+  }
+
+  // Wiktionary definition HTML is stripped to plain text via an inert
+  // DOMParser document (never attached, nothing executes)
+  function htmlToText(html) {
+    const doc = new DOMParser().parseFromString(String(html || ""), "text/html");
+    return (doc.body.textContent || "").replace(/\s+/g, " ").trim();
+  }
+
+  function wikPageLink(term) {
+    return "https://en.wiktionary.org/wiki/" + encodeURIComponent(term.replace(/ /g, "_"));
+  }
+
+  // response -> [{pos, senses: [text]}] (empty array = page exists, no usable text)
+  function parseWikDefs(j) {
+    const sections = Array.isArray(j && j.en) ? j.en
+      : Object.keys(j || {}).map((k) => j[k]).find(Array.isArray) || [];
+    const blocks = [];
+    sections.slice(0, WIK_POS_SHOWN).forEach((sec) => {
+      const senses = (Array.isArray(sec.definitions) ? sec.definitions : [])
+        .map((d) => htmlToText(d.definition))
+        .filter(Boolean)
+        .slice(0, WIK_DEFS_SHOWN);
+      if (senses.length) blocks.push({ pos: sec.partOfSpeech || "", senses: senses });
+    });
+    return blocks;
+  }
+
+  function renderWikDefs(term, blocks) {
+    udBodyEl.innerHTML = "";
+    if (!blocks || !blocks.length) {
+      const p = udEl("p", "ud-status", "Wiktionary doesn’t have this one — ");
+      const a = udEl("a", null, "search it there");
+      a.href = "https://en.wiktionary.org/w/index.php?search=" + encodeURIComponent(term);
+      a.target = "_blank";
+      a.rel = "noopener";
+      p.appendChild(a);
+      p.appendChild(document.createTextNode("."));
+      udBodyEl.appendChild(p);
+      return;
+    }
+    blocks.forEach((b) => {
+      const card = udEl("article", "ud-def");
+      if (b.pos) card.appendChild(udEl("p", "wik-pos", b.pos));
+      const ol = udEl("ol", "wik-defs");
+      b.senses.forEach((s) => ol.appendChild(udEl("li", null, s)));
+      card.appendChild(ol);
+      udBodyEl.appendChild(card);
+    });
+  }
+
+  function openWikDialog(term) {
+    if (!udDialog) { window.open(wikPageLink(term), "_blank", "noopener"); return; }
+    const seq = defDialogStart(term, "Wiktionary");
+    wikOutEl.href = wikPageLink(term);
+    const cached = wikDefCache.get(term);
+    if (cached !== undefined) { renderWikDefs(term, cached); return; }
+    const fetchDef = (title) => fetch(WIK_API + encodeURIComponent(title.replace(/ /g, "_")))
+      .then((r) => {
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      });
+    // pages are case-sensitive: try the lowercase term, then Capitalized
+    // (proper nouns — CMUdict stores everything lowercased)
+    fetchDef(term)
+      .then((j) => (j !== null ? j : fetchDef(term.charAt(0).toUpperCase() + term.slice(1))))
+      .then((j) => {
+        const blocks = j === null ? null : parseWikDefs(j);
+        wikDefCache.set(term, blocks);
+        if (seq === udSeq) renderWikDefs(term, blocks);
+      })
+      .catch(() => {
+        if (seq !== udSeq) return;
+        udBodyEl.innerHTML = "";
+        const p = udEl("p", "ud-status", "Couldn’t reach Wiktionary — ");
+        const a = udEl("a", null, "open it there instead");
+        a.href = wikPageLink(term);
         a.target = "_blank";
         a.rel = "noopener";
         p.appendChild(a);

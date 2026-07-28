@@ -1,6 +1,9 @@
-// Top-rated terms from Urban Dictionary (https://www.urbandictionary.com).
-// Source dataset: georgiyozhegov/urbandictionary-raw. Pronunciations via g2p_en.
-// Format per line: term\tARPABET\tzipf\tUDscore  (ARPABET empty = use CMUdict pronunciation).
+// Top-rated terms from Urban Dictionary (https://www.urbandictionary.com),
+// plus a commonality rescue: common words (wordfreq zipf >= 3.2) whose vote
+// counts the source dump lost (lmao, wtf, yeet...). Pronunciations via g2p_en;
+// initialisms are letter-spelled. Source: georgiyozhegov/urbandictionary-raw.
+// Format per line: term\tARPABET\tzipf\tUDscore  (ARPABET empty = use CMUdict
+// pronunciation; score <= 0 = rescued term whose real votes are unknown).
 window.UD_DATA = `donald trump	D AA1 N AH0 L D T R AH1 M P	4.33	74326
 wmaf	W AH0 M AE1 F	3.50	60117
 pussy		4.24	51825
@@ -10000,4 +10003,446 @@ gangstress	G AE1 NG S T R AH0 S	2.08	63
 pasta dish	P AA1 S T AH0 D IH1 SH	3.74	63
 blowing mud	B L OW1 IH0 NG M AH1 D	3.86	63
 nose job	N OW1 Z JH AA1 B	4.47	63
-monkey ass	M AH1 NG K IY0 AE1 S	4.02	63`;
+monkey ass	M AH1 NG K IY0 AE1 S	4.02	63
+haha	HH AA1 HH AH0	4.53	-16
+ft	EH1 F T IY1	4.52	34
+vol	V OW1 L	4.41	-5
+pp	P IY1 P IY1	4.38	1
+mp	EH1 M P IY1	4.29	-18
+lmao	EH1 L EH1 M EY1 OW1	4.28	1
+hd	EY1 CH D IY1	4.26	-15
+va	V IY1 EY1	4.26	-26
+wtf	D AH1 B AH0 L Y UW0 T IY1 EH1 F	4.22	3
+ep	IY1 P IY1	4.21	-2
+fa	EH1 F EY1	4.20	-13
+sc	EH1 S S IY1	4.18	-30
+tbh	T IY1 B IY1 EY1 CH	4.18	23
+rs	AA1 R EH1 S	4.18	-68
+idk	AY1 D IY1 K EY1	4.17	4
+prof	P R AO1 F	4.12	2
+fc	EH1 F S IY1	4.06	35
+omg	OW1 EH1 M JH IY1	4.05	33
+nc	EH1 N S IY1	4.05	-24
+pt	P IY1 T IY1	4.04	38
+lgbt	EH1 L JH IY1 B IY1 T IY1	4.04	17
+apr	EY1 P IY1 AA1 R	4.02	-21
+tl	T IY1 EH1 L	4.02	12
+ps	P IY1 EH1 S	4.02	-27
+aa	EY1 EY1	4.01	25
+remix	R EH1 M IH0 K S	3.99	-2
+wwe	D AH1 B AH0 L Y UW0 D AH1 B AH0 L Y UW0 IY1	3.97	-29
+af	EY1 EH1 F	3.97	-10
+nj	EH1 N JH EY1	3.97	-10
+ch	S IY1 EY1 CH	3.95	0
+gb	JH IY1 B IY1	3.91	-6
+def	D EH1 F	3.91	-28
+cs	S IY1 EH1 S	3.90	8
+gif	G IH1 F	3.90	4
+mins	M IH1 N Z	3.90	-12
+br	B IY1 AA1 R	3.89	-24
+mvp	EH1 M V IY1 P IY1	3.89	-2
+sd	EH1 S D IY1	3.89	3
+pl	P IY1 EH1 L	3.88	11
+sf	EH1 S EH1 F	3.88	0
+gf	JH IY1 EH1 F	3.88	-41
+xd	EH1 K S D IY1	3.87	38
+covid	K OW1 V IH0 D	3.86	-5
+ufc	Y UW1 EH1 F S IY1	3.85	-101
+cl	S IY1 EH1 L	3.85	-1
+mlb	EH1 M EH1 L B IY1	3.85	19
+bb	B IY1 B IY1	3.84	-34
+dems	D EH1 M Z	3.84	15
+ml	EH1 M EH1 L	3.84	-11
+ea	IY1 EY1	3.81	0
+diy	D IY1 AY1 W AY1	3.80	10
+brexit	B R EH1 K S IH0 T	3.79	13
+cp	S IY1 P IY1	3.79	-72
+mls	EH1 M EH1 L EH1 S	3.79	58
+int	IH1 N T	3.79	-33
+gt	JH IY1 T IY1	3.79	-3
+bf	B IY1 EH1 F	3.79	-15
+nz	EH1 N Z IY1	3.79	-4
+yr	W AY1 AA1 R	3.79	-76
+mb	EH1 M B IY1	3.78	-47
+ff	EH1 F EH1 F	3.78	4
+ky	K EY1 W AY1	3.77	-62
+db	D IY1 B IY1	3.77	-1
+kanye	K AE1 N Y IY0	3.77	9
+ds	D IY1 EH1 S	3.76	-26
+fb	EH1 F B IY1	3.76	-16
+ucla	Y UW1 S IY1 EH1 L EY1	3.75	4
+maths	M AE1 TH S	3.75	-6
+hq	EY1 CH K Y UW1	3.73	43
+tr	T IY1 AA1 R	3.73	-81
+ak	EY1 K EY1	3.73	47
+nw	EH1 N D AH1 B AH0 L Y UW0	3.72	-13
+ut	Y UW1 T IY1	3.72	-110
+uc	Y UW1 S IY1	3.72	27
+rn	AA1 R EH1 N	3.71	-74
+sm	EH1 S EH1 M	3.71	46
+sb	EH1 S B IY1	3.70	-4
+ec	IY1 S IY1	3.70	7
+rb	AA1 R B IY1	3.70	-9
+pls	P L IY1 Z	3.69	-26
+hs	EY1 CH EH1 S	3.69	9
+sw	EH1 S D AH1 B AH0 L Y UW0	3.68	-8
+az	EY1 Z IY1	3.68	-31
+dd	D IY1 D IY1	3.68	-1
+xl	EH1 K S EH1 L	3.68	-9
+xp	EH1 K S P IY1	3.67	22
+rp	AA1 R P IY1	3.67	-48
+wr	D AH1 B AH0 L Y UW0 AA1 R	3.66	16
+fo	EH1 F OW1	3.65	-38
+rc	AA1 R S IY1	3.65	34
+jj	JH EY1 JH EY1	3.63	-2
+ig	AY1 JH IY1	3.63	13
+mf	EH1 M EH1 F	3.62	-16
+eg	IY1 JH IY1	3.62	-26
+nsfw	EH1 N EH1 S EH1 F D AH1 B AH0 L Y UW0	3.61	-2
+tt	T IY1 T IY1	3.61	-1
+plc	P IY1 EH1 L S IY1	3.61	5
+sl	EH1 S EH1 L	3.61	46
+aj	EY1 JH EY1	3.59	8
+oc	OW1 S IY1	3.59	-1
+meds	M EH1 D Z	3.59	1
+woah	W OW1	3.58	1
+mk	EH1 M K EY1	3.58	0
+ew	Y UW1	3.58	1
+gc	JH IY1 S IY1	3.57	-1
+hai	HH AY1	3.57	6
+nh	EH1 N EY1 CH	3.56	-8
+aleppo	AH0 L EH1 P OW0	3.56	-51
+tf	T IY1 EH1 F	3.56	-1
+esp	IY1 EH1 S P IY1	3.55	-3
+rv	AA1 R V IY1	3.55	1
+cw	S IY1 D AH1 B AH0 L Y UW0	3.54	59
+js	JH EY1 EH1 S	3.54	-46
+hk	EY1 CH K EY1	3.54	-2
+sg	EH1 S JH IY1	3.54	-11
+nas	N AE1 S	3.53	2
+bu	B IY1 Y UW1	3.53	-1
+ci	S IY1 AY1	3.53	-37
+fam	F AE1 M	3.52	1
+pbs	P IY1 B IY1 EH1 S	3.52	-42
+pb	P IY1 B IY1	3.52	-9
+rpg	AA1 R P IY1 JH IY1	3.52	2
+gr	JH IY1 AA1 R	3.52	11
+lc	EH1 L S IY1	3.52	4
+nos	N AA1 S	3.52	-8
+dp	D IY1 P IY1	3.51	5
+conor	K AA1 N ER0	3.51	5
+sk	EH1 S K EY1	3.51	11
+smh	EH1 S EH1 M EY1 CH	3.50	0
+faa	F AA1	3.50	-8
+naruto	N AA0 R UW1 T OW0	3.48	20
+kd	K EY1 D IY1	3.48	-24
+rss	AA1 R EH1 S EH1 S	3.48	6
+kb	K EY1 B IY1	3.47	36
+ahhh	AA1	3.47	30
+jd	JH EY1 D IY1	3.47	28
+cj	S IY1 JH EY1	3.46	7
+tj	T IY1 JH EY1	3.44	0
+qc	K Y UW1 S IY1	3.44	4
+ob	OW1 B IY1	3.43	20
+haram	HH EH1 R AH0 M	3.43	-5
+tp	T IY1 P IY1	3.43	3
+bmi	B IY1 EH1 M AY1	3.43	23
+btc	B IY1 T IY1 S IY1	3.43	-7
+gl	JH IY1 EH1 L	3.43	-16
+irl	AY1 AA1 R EH1 L	3.43	-36
+std	EH1 S T IY1 D IY1	3.42	24
+mj	EH1 M JH EY1	3.41	-9
+lf	EH1 L EH1 F	3.40	-8
+boi	B OY1	3.40	-2
+rr	AA1 R AA1 R	3.40	5
+pk	P IY1 K EY1	3.40	-30
+vid	V IH1 D	3.40	29
+sbs	EH1 S B IY1 EH1 S	3.38	0
+zac	Z AE1 K	3.38	8
+gst	JH IY1 EH1 S T IY1	3.38	-20
+lte	EH1 L T IY1 IY1	3.38	4
+cn	S IY1 EH1 N	3.38	50
+blm	B IY1 EH1 L EH1 M	3.38	0
+ipo	AY1 P IY1 OW1	3.37	14
+div	D IH1 V	3.37	-33
+www	D AH1 B AH0 L Y UW0 D AH1 B AH0 L Y UW0 D AH1 B AH0 L Y UW0	3.37	0
+dh	D IY1 EY1 CH	3.37	-5
+assange	AH0 S EY1 N JH	3.36	0
+wt	D AH1 B AH0 L Y UW0 T IY1	3.36	-33
+bm	B IY1 EH1 M	3.36	-13
+hella	HH EH1 L AH0	3.35	34
+obi	OW1 B IY0	3.35	0
+lmfao	EH1 L EH1 M EH1 F EY1 OW1	3.35	36
+ramen	R EY1 M AH0 N	3.35	14
+cybersecurity	S AY2 B ER0 K AH0 S ER1 T IY0 AH0	3.35	4
+bn	B IY1 EH1 N	3.35	-21
+mx	EH1 M EH1 K S	3.34	-9
+gon	G AA1 N	3.34	24
+jojo	Y OW1 Y OW0	3.34	1
+tsa	T S IY1 EY1	3.34	7
+armoured	AA1 R M UH2 R D	3.34	-2
+middlesbrough	M IH1 D Z L ER0 B UW2	3.34	-28
+hb	EY1 CH B IY1	3.33	-36
+bg	B IY1 JH IY1	3.32	-2
+apa	EY1 P IY1 EY1	3.32	-14
+psg	P IY1 EH1 S JH IY1	3.32	21
+msnbc	EH1 M EH1 S EH1 N B IY1 S IY1	3.32	-7822
+soc	S AA1 K	3.32	28
+dawg	D AO1 G	3.32	10
+nxt	EH1 N EH1 K S T IY1	3.32	23
+jax	JH AE1 K S	3.31	-18
+comey	K AH1 M IY0	3.31	15
+cg	S IY1 JH IY1	3.31	-64
+kyrie	K IH1 R IY0	3.31	53
+rx	AA1 R EH1 K S	3.31	10
+tnt	T IY1 EH1 N T IY1	3.31	0
+maga	M AA1 G AH0	3.30	3
+jt	JH EY1 T IY1	3.30	-11
+idf	AY1 D IY1 EH1 F	3.29	-34
+hdmi	EY1 CH D IY1 EH1 M AY1	3.29	6
+doj	D IY1 OW1 JH EY1	3.29	-84
+pst	P IY1 EH1 S T IY1	3.29	-46
+chilli	CH IH1 L IY0	3.29	-35
+kfc	K EY1 EH1 F S IY1	3.28	31
+bj	B IY1 JH EY1	3.28	11
+cpi	S IY1 P IY1 AY1	3.28	3
+rj	AA1 R JH EY1	3.28	-14
+huawei	HH W AA1 W IY0	3.28	54
+bts	B IY1 T IY1 EH1 S	3.27	18
+faq	EH1 F EY1 K Y UW1	3.27	32
+jb	JH EY1 B IY1	3.27	-44
+gw	JH IY1 D AH1 B AH0 L Y UW0	3.27	59
+sts	EH1 S T IY1 EH1 S	3.26	2
+dhs	D IY1 EY1 CH EH1 S	3.26	-17
+fol	F OW1 L	3.26	17
+spd	EH1 S P IY1 D IY1	3.26	9
+frat	F R AE1 T	3.25	-9
+scrum	S K R AH1 M	3.25	-16
+gmo	JH IY1 EH1 M OW1	3.25	30
+isp	AY1 EH1 S P IY1	3.25	15
+dw	D IY1 D AH1 B AH0 L Y UW0	3.25	-17
+icu	AY1 S IY1 Y UW1	3.25	-82
+loc	L AA1 K	3.24	-176
+ez	IY1 Z IY1	3.24	42
+snl	EH1 S EH1 N EH1 L	3.24	-2
+deadpool	D EH1 D P UH2 L	3.24	0
+cpa	S IY1 P IY1 EY1	3.24	0
+ccp	S IY1 S IY1 P IY1	3.23	-11
+pj	P IY1 JH EY1	3.23	-6
+psp	P IY1 EH1 S P IY1	3.23	2
+emoji	EH0 M OW1 JH IY0	3.23	3
+att	EY1 T IY1 T IY1	3.22	-36
+coronavirus	K AO2 R AH0 N AA1 V AH0 S ER0	3.22	13
+osu	OW1 EH1 S Y UW1	3.22	-93
+lds	EH1 L D IY1 EH1 S	3.22	-4
+ctrl	S IY1 T IY1 AA1 R EH1 L	3.22	-2
+ste	S T IY1	3.22	-17
+analysing	AH0 N AE1 L AY0 Z IH0 NG	3.22	4
+drs	D IY1 AA1 R EH1 S	3.21	-2
+gd	JH IY1 D IY1	3.21	3
+ipl	AY1 P IY1 EH1 L	3.21	0
+caliphate	K AE1 L AH0 F EY2 T	3.21	24
+bling	B L AY1 N	3.21	-5
+edm	IY1 D IY1 EH1 M	3.21	1
+ssd	EH1 S EH1 S D IY1	3.21	1
+gis	JH IY1 AY1 EH1 S	3.20	-36
+ani	AA1 N IY0	3.20	44
+eurovision	Y UW2 R OW0 V IH1 ZH AH0 N	3.20	0
+pikachu	P IH0 K AE1 CH UW0	3.18	23
+bai	B AY1	3.18	61
+libs	L IH1 B Z	3.17	30
+tk	T IY1 K EY1	3.16	29
+msg	EH1 M EH1 S JH IY1	3.16	51
+shortlisted	SH AO1 R T AH0 L S T IH0 D S	3.16	20
+halal	HH AH0 L AA1 L	3.15	35
+cnbc	S IY1 EH1 N B IY1 S IY1	3.14	27
+coa	S IY1 OW1 EY1	3.13	31
+fy	EH1 F W AY1	3.13	60
+yusuf	Y UW1 S AH0 F	3.10	56
+illuminati	IH0 L UW2 M AH0 N EY1 T IY0	3.09	36
+swindon	S W IH1 N D AH0 N	3.09	46
+lukaku	L AH0 K UW1 K UW0	3.07	45
+bod	B AA1 D	3.05	48
+papi	P AA1 P IY0	3.04	23
+adv	AE1 D V IY0	3.04	33
+mio	M AY1 OW0	3.03	23
+osiris	OW0 S IH1 R IH0 S	3.02	31
+yeon	Y IY1 AA0 N	3.02	25
+kar	K AA1 R	3.02	43
+nda	EH1 N D IY1 EY1	3.00	28
+gaius	G EY1 AH0 S	2.99	30
+declan	D EH1 K L AH0 N	2.97	45
+thr	T IY1 EY1 CH AA1 R	2.97	49
+bpm	B IY1 P IY1 EH1 M	2.96	39
+src	EH1 S AA1 R S IY1	2.95	22
+vcr	V IY1 S IY1 AA1 R	2.95	28
+ganesh	G AE1 N IH0 SH	2.95	62
+bff	B IY1 EH1 F EH1 F	2.95	34
+siena	S IY1 N AH0	2.95	58
+asos	EY1 S OW0 Z	2.94	25
+stingray	S T IH1 NG G R EY2	2.93	23
+soulmate	S OW1 L M AH0 T	2.92	23
+garmin	G AA1 R M AH0 N	2.92	21
+lbj	EH1 L B IY1 JH EY1	2.92	53
+pcc	P IY1 S IY1 S IY1	2.92	28
+fbs	EH1 F B IY1 EH1 S	2.91	28
+cursive	K ER1 S IH0 V	2.90	63
+doggo	D AA1 G OW0	2.89	29
+hcl	EY1 CH S IY1 EH1 L	2.89	34
+wth	D AH1 B AH0 L Y UW0 T IY1 EY1 CH	2.89	60
+chs	S IY1 EY1 CH EH1 S	2.88	31
+sauron	S AO1 R AH0 N	2.86	33
+kaitlyn	K EY1 T L IH0 N	2.85	28
+mesut	M EH1 S AH0 T	2.85	22
+mdma	EH1 M D IY1 EH1 M EY1	2.84	41
+tryna	T R IY1 N AH0	2.84	37
+toure	T UH1 R	2.83	23
+cpm	S IY1 P IY1 EH1 M	2.82	24
+nae	N EY1	2.82	42
+roleplay	R OW1 L AH0 P L EY2	2.82	21
+kala	K AA1 L AH0	2.81	29
+gimp	JH IH1 M P	2.80	20
+sns	EH1 S EH1 N EH1 S	2.79	30
+phat	F AE1 T	2.79	21
+kel	K EH1 L	2.79	35
+hj	EY1 CH JH EY1	2.78	25
+bcc	B IY1 S IY1 S IY1	2.78	39
+csc	S IY1 EH1 S S IY1	2.77	55
+ciara	CH AA1 R AH0	2.76	47
+nca	EH1 N S IY1 EY1	2.76	20
+jbl	JH EY1 B IY1 EH1 L	2.75	45
+yar	Y AA1 R	2.75	24
+noob	N UW1 B	2.74	41
+teardrop	T IH1 R D R AA2 P	2.73	41
+foodies	F UW1 D IY0 Z	2.73	24
+tweeter	T W IY1 T ER0	2.71	49
+opengl	OW1 P AH0 N JH IY1 EH1 L	2.71	60
+jacqui	JH AE1 K IY0	2.70	28
+jetpack	JH EH1 T P AE2 K	2.70	48
+fafsa	F AE1 F S AH0	2.70	42
+asad	AH0 S AA1 D	2.69	46
+zhen	Z EH1 N	2.69	56
+uta	Y UW1 T AH0	2.69	40
+batgirl	B AE1 T JH IH0 L	2.68	58
+biathlon	B AY1 AH0 TH AH0 L	2.68	25
+sappy	S AE1 P IY0	2.68	29
+lacs	L AE1 K S	2.67	21
+otaku	OW1 T AH0 K UW2	2.66	31
+lma	EH1 L EH1 M EY1	2.66	24
+thicc	TH IH1 K	2.66	38
+morsi	M AO1 R S IY0	2.66	62
+yuna	Y UW1 N AH0	2.66	21
+lod	L AA1 D	2.65	43
+cbr	S IY1 B IY1 AA1 R	2.65	33
+gbs	JH IY1 B IY1 EH1 S	2.65	28
+mongrel	M AA1 NG G R AH0 L	2.65	43
+dpr	D IY1 P IY1 AA1 R	2.65	26
+unfunny	AH0 N F AH1 N IY0	2.64	25
+pubg	P AH1 B JH IY1	2.64	23
+hertford	HH ER1 T F ER0 D	2.64	28
+bronzer	B R AA1 N Z ER0	2.64	40
+krispy	K R IH1 S P IY0	2.63	36
+masseuse	M AH0 S UW1 S	2.62	21
+donatello	D OW0 N AA0 T EH1 L OW0	2.62	24
+farid	F EH1 R AH0 D	2.62	20
+whitehaven	W AY1 T HH AE2 V AH0 N	2.62	20
+shrooms	SH R UW1 M Z	2.62	62
+jabba	JH AE1 B AH0	2.62	20
+bromance	B R OW1 M AH0 N S	2.62	36
+preposition	P R EH2 P AH0 Z IH1 SH AH0 N	2.62	51
+fuk	F AH1 K	2.61	22
+edp	IY1 D IY1 P IY1	2.61	48
+vevo	V EH1 V OW0	2.61	60
+miri	M IH1 R IY0	2.61	44
+diazepam	D AY2 AH0 S IH1 M P AH0	2.61	56
+aoa	EY1 OW1 EY1	2.61	56
+evangelion	IH0 V AE2 NG G Y EH1 L AH0 N	2.61	43
+ldr	EH1 L D IY1 AA1 R	2.61	44
+choker	K OW1 K ER0	2.60	39
+scruff	S K R AH1 F	2.60	51
+luciana	L UW0 CH IY0 AA1 N AH0	2.60	56
+aos	EY1 OW1 EH1 S	2.59	26
+pma	P IY1 EH1 M EY1	2.59	50
+uriah	Y ER0 IY1 AH0	2.57	37
+morata	M AO0 R AA1 T AH0	2.57	32
+cami	K AA1 M IY0	2.57	61
+nougat	N UW1 G AH0 T	2.57	62
+aew	EY1 IY1 D AH1 B AH0 L Y UW0	2.57	20
+hemi	HH EH1 M IY0	2.56	30
+pigtails	P IH1 G T EY2 L Z	2.56	35
+waifu	W EY1 F Y UW0	2.56	52
+eft	EH1 F T	2.55	24
+cubby	K AH1 B IY0	2.55	35
+hellcat	HH EH1 L K AE2 T	2.55	47
+burnie	B ER1 N IY0	2.54	22
+riaa	AA1 R AY1 EY1 EY1	2.54	39
+hawkeyes	HH AO1 K IY2 Z	2.54	46
+karbala	K AA0 B R AA1 L AH0	2.54	35
+qp	K Y UW1 P IY1	2.53	27
+bha	B IY1 EY1 CH EY1	2.53	21
+ambedkar	AE0 M B EH1 D K AA2 R	2.53	39
+flipkart	F L IH1 P K AA2 R T	2.53	20
+inuyasha	IH0 N Y UW0 W AA1 S AH0	2.52	47
+nanaimo	N AA0 M AA1 IY0 OW0	2.52	35
+slipstream	S L IH1 P S T R IY2 M	2.52	51
+ghosting	G OW1 S T IH0 NG	2.52	41
+bogo	B OW1 G OW0	2.52	23
+haverhill	HH AE1 V ER0 HH IH2 L	2.52	54
+nikhil	N IH1 K IH0 L	2.52	21
+nen	N EH1 N	2.52	44
+telnet	T EH1 L N AH0 T	2.52	63
+neocon	N IY1 OW0 K AH0 N	2.51	24
+yeet	Y IY1 T	2.51	41
+bringer	B R IH1 NG ER0	2.51	24
+fabrice	F AE1 B R AH0 S	2.51	39
+cag	K AE1 G	2.51	40
+loli	L OW1 L IY0	2.51	22
+mtc	EH1 M T IY1 S IY1	2.51	44
+bma	B IY1 EH1 M EY1	2.51	48
+bhs	B IY1 EY1 CH EH1 S	2.51	25
+yunus	Y UW1 N AH0 S	2.50	23
+qwerty	K W ER1 T IY0	2.50	60
+ummah	AH1 M AH0	2.49	27
+creationist	K R IY0 EY1 SH AH0 N IH0 S T	2.49	31
+radek	R AA1 D IH0 K	2.49	43
+soulmates	S OW1 L M AH0 T S	2.48	22
+dicked	D IH1 K T	2.48	55
+voltron	V OW1 L T R AH0 N	2.48	23
+ammar	AE1 M ER0	2.48	24
+besties	B EH1 S T IY0 Z	2.48	24
+animatronic	AE2 N IY0 M AA0 T AA1 R IH0 K IH0 N	2.48	50
+abhishek	AE1 B IH0 SH EH2 K	2.48	41
+tove	T OW1 V	2.48	60
+renzo	R EH1 N Z OW0	2.47	42
+asim	AH0 S IY1 M	2.47	33
+cakewalk	K EY1 K W AO2 K	2.47	28
+fishnet	F IH1 SH N EH2 T	2.46	42
+spline	S P L AY1 N	2.46	23
+cracow	K R AE1 K OW0	2.46	53
+tmo	T IY1 EH1 M OW1	2.45	23
+firenze	F AY1 R AH0 N Z	2.45	20
+grooving	G R UW1 V IH0 NG	2.45	36
+dafuq	D AA1 F AH0 K	2.45	51
+mtf	EH1 M T IY1 EH1 F	2.45	49
+bmd	B IY1 EH1 M D IY1	2.45	37
+accrington	AH0 K R IH1 NG T AH0 N	2.45	57
+baggins	B AE1 G IH0 N Z	2.44	45
+spo	S P OW1	2.44	29
+mukhtar	M AH1 K T ER0	2.44	22
+darkside	D AA1 R K S AY2 D	2.44	33
+bloodlust	B L AH1 D L AH0 S T	2.44	25
+bridgwater	B R IH1 G W AO2 T ER0	2.44	30
+chiaki	CH IY0 AA1 K IY0	2.43	45
+arron	EH1 R AH0 N	2.43	50
+ccf	S IY1 S IY1 EH1 F	2.43	27
+kakashi	K AA0 K AA1 SH IY0	2.43	63
+tard	T AA1 R D	2.42	23
+hmg	EY1 CH EH1 M JH IY1	2.42	31
+suge	SH UH1 G	2.42	56
+mmf	EH1 M EH1 M EH1 F	2.41	23
+tcc	T IY1 S IY1 S IY1	2.41	33
+sbr	EH1 S B IY1 AA1 R	2.41	56
+snooki	S N UH1 K IY0	2.40	37
+pwm	P IY1 D AH1 B AH0 L Y UW0 EH1 M	2.40	48
+ginormous	JH IH1 N ER0 M AH0 S	2.40	26
+teletubbies	T AH0 L EH1 T B W AH0 S IY0	2.40	52`;

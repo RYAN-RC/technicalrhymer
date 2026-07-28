@@ -1047,6 +1047,28 @@ footer .ud-badge { font-size: 11px; }
 .ud-foot { margin: 12px 0 0; }
 .ud-foot a { color: var(--ud); }
 .ud-out-ic { width: 11px; height: 11px; margin-left: 3px; vertical-align: -1px; }
+/* Wiktionary blocks reuse the .ud-def card */
+.wik-pos {
+  margin: 0 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--faint);
+}
+.wik-defs {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+}
+.wik-defs li {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.wik-defs li::marker { color: var(--faint); }
 .more-note {
   margin-top: 6px;
   font-size: 13px;

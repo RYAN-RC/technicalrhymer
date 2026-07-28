@@ -4,7 +4,7 @@
     "title": "Technical Rhymer API",
     "version": "1.0.0",
     "summary": "Rhymes by sound, not spelling - ARPABET pronunciation lookup and phoneme-pattern rhyme search.",
-    "description": "Free, keyless JSON API behind technicalrhymer.org: the CMU Pronouncing Dictionary (~134k words) plus the top 10,000 Urban Dictionary slang terms and 2,000+ new words of the 2020s, searchable by phoneme pattern and ranked by real-world commonality (wordfreq Zipf). Rate limit: 30 requests/minute per IP. Full agent guide: https://technicalrhymer.org/llms.txt Response fields that do not apply are omitted (never null).",
+    "description": "Free, keyless JSON API behind technicalrhymer.org: the CMU Pronouncing Dictionary (~134k words) plus 10,400+ Urban Dictionary slang terms and 2,000+ new words of the 2020s, searchable by phoneme pattern and ranked by real-world commonality (wordfreq Zipf). Rate limit: 30 requests/minute per IP. Full agent guide: https://technicalrhymer.org/llms.txt Response fields that do not apply are omitted (never null).",
     "contact": {
       "name": "Ryan Mergen",
       "email": "ryan@runcabin.com",

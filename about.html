@@ -270,7 +270,13 @@
           highest-net-voted slang terms. Pronunciations for terms CMUdict lacks are auto-generated
           with a grapheme-to-phoneme model, so they're approximate. UD content is user-submitted
           and can be crude or NSFW; it's included as-is, with vote scores and links back to the
-          source for attribution.
+          source for attribution. The vote data in the source dump is lossy — famous terms like
+          <i>lmao</i> and <i>yeet</i> survive with single-digit scores — so a commonality rescue
+          adds ~440 words the votes lost: anything genuinely common in real-world text
+          (wordfreq Zipf &ge; 3.2), or moderately common with real surviving votes, gets in
+          regardless of its recorded score. Rescued terms show a plain UD badge instead of a
+          meaningless number, and initialisms among them are letter-spelled
+          (<i>idk</i> &rarr; <code>AY1 D IY1 K EY1</code>).
         </li>
         <li>
           <b>New words of the 2020s</b> (teal <b style="color:var(--new)">’2x</b> badge) — the
@@ -281,10 +287,10 @@
           qualifies as long as any pre-2020 definitions are marginal next to its 2020s peak.
           Pronunciations are approximate: grapheme-to-phoneme for pronounceable terms, letter names
           for vowel-less acronyms (<i>tds</i> &rarr; <code>T IY1 D IY1 EH1 S</code>). The source
-          dataset ends in November 2023, so past that point the set is hand-curated: about 70
+          dataset ends in November 2023, so past that point the set is hand-curated: about 85
           era-defining terms through 2026 — <i>skibidi</i>, <i>hawk tuah</i>, <i>six seven</i>,
-          <i>clanker</i>, <i>tralalero tralala</i> — picked editorially, with hand-checked
-          pronunciations. Urban Dictionary no longer publishes vote counts, so these carry no
+          <i>clanker</i>, <i>vibe coding</i>, <i>tralalero tralala</i> — picked editorially and
+          validated against the live Urban Dictionary API, with hand-checked pronunciations. Urban Dictionary no longer publishes vote counts, so these carry no
           score.
         </li>
       </ul>
@@ -355,12 +361,12 @@
         <b>drop a line on the wall</b>, the pen name and line you submit are sent to our relay,
         AI-checked for spam, and stored so the wall can display them — including lines the check
         rejects, which we keep briefly for abuse review, along with the request's IP address.
-        Third, clicking an <b>Urban Dictionary badge</b> fetches that term's definitions straight
-        from Urban Dictionary's public API so you can read them without leaving the site — the
-        term and your IP address reach Urban Dictionary exactly as if you'd opened their page,
-        but only when you click. All three exceptions are anonymous: there are no accounts to tie
-        any of it to. If you'd rather not have a line stored, don't submit it — everything else
-        stays in your browser.
+        Third, clicking an <b>Urban Dictionary badge</b> or the <b>Define</b> button fetches that
+        term's definitions straight from Urban Dictionary's or Wiktionary's public API so you can
+        read them without leaving the site — the term and your IP address reach that service
+        exactly as if you'd opened their page, but only when you click. All three exceptions are
+        anonymous: there are no accounts to tie any of it to. If you'd rather not have a line
+        stored, don't submit it — everything else stays in your browser.
       </p>
     </section>
 
@@ -374,7 +380,8 @@
         <li><a href="https://github.com/rspeer/wordfreq" target="_blank" rel="noopener">wordfreq</a> — Zipf commonality scores.</li>
         <li><a href="https://nlp.stanford.edu/projects/glove/" target="_blank" rel="noopener">GloVe</a> — offline word vectors (glove-wiki-gigaword-50).</li>
         <li><a href="https://wordnet.princeton.edu/" target="_blank" rel="noopener">WordNet</a> — synonyms and antonyms.</li>
-        <li><a href="https://www.urbandictionary.com" target="_blank" rel="noopener">Urban Dictionary</a> — slang terms and vote scores (© their authors), via the <code>georgiyozhegov/urbandictionary-raw</code> dataset.</li>
+        <li><a href="https://www.urbandictionary.com" target="_blank" rel="noopener">Urban Dictionary</a> — slang terms, vote scores, and on-demand definitions (© their authors), via the <code>georgiyozhegov/urbandictionary-raw</code> dataset and the public API.</li>
+        <li><a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> — on-demand definitions for standard words, by Wiktionary contributors (<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA</a>).</li>
         <li><a href="https://github.com/Kyubyong/g2p" target="_blank" rel="noopener">g2p_en</a> — grapheme-to-phoneme for words CMUdict doesn't know.</li>
         <li><a href="https://lucide.dev" target="_blank" rel="noopener">Lucide</a> — icons.</li>
       </ul>

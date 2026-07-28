@@ -349,9 +349,10 @@
         Slang terms marked <span class="ud-badge" style="vertical-align:middle"><svg aria-hidden="true"><use href="#ic-thumbs-up"></use></svg>UD</span>
         are the top 10,000 highest-rated entries from
         <a href="https://www.urbandictionary.com" target="_blank" rel="noopener">Urban Dictionary</a>
-        (definitions and vote scores © their respective authors); their pronunciations are
-        auto-generated and approximate. Urban Dictionary content is user-submitted and may be
-        crude, offensive, or NSFW.
+        (definitions and vote scores © their respective authors), plus a few hundred common
+        words — <i>lmao</i>, <i>yeet</i>, <i>covid</i> — whose vote records the source data
+        lost; their pronunciations are auto-generated and approximate. Urban Dictionary content
+        is user-submitted and may be crude, offensive, or NSFW.
       </p>
       <p style="margin:8px 0 0">
         Terms marked <span class="new-tag" style="vertical-align:middle">’23</span> are
@@ -406,14 +407,19 @@
   <dialog id="udDialog" class="fz-dialog ud-dialog" aria-labelledby="udTitle">
     <div class="fz-head">
       <svg aria-hidden="true"><use href="#ic-book-open"></use></svg>
-      <h2 id="udTitle"><span id="udTerm"></span> <span class="ud-title-src">on Urban Dictionary</span></h2>
+      <h2 id="udTitle"><span id="udTerm"></span> <span class="ud-title-src" id="udSrc">on Urban Dictionary</span></h2>
       <button id="udClose" class="clear-btn" type="button" title="Close (Esc)" aria-label="Close"><svg aria-hidden="true"><use href="#ic-x"></use></svg></button>
     </div>
     <div id="udBody" class="ud-body"></div>
-    <p class="fz-hint ud-foot">
+    <p class="fz-hint ud-foot" id="udFootUd">
       Definitions load on demand from the Urban Dictionary API — © their authors, crude and
       unfiltered by design.
       <a id="udOut" href="https://www.urbandictionary.com" target="_blank" rel="noopener">View on urbandictionary.com<svg aria-hidden="true" class="ud-out-ic"><use href="#ic-external"></use></svg></a>
+    </p>
+    <p class="fz-hint ud-foot" id="udFootWik" hidden>
+      Definitions load on demand from the Wiktionary API — text by Wiktionary contributors,
+      <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA</a>.
+      <a id="wikOut" href="https://en.wiktionary.org" target="_blank" rel="noopener">View on wiktionary.org<svg aria-hidden="true" class="ud-out-ic"><use href="#ic-external"></use></svg></a>
     </p>
   </dialog>
 

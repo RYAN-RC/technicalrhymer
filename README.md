@@ -165,11 +165,15 @@ Match modes: *Ends with (rhyme)* · *Starts with* · *Anywhere* · *Exact*.
 ### Slang (Urban Dictionary)
 
 Coverage includes the **top 10,000 highest-rated Urban Dictionary terms** (ranked
-by net vote score), so slang words and phrases are searchable and turn up in
-rhyme results. These are marked with a gold **UD** tag; the lookup card shows the
-UD vote score and links to the definition on Urban Dictionary. Their
-pronunciations are **auto-generated** (g2p) and approximate, not human-verified.
-Urban Dictionary content is user-submitted and may be crude, offensive, or NSFW.
+by net vote score) plus a **commonality rescue** of ~440 words whose vote records
+the source dump lost (`lmao`, `wtf`, `yeet`, `covid` — kept when wordfreq Zipf
+≥ 3.2, or ≥ 2.4 with real surviving votes), so slang words and phrases are
+searchable and turn up in rhyme results. These are marked with a gold **UD** tag;
+the lookup card shows the UD vote score (hidden when the dump lost it) and links
+to the definition on Urban Dictionary. Their pronunciations are
+**auto-generated** (g2p; initialisms letter-spelled) and approximate, not
+human-verified. Urban Dictionary content is user-submitted and may be crude,
+offensive, or NSFW.
 
 ### New words of the 2020s
 
@@ -249,7 +253,7 @@ pip install wordfreq pyarrow pandas g2p_en gensim nltk   # one-time
 
 python build_data.py     # cmudict.dict        -> cmudict-data.js (pronunciations)
 python build_freq.py     # cmudict.dict        -> freq-data.js    (commonality / Zipf)
-python build_ud.py       # ud-raw.parquet      -> ud-data.js      (top 10k UD terms)
+python build_ud.py       # ud-raw.parquet      -> ud-data.js      (top 10k UD terms + zipf rescue)
 python build_new.py      # ud-raw.parquet      -> new-data.js     (top 2k new words of the 2020s)
 python build_vec.py      # GloVe (downloaded)  -> vec-data.js     (word vectors, Word sense)
 python build_lex.py      # WordNet (nltk)      -> lex-data.js     (synonyms/antonyms)
@@ -258,8 +262,9 @@ python build_lex.py      # WordNet (nltk)      -> lex-data.js     (synonyms/anto
 `build_data.py` drops dotted abbreviations (`a.`, `u.s.`). `build_freq.py` falls
 back to the base word for possessives (so `challenge's` isn't stranded at 0).
 `build_ud.py` ranks UD terms by net vote score, dedupes, takes the top 10,000,
-g2p's the ones not already in CMUdict, and blends commonality as
-`max(wordfreq, pseudo-from-votes)`.
+rescues common words the lossy vote data missed (Zipf ≥ 3.2, or ≥ 2.4 with
+score ≥ 20), g2p's the ones not already in CMUdict (letter-spelling
+initialisms), and blends commonality as `max(wordfreq, pseudo-from-votes)`.
 
 ### How slang commonality is scored
 

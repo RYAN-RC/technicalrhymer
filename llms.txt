@@ -1,6 +1,6 @@
 # Technical Rhymer
 
-> Rhymes by sound, not spelling. Technical Rhymer (technicalrhymer.org) looks up a word's ARPABET pronunciation, then finds every word whose pronunciation matches a phoneme pattern - perfect rhymes, slant rhymes, multi-syllable schemes. It covers the CMU Pronouncing Dictionary (~134k standard English words), the top 10,000 Urban Dictionary slang terms, and 2,000+ new words of the 2020s (curated through 2026), all ranked by real-world commonality.
+> Rhymes by sound, not spelling. Technical Rhymer (technicalrhymer.org) looks up a word's ARPABET pronunciation, then finds every word whose pronunciation matches a phoneme pattern - perfect rhymes, slant rhymes, multi-syllable schemes. It covers the CMU Pronouncing Dictionary (~134k standard English words), 10,400+ Urban Dictionary slang terms (the top-voted 10,000 plus a commonality rescue for words whose vote records the source data lost - lmao, yeet, covid), and 2,000+ new words of the 2020s (curated through 2026), all ranked by real-world commonality.
 
 This file is for AI assistants and developers. Everything below is free to use, no key, no signup.
 
@@ -102,7 +102,7 @@ Notes on results:
 - Fields that don't apply are omitted (no `"udScore": null` noise) - treat absent as "not applicable".
 - The searched word itself appears when it matches its own tail (treasure rhymes with treasure) - skip it yourself if unwanted.
 - `rhymeRepeats` (when present, 2+) marks a "double rhyme": the matched segment occurs that many times in the word (e.g. `AE T` twice in "rat-a-tat"). `doubleRhymes` counts them for the whole result set.
-- `source` is `cmudict`, `urban-dictionary` (top-10k UD slang, auto-generated pronunciation), `cmudict+urban-dictionary` (a standard word that is ALSO a top-rated UD term - like pleasure above), or `new-words-2020s` (a 2020s coinage outside the UD top-10k). `udScore` is the UD net vote score; `newSince` marks new-words-of-the-2020s terms with the year they went mainstream; `approxPron: true` means the pronunciation was machine-generated (g2p) and is approximate.
+- `source` is `cmudict`, `urban-dictionary` (UD slang, auto-generated pronunciation), `cmudict+urban-dictionary` (a standard word that is ALSO a top-rated UD term - like pleasure above), or `new-words-2020s` (a 2020s coinage outside the UD set). `udScore` is the UD net vote score (0 or negative = a commonality-rescued term whose real votes are unknown); `newSince` marks new-words-of-the-2020s terms with the year they went mainstream; `approxPron: true` means the pronunciation was machine-generated (g2p) and is approximate.
 - Errors are actionable: an unknown phoneme returns HTTP 400 with `invalidTokens` and the full list of valid ARPABET phonemes. Boolean params accept `true/false` and `1/0`.
 
 More examples:
@@ -143,7 +143,7 @@ The full dataset ships as plain-text bundles inside JavaScript template literals
 
 - https://technicalrhymer.org/cmudict-data.js - `word\tARPABET` (~3.7 MB, one line per pronunciation; words repeat for alternates)
 - https://technicalrhymer.org/freq-data.js - `word\tzipf` (~1.5 MB)
-- https://technicalrhymer.org/ud-data.js - `term\tARPABET\tzipf\tudScore` (top-10k Urban Dictionary; empty ARPABET = term is in CMUdict)
+- https://technicalrhymer.org/ud-data.js - `term\tARPABET\tzipf\tudScore` (top-10k Urban Dictionary plus zipf-rescued common words, score <= 0 = rescued; empty ARPABET = term is in CMUdict)
 - https://technicalrhymer.org/new-data.js - `term\tARPABET\tzipf\tscore\tfirstYear` (new words of the 2020s; score 0 = unscored)
 
 Prefer the API for lookups; fetch bundles only when you genuinely need the whole dataset.
