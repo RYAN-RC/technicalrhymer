@@ -202,6 +202,58 @@
     return "https://www.urbandictionary.com/define.php?term=" + encodeURIComponent(term);
   }
 
+  // ---- closest spellings for a missed lookup ----
+  // Hamming distance (letter-for-letter mismatches) over the whole index, with
+  // two typo-shaped extensions: candidates one letter longer or shorter align
+  // with a single gap (cost 1), and exactly two adjacent mismatches that are a
+  // swapped pair (teh -> the) count as one. Length gates most of the ~146k
+  // words out before any letters are compared, so this is fine to run live.
+  function hamWithin(a, b, max) {
+    let d = 0, m1 = -1, m2 = -1;
+    for (let i = 0; i < a.length; i++) {
+      if (a.charCodeAt(i) !== b.charCodeAt(i)) {
+        d++;
+        if (d === 1) m1 = i; else if (d === 2) m2 = i;
+        else if (d > max + 1) return -1; // keep 1 headroom: a swap may still rescue d = max+1
+      }
+    }
+    if (d === 2 && m2 === m1 + 1 && a[m1] === b[m2] && a[m2] === b[m1]) d = 1;
+    return d <= max ? d : -1;
+  }
+
+  // `longer` has exactly one extra letter: gap at the first mismatch (cost 1),
+  // then Hamming over the rest.
+  function gapHamWithin(longer, shorter, max) {
+    let i = 0;
+    while (i < shorter.length && longer.charCodeAt(i) === shorter.charCodeAt(i)) i++;
+    let d = 1;
+    for (let j = i; j < shorter.length; j++) {
+      if (longer.charCodeAt(j + 1) !== shorter.charCodeAt(j)) {
+        d++;
+        if (d > max) return -1;
+      }
+    }
+    return d;
+  }
+
+  function spellSuggestions(q) {
+    if (q.length < 3) return [];
+    const max = q.length <= 4 ? 1 : q.length <= 8 ? 2 : 3;
+    const found = new Map(); // word -> { w, d, z } (multi-pron words appear once)
+    for (let i = 0; i < entries.length; i++) {
+      const e = entries[i];
+      const dl = e.w.length - q.length;
+      if (dl < -1 || dl > 1 || found.has(e.w)) continue;
+      const d = dl === 0 ? hamWithin(q, e.w, max)
+        : dl === 1 ? gapHamWithin(e.w, q, max)
+        : gapHamWithin(q, e.w, max);
+      if (d > 0) found.set(e.w, { w: e.w, d: d, z: e.z });
+    }
+    return Array.from(found.values())
+      .sort((a, b) => (a.d - b.d) || (b.z - a.z) || byAlpha(a, b))
+      .slice(0, 8);
+  }
+
   // ---- helpers ----
   // Perfect-rhyme tail: from the last primary-stressed vowel to the end
   // (falls back to last secondary, then last unstressed vowel).
@@ -680,10 +732,18 @@
     }
 
     if (!prons || !prons.length) {
+      const sugg = spellSuggestions(q);
+      const coverage = "This build covers the CMU Pronouncing Dictionary (standard English), the " +
+        "top 10,000 Urban Dictionary terms, and 2,000+ new words of the 2020s.";
       notFound.innerHTML =
-        "<b>“" + escapeHtml(q) + "”</b> isn’t in the dictionary. " +
-        "This build covers the CMU Pronouncing Dictionary (standard English), the " +
-        "top 10,000 Urban Dictionary terms, and 2,000+ new words of the 2020s. Try another spelling.";
+        "<b>“" + escapeHtml(q) + "”</b> isn’t in the dictionary." +
+        (sugg.length
+          ? " Closest spellings — click one to look it up:" +
+            '<div class="nf-sugg">' +
+            sugg.map((s) => '<button type="button" class="ex-chip" data-w="' + escapeAttr(s.w) + '">' + escapeHtml(s.w) + "</button>").join("") +
+            "</div>" +
+            '<div class="nf-note">' + coverage + "</div>"
+          : " " + coverage + " Try another spelling.");
       notFound.classList.add("show");
       return;
     }
@@ -791,9 +851,15 @@
         e.stopPropagation();
         speak(word);
       });
-      // the UD / New badge links inside the card shouldn't trigger a fill
+      // the UD / New badge links open the on-site definition dialog instead of
+      // leaving (modified clicks keep normal link behavior) — and never fill
       Array.from(card.querySelectorAll(".ud-badge, .new-badge")).forEach((a) =>
-        a.addEventListener("click", (e) => e.stopPropagation()));
+        a.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0) return;
+          e.preventDefault();
+          openUdDialog(word);
+        }));
     });
   }
 
@@ -1311,8 +1377,8 @@
       (nu ? " · new this decade (mainstream since " + nu.year + ")" : "") +
       (dbl ? " · rhyme repeats ×" + dbl : "") +
       (DISTS && DISTS.has(e.w) ? " · sound distance " + DISTS.get(e.w).toFixed(2) : "");
-    const udTag = isUd ? ' <span class="ud-tag">UD</span>' : "";
-    const newTag = nu ? ' <span class="new-tag">’' + String(nu.year).slice(2) + "</span>" : "";
+    const udTag = isUd ? ' <span class="ud-tag" title="Urban Dictionary — click for the definition">UD</span>' : "";
+    const newTag = nu ? ' <span class="new-tag" title="New this decade — click for the Urban Dictionary definition">’' + String(nu.year).slice(2) + "</span>" : "";
     const dblTag = dbl ? ' <span class="dbl-tag">×' + dbl + "</span>" : "";
     return '<button class="word-chip' + (dbl ? " is-double" : "") + '" data-w="' + escapeAttr(e.w) + '" title="' + escapeAttr(title) + '">' +
       '<span class="chip-row"><span class="w">' + escapeHtml(e.w) + udTag + newTag + dblTag + "</span>" +
@@ -1444,8 +1510,11 @@
     if (announceEl) announceEl.textContent = total.toLocaleString() + " match" + (total === 1 ? "" : "es") + " for " + disp;
 
     Array.from(resultsEl.querySelectorAll(".word-chip")).forEach((chip) => {
-      chip.addEventListener("click", () => {
-        wordInput.value = chip.getAttribute("data-w");
+      chip.addEventListener("click", (e) => {
+        const w = chip.getAttribute("data-w");
+        // the UD / ’2x tags open the definition dialog; the rest of the chip looks the word up
+        if (e.target.closest(".ud-tag, .new-tag")) { openUdDialog(w); return; }
+        wordInput.value = w;
         syncClearBtns();
         doLookup();
         document.querySelector("header").scrollIntoView({ behavior: SMOOTH, block: "start" });
@@ -1571,6 +1640,15 @@
       doLookup(true);
     });
   }
+
+  // ---- "closest spellings" chips inside the not-found box ----
+  notFound.addEventListener("click", (e) => {
+    const b = e.target.closest(".ex-chip[data-w]");
+    if (!b) return;
+    wordInput.value = b.getAttribute("data-w");
+    syncClearBtns();
+    doLookup(true);
+  });
 
   // ---- phoneme keyboard: tap sounds/operators to build the search box ----
   if (phonePanel) {
@@ -1763,6 +1841,112 @@
       else { const t = tabById(activeTabId); if (t) renderTabContent(t); }
     });
   }
+
+  // ---- Urban Dictionary definitions, without leaving the site ----
+  // UD's public JSON API is CORS-open, so a click on a UD badge/tag pulls the
+  // term's definitions into a native dialog (our styling, no ads) instead of
+  // bouncing the visitor to urbandictionary.com. The link out lives in the
+  // dialog footer; a failed fetch falls back to offering UD itself.
+  const udDialog = $("udDialog");
+  const udBodyEl = $("udBody");
+  const udTermEl = $("udTerm");
+  const udOutEl = $("udOut");
+  const UD_API = "https://api.urbandictionary.com/v0/define?term=";
+  const UD_DEFS_SHOWN = 3;
+  const udDefCache = new Map(); // term -> API list sorted by thumbs-up
+  let udSeq = 0;                // ignore a slow response after another open/close
+
+  function udEl(tag, cls, text) {
+    const el = document.createElement(tag);
+    if (cls) el.className = cls;
+    if (text != null) el.textContent = text;
+    return el;
+  }
+
+  // UD marks cross-references with [brackets] — render them as plain text
+  const udPlain = (s) => String(s || "").replace(/\[([^\]]*)\]/g, "$1");
+
+  function renderUdDefs(term, list) {
+    udBodyEl.innerHTML = "";
+    if (!list.length) {
+      udBodyEl.appendChild(udEl("p", "ud-status", "Urban Dictionary has no definitions for this one."));
+      return;
+    }
+    list.slice(0, UD_DEFS_SHOWN).forEach((d) => {
+      const card = udEl("article", "ud-def");
+      card.appendChild(udEl("p", "ud-def-text", udPlain(d.definition)));
+      if (d.example) card.appendChild(udEl("p", "ud-def-ex", udPlain(d.example)));
+      const meta = udEl("p", "ud-def-meta");
+      // the API stopped reporting real vote counts (everything comes back 0) —
+      // only show votes when it actually sends some
+      if ((d.thumbs_up || 0) + (d.thumbs_down || 0) > 0) {
+        const up = udEl("span", "ud-votes");
+        up.innerHTML = icon("ic-thumbs-up");
+        up.appendChild(document.createTextNode((d.thumbs_up || 0).toLocaleString()));
+        meta.appendChild(up);
+        const down = udEl("span", "ud-votes down");
+        down.innerHTML = icon("ic-thumbs-down");
+        down.appendChild(document.createTextNode((d.thumbs_down || 0).toLocaleString()));
+        meta.appendChild(down);
+      }
+      const year = String(d.written_on || "").slice(0, 4);
+      meta.appendChild(udEl("span", null, "by " + (d.author || "anonymous") + (year ? ", " + year : "")));
+      if (d.permalink) {
+        const a = udEl("a", "ud-def-link", "open");
+        a.href = d.permalink;
+        a.target = "_blank";
+        a.rel = "noopener";
+        meta.appendChild(a);
+      }
+      card.appendChild(meta);
+      udBodyEl.appendChild(card);
+    });
+    if (list.length > UD_DEFS_SHOWN) {
+      udBodyEl.appendChild(udEl("p", "ud-status",
+        "Top " + UD_DEFS_SHOWN + " of " + list.length.toLocaleString() + " definitions — the rest are on urbandictionary.com."));
+    }
+  }
+
+  function openUdDialog(term) {
+    if (!udDialog) { window.open(udLink(term), "_blank", "noopener"); return; }
+    const seq = ++udSeq;
+    udTermEl.textContent = term;
+    udOutEl.href = udLink(term);
+    udBodyEl.innerHTML = "";
+    udBodyEl.appendChild(udEl("p", "ud-status", "Fetching definitions…"));
+    if (typeof udDialog.showModal === "function") { if (!udDialog.open) udDialog.showModal(); }
+    else udDialog.setAttribute("open", "");
+    const cached = udDefCache.get(term);
+    if (cached) { renderUdDefs(term, cached); return; }
+    fetch(UD_API + encodeURIComponent(term))
+      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then((j) => {
+        const list = (j && Array.isArray(j.list) ? j.list : [])
+          .slice().sort((a, b) => (b.thumbs_up || 0) - (a.thumbs_up || 0));
+        udDefCache.set(term, list);
+        if (seq === udSeq) renderUdDefs(term, list);
+      })
+      .catch(() => {
+        if (seq !== udSeq) return;
+        udBodyEl.innerHTML = "";
+        const p = udEl("p", "ud-status", "Couldn’t reach Urban Dictionary — ");
+        const a = udEl("a", null, "open it there instead");
+        a.href = udLink(term);
+        a.target = "_blank";
+        a.rel = "noopener";
+        p.appendChild(a);
+        p.appendChild(document.createTextNode("."));
+        udBodyEl.appendChild(p);
+      });
+  }
+
+  function closeUdDialog() {
+    udSeq++;
+    if (udDialog.open) udDialog.close();
+    else udDialog.removeAttribute("open");
+  }
+
+  if (udDialog) $("udClose").addEventListener("click", closeUdDialog);
 
   // ---- back to top ----
   if (toTopBtn) {

@@ -443,6 +443,13 @@ button.btn.ghost:hover { background: var(--surface-3); filter: none; }
 }
 .notfound.show { display: block; }
 .notfound b { color: var(--text); }
+.nf-sugg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.nf-note {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--faint);
+}
 
 .search-help {
   margin-top: 12px;
@@ -988,6 +995,58 @@ footer .ud-badge { font-size: 11px; }
   margin-left: 5px;
   vertical-align: 1px;
 }
+
+/* ---------- Urban Dictionary definition dialog ---------- */
+/* the UD / ’2x tags on result chips open the dialog — hint that they're targets */
+.word-chip .ud-tag:hover, .word-chip .new-tag:hover { filter: brightness(1.35); text-decoration: underline; }
+.ud-dialog { width: min(560px, calc(100vw - 28px)); }
+.ud-dialog .fz-head svg { color: var(--ud); }
+.ud-title-src { color: var(--faint); font-weight: 500; font-size: 13px; }
+.ud-body { display: grid; gap: 10px; max-height: 56vh; overflow-y: auto; }
+.ud-status { color: var(--faint); font-size: 13px; line-height: 1.5; margin: 4px 0; }
+.ud-status a { color: var(--ud); }
+.ud-def {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 13px;
+}
+.ud-def-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.ud-def-ex {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted);
+  font-style: italic;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  border-left: 2px solid var(--ud-line);
+  padding-left: 9px;
+}
+.ud-def-meta {
+  margin: 9px 0 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 11.5px;
+  color: var(--faint);
+}
+.ud-def-meta svg { width: 12px; height: 12px; vertical-align: -2px; margin-right: 3px; }
+.ud-votes { color: var(--ud); white-space: nowrap; }
+.ud-votes.down { color: var(--faint); }
+.ud-def-link { color: var(--accent-2); text-decoration: none; margin-left: auto; }
+.ud-def-link:hover { text-decoration: underline; }
+.ud-foot { margin: 12px 0 0; }
+.ud-foot a { color: var(--ud); }
+.ud-out-ic { width: 11px; height: 11px; margin-left: 3px; vertical-align: -1px; }
 .more-note {
   margin-top: 6px;
   font-size: 13px;
