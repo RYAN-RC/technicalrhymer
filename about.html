@@ -355,7 +355,7 @@
       </div>
       <p>
         No accounts, no analytics, no cookies, no tracking. Nothing you type leaves your machine,
-        with three explicit exceptions. First, when you use the word-sense filter's AI mode, the
+        with four explicit exceptions. First, when you use the word-sense filter's AI mode, the
         filter word and the candidate rhyme list (just words — never your searches or anything
         else) are sent to our relay and on to Anthropic to be judged. Second, when you
         <b>drop a line on the wall</b>, the pen name and line you submit are sent to our relay,
@@ -364,9 +364,12 @@
         Third, clicking an <b>Urban Dictionary badge</b> or the <b>Define</b> button fetches that
         term's definitions straight from Urban Dictionary's or Wiktionary's public API so you can
         read them without leaving the site — the term and your IP address reach that service
-        exactly as if you'd opened their page, but only when you click. All three exceptions are
-        anonymous: there are no accounts to tie any of it to. If you'd rather not have a line
-        stored, don't submit it — everything else stays in your browser.
+        exactly as if you'd opened their page, but only when you click. Fourth, pressing
+        <b>Search</b> sends a counting ping to our relay so the site can show its all-time search
+        tally — a bare increment that contains nothing you typed; only the running total is
+        stored. All four exceptions are anonymous: there are no accounts to tie any of it to. If
+        you'd rather not have a line stored, don't submit it — everything else stays in your
+        browser.
       </p>
     </section>
 

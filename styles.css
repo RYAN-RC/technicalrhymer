@@ -443,6 +443,12 @@ button.btn.ghost:hover { background: var(--surface-3); filter: none; }
 }
 .notfound.show { display: block; }
 .notfound b { color: var(--text); }
+.tally {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
 .nf-sugg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
 .nf-note {
   margin-top: 10px;

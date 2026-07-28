@@ -1594,9 +1594,46 @@
   }
   stripStress1El.addEventListener("change", () => setIgnoreStress(stripStress1El.checked));
 
-  searchBtn.addEventListener("click", doSearch);
+  // ---- all-time search tally (server-side, survives redeploys) ----
+  // Counts explicit search presses (button / Enter) with something in the box.
+  // The bump is a bare POST — nothing typed is ever sent — and the site works
+  // identically when it fails (file://, backend down, endpoint not live yet):
+  // the tally simply stays hidden.
+  const STATS_URL = window.RF_STATS_URL || "https://runcabin.com/api/rhymer/searches";
+  const tallyEl = $("searchTally");
+
+  function renderTally(n) {
+    if (!tallyEl || typeof n !== "number") return;
+    tallyEl.textContent = n.toLocaleString() + " searches all-time";
+    tallyEl.hidden = false;
+  }
+
+  function bumpSearchTally() {
+    try {
+      fetch(STATS_URL, { method: "POST", keepalive: true })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => { if (j) renderTally(j.count); })
+        .catch(() => { /* best-effort */ });
+    } catch (e) { /* fetch unavailable */ }
+  }
+
+  try {
+    fetch(STATS_URL)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j) renderTally(j.count); })
+      .catch(() => { /* tally stays hidden */ });
+  } catch (e) { /* */ }
+
+  searchBtn.addEventListener("click", () => {
+    if (fragInput.value.trim()) bumpSearchTally();
+    doSearch();
+  });
   fragInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); doSearch(); }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (fragInput.value.trim()) bumpSearchTally();
+      doSearch();
+    }
   });
   ignoreStressEl.addEventListener("change", () => setIgnoreStress(ignoreStressEl.checked));
   fuzzyEl.addEventListener("change", () => { savePrefs(); if (fragInput.value.trim()) doSearch(); });
