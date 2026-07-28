@@ -5,3 +5,4 @@ key.local.js
 # Build inputs / large source data (regenerate via build/ scripts)
 build/cmudict.dict
 build/ud-raw.parquet
+build/excluded_cand.pkl
