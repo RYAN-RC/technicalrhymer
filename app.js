@@ -793,7 +793,7 @@
       const sugg = spellSuggestions(q);
       const coverage = "This build covers the CMU Pronouncing Dictionary (standard English), " +
         "10,000+ Urban Dictionary terms, 2,000+ new words of the 2020s, " +
-        "500+ words this century added to the everyday lexicon, and the names of " +
+        "690+ words added to the everyday lexicon since 1990, and the names of " +
         "the S&P 500 and the world's 500 biggest companies.";
       notFound.innerHTML =
         "<b>“" + escapeHtml(q) + "”</b> isn’t in the dictionary." +

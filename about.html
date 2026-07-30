@@ -294,13 +294,15 @@
           score.
         </li>
         <li>
-          <b>The modern lexicon</b> (sky <b style="color:var(--mod)">’1x</b> badge) — 554 words that
-          entered ordinary English roughly 2000-2026 and exist in none of the layers above. This is
-          the non-slang counterpart to the set before it: <i>podcaster</i>, <i>ransomware</i>,
-          <i>microplastics</i>, <i>neurodivergent</i>, <i>gochujang</i>, <i>shrinkflation</i>,
-          <i>exoplanet</i> — newspaper and product English, not street slang. Words that are really
-          1990s natives (<i>webcam</i>, <i>malware</i>, <i>emoticon</i>) are deliberately excluded;
-          the brief was this century. The list was curated category by category and then backstopped
+          <b>The modern lexicon</b> (sky <b style="color:var(--mod)">’1x</b> badge) — 693 words that
+          entered ordinary English between 1990 and 2026 and exist in none of the layers above. This
+          is the non-slang counterpart to the set before it: <i>webcam</i>, <i>dial-up</i>,
+          <i>britpop</i>, <i>podcaster</i>, <i>ransomware</i>, <i>microplastics</i>,
+          <i>neurodivergent</i>, <i>gochujang</i>, <i>shrinkflation</i>, <i>exoplanet</i> —
+          newspaper, office, clinic and record-sleeve English, not street slang. The 1990s are in
+          here for a specific reason: CMUdict was frozen mid-decade, so it knows <i>internet</i>
+          and <i>email</i> but not <i>webcam</i>, <i>mp3</i> or <i>drum and bass</i>, and almost
+          none of the decade's music vocabulary. The list was curated category by category and then backstopped
           by a gap sweep: every word in wordfreq's top 120,000 that this site could not look up was
           reviewed by hand, which is how the inflections (<i>podcasts</i>, <i>retweeted</i>) and the
           words nobody thinks to list (<i>relatable</i>, <i>remastered</i>) got in. wordfreq's
@@ -328,6 +330,13 @@
         <code>IH0 Z</code>, not <code>S</code>); and only what is left goes to the model. Every
         generated pronunciation was then read back against its word. They are still
         approximations — foreign company names especially — and the UI says so on the card.
+      </p>
+      <p>
+        One ranking caveat about multi-word entries: wordfreq scores a phrase by combining its
+        words as if they occurred independently, which overstates a specific collocation badly —
+        it puts <i>girl power</i> at Zipf 5.14, up among the most common words in the language.
+        Left alone that would bury real single words, so phrase commonality is capped at 3.40:
+        above slang, below everyday vocabulary.
       </p>
     </section>
 

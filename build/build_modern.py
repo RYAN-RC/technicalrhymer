@@ -71,8 +71,16 @@ OUT = os.path.join(HERE, "..", "mod-data.js")
 FLOOR_ZIPF = 1.60      # a 2020s term wordfreq has never seen still sorts above junk
 INFL_MIN_ZIPF = 2.00   # generated inflections need this much real-world use
 
+# wordfreq scores a multi-word string by combining its words as if they were
+# independent, which badly OVERSTATES a specific collocation: it puts "girl
+# power" at 5.14, up among the most common words in English. Uncapped, phrases
+# would bury genuinely common single words in the commonality sort. Cap them
+# below everyday vocabulary but above slang.
+PHRASE_CAP = 3.40
+
 CATEGORIES = ("internet", "tech", "ai", "crypto", "covid", "health",
-              "climate", "business", "society", "culture", "food", "science")
+              "climate", "business", "society", "culture", "music", "food",
+              "science")
 
 # ---------------------------------------------------------------- pronunciations
 # Hand-written where g2p_en cannot get there: initialisms (spoken as letters or
@@ -405,6 +413,114 @@ PRON.update({
     "sourdough starter": "S AW1 R D OW2 S T AA1 R T ER0",
 })
 
+# The 1990s pass (added 2026-07-30): initialisms of the dial-up era, the decade's
+# music genres, and its office and clinic vocabulary.
+PRON.update({
+    "cd-rom": "S IY1 D IY1 R AA1 M",
+    "mp3": "EH1 M P IY1 TH R IY1",
+    "mpeg": "EH1 M P EH2 G",
+    "jpeg": "JH EY1 P EH2 G",
+    "gsm": "JH IY1 EH1 S EH1 M",
+    "pcr": "P IY1 S IY1 AA1 R",
+    "pda": "P IY1 D IY1 EY1",
+    "wto": "D AH1 B AH0 L Y UW0 T IY1 OW1",
+    "b2b": "B IY1 T UW1 B IY1",
+    "b2c": "B IY1 T UW1 S IY1",
+    "hmo": "EY1 CH EH1 M OW1",
+    "ppo": "P IY1 P IY1 OW1",
+    "ssri": "EH1 S EH1 S AA1 R AY1",
+    "haart": "HH AA1 R T",
+    "y2k": "W AY1 T UW1 K EY1",
+    "rsi": "AA1 R EH1 S AY1",
+    "omega-3": "OW0 M EY1 G AH0 TH R IY1",
+    "hiv-positive": "EY1 CH AY1 V IY1 P AA1 Z AH0 T IH0 V",
+    "dot-com": "D AA1 T K AA2 M",
+    "dotcom": "D AA1 T K AA2 M",
+    "e-tailer": "IY1 T EY2 L ER0",
+    "etailer": "IY1 T EY2 L ER0",
+    "ezine": "IY1 Z IY2 N",
+    "weblog": "W EH1 B L AO2 G",
+    "webring": "W EH1 B R IH2 NG",
+    "webzine": "W EH1 B Z IY2 N",
+    "webcam": "W EH1 B K AE2 M",
+    "webcast": "W EH1 B K AE2 S T",
+    "webpage": "W EH1 B P EY2 JH",
+    "webmaster": "W EH1 B M AE2 S T ER0",
+    "netiquette": "N EH1 T AH0 K AH0 T",
+    "netizen": "N EH1 T AH0 Z AH0 N",
+    "warez": "W EH1 R Z",
+    "defrag": "D IY0 F R AE1 G",
+    "dongle": "D AA1 NG G AH0 L",
+    "bitrate": "B IH1 T R EY2 T",
+    "palmtop": "P AA1 M T AA2 P",
+    "cybercafe": "S AY1 B ER0 K AE2 F EY0",
+    "cyberbully": "S AY1 B ER0 B UH2 L IY0",
+    "cyberbullying": "S AY1 B ER0 B UH2 L IY0 IH0 NG",
+    "clickthrough": "K L IH1 K TH R UW2",
+    "tamagotchi": "T AA2 M AH0 G AA1 CH IY0",
+    "winamp": "W IH1 N AE2 M P",
+    "geocities": "JH IY1 OW0 S IH2 T IY0 Z",
+    "spammer": "S P AE1 M ER0",
+    "vaporware": "V EY1 P ER0 W EH2 R",
+    "stickiness": "S T IH1 K IY0 N AH0 S",
+    "disintermediation": "D IH0 S IH2 N T ER0 M IY2 D IY0 EY1 SH AH0 N",
+    "intrapreneur": "IH2 N T R AH0 P R AH0 N ER1",
+    "downshifting": "D AW1 N SH IH2 F T IH0 NG",
+    "reengineering": "R IY2 EH2 N JH AH0 N IH1 R IH0 NG",
+    "telecommute": "T EH1 L AH0 K AH0 M Y UW2 T",
+    "telecommuting": "T EH1 L AH0 K AH0 M Y UW2 T IH0 NG",
+    "infotainment": "IH2 N F OW0 T EY1 N M AH0 N T",
+    "edutainment": "EH2 JH UW0 T EY1 N M AH0 N T",
+    "securitization": "S IH0 K Y UH2 R AH0 T AH0 Z EY1 SH AH0 N",
+    "copay": "K OW1 P EY2",
+    "mcjob": "M AH0 K JH AA1 B",
+    "docusoap": "D AA1 K Y UW0 S OW2 P",
+    "spinmeister": "S P IH1 N M AY2 S T ER0",
+    "twentysomething": "T W EH1 N T IY0 S AH2 M TH IH0 NG",
+    "latchkey": "L AE1 CH K IY2",
+    "heroin chic": "HH EH1 R OW0 AH0 N SH IY1 K",
+    "three-peat": "TH R IY1 P IY2 T",
+    "wonkish": "W AA1 NG K IH0 SH",
+    "himbo": "HH IH1 M B OW0",
+    "wigger": "W IH1 G ER0",
+    "ladette": "L AH0 D EH1 T",
+    "yardie": "Y AA1 R D IY0",
+    "alcopop": "AE1 L K OW0 P AA2 P",
+    "blingbling": "B L IH1 NG B L IH2 NG",
+    # 1990s music
+    "britpop": "B R IH1 T P AA2 P",
+    "nu metal": "N Y UW1 M EH1 T AH0 L",
+    "trip hop": "T R IH1 P HH AA1 P",
+    "acid jazz": "AE1 S AH0 D JH AE1 Z",
+    "drum and bass": "D R AH1 M AH0 N D B EY1 S",
+    "breakbeat": "B R EY1 K B IY2 T",
+    "big beat": "B IH1 G B IY1 T",
+    "psytrance": "S AY1 T R AE2 N S",
+    "darkwave": "D AA1 R K W EY2 V",
+    "chillout": "CH IH1 L AW2 T",
+    "turntablism": "T ER1 N T AH0 B L IH2 Z AH0 M",
+    "screamo": "S K R IY1 M OW0",
+    "rapcore": "R AE1 P K AO2 R",
+    "hyphy": "HH AY1 F IY0",
+    "moshing": "M AA1 SH IH0 NG",
+    "grrrl": "G ER1 L",
+    "riot grrrl": "R AY1 AH0 T G ER1 L",
+    # 1990s medicine / science
+    "prion": "P R IY1 AA0 N",
+    "fibromyalgia": "F AY2 B R OW0 M AY0 AE1 L JH AH0",
+    "rohypnol": "R OW0 HH IH1 P N AO0 L",
+    "roofie": "R UW1 F IY0",
+    "nutraceutical": "N UW2 T R AH0 S UW1 T IH0 K AH0 L",
+    "phytochemical": "F AY2 T OW0 K EH1 M IH0 K AH0 L",
+    "olestra": "OW0 L EH1 S T R AH0",
+    "transgenic": "T R AE0 N Z JH EH1 N IH0 K",
+    "hantavirus": "HH AE1 N T AH0 V AY2 R AH0 S",
+    # g2p slips caught in the 1990s review pass
+    "low-hanging fruit": "L OW1 HH AE2 NG IH0 NG F R UW1 T",
+    "adware": "AE1 D W EH2 R",
+    "core competency": "K AO1 R K AH0 M P EH1 T AH0 N S IY0",
+})
+
 # Compounds composed from CMUdict parts (see docstring). "a+b" — each part is
 # either a CMUdict word or a key in PREFIX_PRON.
 PARTS = {
@@ -475,6 +591,12 @@ PARTS = {
     "microtransaction": "micro+transaction", "ultramarathon": "ultra+marathon",
     "contouring": "contour+ing", "mouthfeel": "mouth+feel",
     "plant-based": "plant+based", "gluten-free": "gluten+free",
+    # 1990s
+    "videogame": "video+game", "videogames": "video+games",
+    "dial-up": "dial+up", "boy band": "boy+band", "girl power": "girl+power",
+    "teen pop": "teen+pop", "battle rap": "battle+rap", "pop punk": "pop+punk",
+    "mall rat": "mall+rat", "soccer mom": "soccer+mom",
+    "road rage": "road+rage", "air rage": "air+rage",
     # science
     "biomarker": "bio+marker", "decoherence": "de+coherence",
     "metamaterial": "meta+material", "nanotube": "nano+tube",
@@ -803,6 +925,107 @@ TERMS = [
     ("optogenetics", 2010, "science"), ("neuroplasticity", 2005, "science"),
     ("methylation", 2005, "science"), ("biomarker", 2005, "science"),
     ("spacetime", 2005, "science"), ("spaceflight", 2005, "science"),
+
+    # ================================================================ 1990s
+    # Added 2026-07-30 at the operator's request: a rich palette for writers,
+    # communicators and songwriters needs the decade CMUdict was frozen in the
+    # middle of. It has "internet" and "email" but not "webcam" or "dial-up",
+    # and almost none of the decade's music vocabulary.
+
+    # ---- the dial-up internet ----
+    ("webpage", 1995, "internet"), ("webmaster", 1993, "internet"),
+    ("hyperlink", 1990, "internet"), ("dial-up", 1994, "internet"),
+    ("netiquette", 1993, "internet"), ("netizen", 1994, "internet"),
+    ("emoticon", 1990, "internet"), ("spammer", 1995, "internet"),
+    ("webcam", 1994, "internet"), ("webcast", 1995, "internet"),
+    ("webzine", 1994, "internet"), ("ezine", 1994, "internet"),
+    ("weblog", 1997, "internet"), ("webring", 1995, "internet"),
+    ("clickthrough", 1996, "internet"), ("banner ad", 1994, "internet"),
+    ("chat room", 1994, "internet"), ("chatroom", 1994, "internet"),
+    ("instant messaging", 1996, "internet"), ("cybercafe", 1994, "internet"),
+    ("cyberbully", 1998, "internet"), ("cyberbullying", 1998, "internet"),
+    ("geocities", 1995, "internet"), ("winamp", 1997, "internet"),
+    ("dot-com", 1994, "internet"), ("dotcom", 1994, "internet"),
+    ("e-tailer", 1997, "internet"), ("videogame", 1990, "internet"),
+    ("videogames", 1990, "internet"),
+
+    # ---- the machines ----
+    ("cd-rom", 1990, "tech"), ("mp3", 1995, "tech"), ("mpeg", 1992, "tech"),
+    ("jpeg", 1992, "tech"), ("pda", 1992, "tech"), ("palmtop", 1990, "tech"),
+    ("gsm", 1991, "tech"), ("ringtone", 1996, "tech"),
+    ("malware", 1990, "tech"), ("spyware", 1995, "tech"),
+    ("adware", 1995, "tech"), ("freeware", 1990, "tech"),
+    ("shareware", 1990, "tech"), ("warez", 1990, "tech"),
+    ("vaporware", 1990, "tech"), ("defrag", 1990, "tech"),
+    ("dongle", 1990, "tech"), ("bitrate", 1995, "tech"),
+    ("y2k", 1997, "tech"), ("killer app", 1990, "tech"),
+    ("open source", 1998, "tech"), ("bleeding edge", 1990, "tech"),
+
+    # ---- the decade's music ----
+    ("britpop", 1994, "music"), ("trip hop", 1994, "music"),
+    ("acid jazz", 1990, "music"), ("drum and bass", 1993, "music"),
+    ("breakbeat", 1990, "music"), ("big beat", 1996, "music"),
+    ("psytrance", 1996, "music"), ("darkwave", 1990, "music"),
+    ("chillout", 1994, "music"), ("nu metal", 1996, "music"),
+    ("rapcore", 1993, "music"), ("screamo", 1994, "music"),
+    ("pop punk", 1994, "music"), ("teen pop", 1997, "music"),
+    ("boy band", 1990, "music"), ("girl power", 1996, "music"),
+    ("riot grrrl", 1991, "music"), ("grrrl", 1991, "music"),
+    ("turntablism", 1995, "music"), ("battle rap", 1990, "music"),
+    ("moshing", 1990, "music"), ("hyphy", 1998, "music"),
+    ("blingbling", 1999, "music"),
+
+    # ---- the decade's people ----
+    ("slacker", 1990, "culture"), ("twentysomething", 1990, "culture"),
+    ("generation x", 1991, "culture"), ("latchkey", 1990, "culture"),
+    ("soccer mom", 1992, "culture"), ("mall rat", 1990, "culture"),
+    ("himbo", 1990, "culture"), ("wigger", 1990, "culture"),
+    ("ladette", 1995, "culture"), ("yardie", 1990, "culture"),
+    ("wonkish", 1993, "culture"), ("three-peat", 1993, "culture"),
+    ("heroin chic", 1996, "culture"), ("alcopop", 1995, "culture"),
+    ("extreme sports", 1993, "culture"), ("tamagotchi", 1997, "culture"),
+    ("road rage", 1994, "society"), ("air rage", 1997, "society"),
+    ("docusoap", 1997, "culture"), ("reality tv", 1992, "culture"),
+    ("infotainment", 1990, "culture"), ("edutainment", 1990, "culture"),
+    ("shock jock", 1990, "culture"), ("spin doctor", 1990, "society"),
+    ("spinmeister", 1990, "society"), ("sound bite", 1990, "society"),
+    ("photo op", 1990, "society"), ("wedge issue", 1990, "society"),
+    ("soft money", 1990, "society"), ("glass ceiling", 1990, "society"),
+
+    # ---- the decade's office ----
+    ("mcjob", 1991, "business"), ("downshifting", 1994, "business"),
+    ("reengineering", 1993, "business"), ("telecommute", 1990, "business"),
+    ("telecommuting", 1990, "business"), ("casual friday", 1992, "business"),
+    ("mommy track", 1990, "business"), ("road warrior", 1990, "business"),
+    ("knowledge worker", 1990, "business"), ("six sigma", 1990, "business"),
+    ("core competency", 1990, "business"), ("paradigm shift", 1990, "business"),
+    ("low-hanging fruit", 1990, "business"), ("mission critical", 1990, "business"),
+    ("value-added", 1990, "business"), ("win-win", 1990, "business"),
+    ("intrapreneur", 1990, "business"), ("disintermediation", 1995, "business"),
+    ("stickiness", 1997, "business"), ("b2b", 1998, "business"),
+    ("b2c", 1998, "business"), ("emerging markets", 1990, "business"),
+    ("venture capital", 1990, "business"), ("angel investor", 1994, "business"),
+    ("burn rate", 1995, "business"), ("securitization", 1990, "business"),
+    ("wto", 1995, "business"), ("early adopter", 1990, "business"),
+    ("rebranding", 1990, "business"), ("viral marketing", 1996, "business"),
+    ("guerrilla marketing", 1990, "business"),
+
+    # ---- the decade's clinic and lab ----
+    ("prion", 1990, "health"), ("mad cow", 1990, "health"),
+    ("hantavirus", 1993, "health"), ("haart", 1996, "health"),
+    ("protease inhibitor", 1995, "health"), ("hiv-positive", 1990, "health"),
+    ("ssri", 1990, "health"), ("fibromyalgia", 1990, "health"),
+    ("carpal tunnel", 1990, "health"), ("rsi", 1990, "health"),
+    ("rohypnol", 1995, "health"), ("roofie", 1995, "health"),
+    ("crystal meth", 1990, "health"), ("needle exchange", 1990, "health"),
+    ("harm reduction", 1990, "health"), ("managed care", 1990, "health"),
+    ("hmo", 1990, "health"), ("ppo", 1990, "health"), ("copay", 1990, "health"),
+    ("nutraceutical", 1990, "health"), ("phytochemical", 1995, "health"),
+    ("olestra", 1996, "health"), ("omega-3", 1990, "health"),
+    ("trans fat", 1994, "health"),
+    ("transgenic", 1990, "science"), ("gene therapy", 1990, "science"),
+    ("stem cell", 1990, "science"), ("human genome", 1990, "science"),
+    ("pcr", 1990, "science"),
 ]
 
 ok_re = re.compile(r"^[a-z0-9][a-z0-9 '.\-]*$")
@@ -967,7 +1190,10 @@ def main():
         if not ph:
             print(f"  SKIP (no pronunciation): {term!r}")
             return False
-        z = max(zipf_frequency(term, "en"), FLOOR_ZIPF)
+        z = zipf_frequency(term, "en")
+        if " " in term or "-" in term:
+            z = min(z, PHRASE_CAP)   # see PHRASE_CAP
+        z = max(z, FLOOR_ZIPF)
         rows.append((term, ph, z, year, cat))
         emitted.add(term)
         return True

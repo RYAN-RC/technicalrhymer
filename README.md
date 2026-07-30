@@ -189,11 +189,14 @@ are g2p like the UD set, except vowel-less acronyms (`tds`, `smh`) which are
 spelled out as letter names. The source dataset ends **Nov 2023**, so 2024+
 coinages aren't included yet.
 
-### The modern lexicon (non-slang, 2000-2026)
+### The modern lexicon (non-slang, 1990-2026)
 
-Coverage also includes **554 words that entered ordinary English this century**
-and exist in none of the layers above — `podcaster`, `ransomware`,
-`microplastics`, `neurodivergent`, `gochujang`, `shrinkflation`, `exoplanet`.
+Coverage also includes **693 words that entered ordinary English since 1990**
+and exist in none of the layers above — `webcam`, `dial-up`, `britpop`,
+`podcaster`, `ransomware`, `microplastics`, `neurodivergent`, `gochujang`,
+`shrinkflation`, `exoplanet`. The 1990s pass matters because CMUdict was frozen
+mid-decade: it has `internet` and `email` but not `webcam`, `mp3` or
+`drum and bass`.
 These carry a sky **’1x** tag and a **Since 20xx** badge. This is the non-slang
 counterpart to the set above: newspaper and product English, not street slang.
 Words that are really 1990s natives (`webcam`, `malware`, `emoticon`) are
