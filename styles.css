@@ -19,6 +19,12 @@
   --new: #2dd4bf;
   --new-soft: rgba(45, 212, 191, 0.12);
   --new-line: rgba(45, 212, 191, 0.4);
+  --mod: #7dd3fc;
+  --mod-soft: rgba(125, 211, 252, 0.12);
+  --mod-line: rgba(125, 211, 252, 0.38);
+  --co: #c4b5fd;
+  --co-soft: rgba(196, 181, 253, 0.12);
+  --co-line: rgba(196, 181, 253, 0.38);
   --good: #4ade80;
   --warn: #fbbf24;
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -1001,6 +1007,35 @@ footer .ud-badge { font-size: 11px; }
   margin-left: 5px;
   vertical-align: 1px;
 }
+
+/* ---------- modern lexicon + company-name attribution ---------- */
+/* Same shapes as .new-badge / .new-tag, in their own hues: sky = a word this
+   century added to ordinary English, violet-grey = a company name. */
+.mod-badge, .co-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 1px 7px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.mod-badge { color: var(--mod); background: var(--mod-soft); border: 1px solid var(--mod-line); }
+.co-badge { color: var(--co); background: var(--co-soft); border: 1px solid var(--co-line); }
+.mod-badge svg, .co-badge svg { width: 12px; height: 12px; }
+.mod-tag, .co-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-left: 5px;
+  vertical-align: 1px;
+}
+.mod-tag { color: var(--mod); background: var(--mod-soft); border: 1px solid var(--mod-line); }
+.co-tag { color: var(--co); background: var(--co-soft); border: 1px solid var(--co-line); }
 
 /* ---------- Urban Dictionary definition dialog ---------- */
 /* the UD / ’2x tags on result chips open the dialog — hint that they're targets */

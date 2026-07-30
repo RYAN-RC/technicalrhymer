@@ -6,3 +6,6 @@ key.local.js
 build/cmudict.dict
 build/ud-raw.parquet
 build/excluded_cand.pkl
+# Company-name inputs for build_co.py (refresh commands in its docstring)
+build/sp500.csv
+build/global500.csv

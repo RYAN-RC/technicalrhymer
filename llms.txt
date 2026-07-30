@@ -1,6 +1,6 @@
 # Technical Rhymer
 
-> Rhymes by sound, not spelling. Technical Rhymer (technicalrhymer.org) looks up a word's ARPABET pronunciation, then finds every word whose pronunciation matches a phoneme pattern - perfect rhymes, slant rhymes, multi-syllable schemes. It covers the CMU Pronouncing Dictionary (~134k standard English words), 10,400+ Urban Dictionary slang terms (the top-voted 10,000 plus a commonality rescue for words whose vote records the source data lost - lmao, yeet, covid), and 2,000+ new words of the 2020s (curated through 2026), all ranked by real-world commonality.
+> Rhymes by sound, not spelling. Technical Rhymer (technicalrhymer.org) looks up a word's ARPABET pronunciation, then finds every word whose pronunciation matches a phoneme pattern - perfect rhymes, slant rhymes, multi-syllable schemes. It covers the CMU Pronouncing Dictionary (~134k standard English words), 10,400+ Urban Dictionary slang terms (the top-voted 10,000 plus a commonality rescue for words whose vote records the source data lost - lmao, yeet, covid), and 2,000+ new words of the 2020s (curated through 2026), all ranked by real-world commonality. The website additionally covers 554 modern-lexicon words that entered ordinary English 2000-2026 (non-slang: podcaster, ransomware, microplastics, gochujang) and 596 company names (the S&P 500 and the world's 500 largest public companies) - those two layers are in the website only; the API below does not serve them yet.
 
 This file is for AI assistants and developers. Everything below is free to use, no key, no signup.
 

@@ -259,7 +259,7 @@
         <span class="ic"><svg aria-hidden="true"><use href="#ic-database"></use></svg></span>
         <h2>The dictionary</h2>
       </div>
-      <p>Three layers, each honestly labeled in the UI:</p>
+      <p>Five layers, each honestly labeled in the UI:</p>
       <ul>
         <li>
           <b>CMU Pronouncing Dictionary</b> — ~135k standard-English words with curated
@@ -293,7 +293,42 @@
           validated against the live Urban Dictionary API, with hand-checked pronunciations. Urban Dictionary no longer publishes vote counts, so these carry no
           score.
         </li>
+        <li>
+          <b>The modern lexicon</b> (sky <b style="color:var(--mod)">’1x</b> badge) — 554 words that
+          entered ordinary English roughly 2000-2026 and exist in none of the layers above. This is
+          the non-slang counterpart to the set before it: <i>podcaster</i>, <i>ransomware</i>,
+          <i>microplastics</i>, <i>neurodivergent</i>, <i>gochujang</i>, <i>shrinkflation</i>,
+          <i>exoplanet</i> — newspaper and product English, not street slang. Words that are really
+          1990s natives (<i>webcam</i>, <i>malware</i>, <i>emoticon</i>) are deliberately excluded;
+          the brief was this century. The list was curated category by category and then backstopped
+          by a gap sweep: every word in wordfreq's top 120,000 that this site could not look up was
+          reviewed by hand, which is how the inflections (<i>podcasts</i>, <i>retweeted</i>) and the
+          words nobody thinks to list (<i>relatable</i>, <i>remastered</i>) got in. wordfreq's
+          corpora end around 2021, so 2022-2026 terms come from curation alone.
+        </li>
+        <li>
+          <b>Company names</b> (violet <b style="color:var(--co)">Co</b> badge) — the S&amp;P 500
+          plus the world's 500 largest public companies by market value, minus every name CMUdict
+          already had: 596 additions. Legal suffixes are dropped, because nobody says them
+          ("AbbVie", not "AbbVie Inc"), and a parenthetical alias becomes its own entry, so
+          <i>alphabet</i> and <i>google</i> both work.
+        </li>
       </ul>
+      <p>
+        Pronunciations in those last two layers are built in a deliberate order, because
+        grapheme-to-phoneme models are good at ordinary morphology and terrible at compounds and
+        proper nouns — left alone, one read <i>touchscreen</i> as
+        <code>T UW0 K S K R EY1 N</code> and <i>vloggers</i> as <code>G L AA1 V G ER0 Z</code>.
+        So: initialisms, brand coinages and loanwords are hand-written (<i>TSMC</i> letter by
+        letter, <i>Xiaomi</i> as <code>SH AW1 M IY0</code>); compounds are composed from the real
+        CMUdict pronunciations of their parts, with stress placed the way English places it — a
+        Germanic compound keeps it on the first element (TOUCH-screen) and a Latinate prefix moves
+        it onto the root (micro-PLAS-tic); inflected forms take their base pronunciation plus the
+        regular ending with voicing agreement (<i>fanbase</i> &rarr; <i>fanbases</i> adds
+        <code>IH0 Z</code>, not <code>S</code>); and only what is left goes to the model. Every
+        generated pronunciation was then read back against its word. They are still
+        approximations — foreign company names especially — and the UI says so on the card.
+      </p>
     </section>
 
     <section class="step">
@@ -303,7 +338,7 @@
       </div>
       <p>
         The site is static files — no database, no framework, no build step at runtime. All
-        dictionary data (~15&nbsp;MB across six bundles) is baked into plain JavaScript files
+        dictionary data (~15&nbsp;MB across eight bundles) is baked into plain JavaScript files
         loaded with <code>&lt;script&gt;</code> tags, which means search works offline and even
         opened directly from disk over <code>file://</code>. The heavy word-vector and WordNet
         bundles are lazy-loaded only if the offline sense filter is actually used. There are two
@@ -386,6 +421,7 @@
         <li><a href="https://www.urbandictionary.com" target="_blank" rel="noopener">Urban Dictionary</a> — slang terms, vote scores, and on-demand definitions (© their authors), via the <code>georgiyozhegov/urbandictionary-raw</code> dataset and the public API.</li>
         <li><a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> — on-demand definitions for standard words, by Wiktionary contributors (<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA</a>).</li>
         <li><a href="https://github.com/Kyubyong/g2p" target="_blank" rel="noopener">g2p_en</a> — grapheme-to-phoneme for words CMUdict doesn't know.</li>
+        <li><a href="https://github.com/datasets/s-and-p-500-companies" target="_blank" rel="noopener">S&amp;P 500 constituents</a> (Wikipedia-derived) and <a href="https://companiesmarketcap.com" target="_blank" rel="noopener">companiesmarketcap.com</a> — company names and rankings. Company names are trademarks of their owners; they appear here only as pronunciations.</li>
         <li><a href="https://lucide.dev" target="_blank" rel="noopener">Lucide</a> — icons.</li>
       </ul>
     </section>

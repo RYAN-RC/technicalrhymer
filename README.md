@@ -189,6 +189,44 @@ are g2p like the UD set, except vowel-less acronyms (`tds`, `smh`) which are
 spelled out as letter names. The source dataset ends **Nov 2023**, so 2024+
 coinages aren't included yet.
 
+### The modern lexicon (non-slang, 2000-2026)
+
+Coverage also includes **554 words that entered ordinary English this century**
+and exist in none of the layers above — `podcaster`, `ransomware`,
+`microplastics`, `neurodivergent`, `gochujang`, `shrinkflation`, `exoplanet`.
+These carry a sky **’1x** tag and a **Since 20xx** badge. This is the non-slang
+counterpart to the set above: newspaper and product English, not street slang.
+Words that are really 1990s natives (`webcam`, `malware`, `emoticon`) are
+excluded on purpose. The list was curated category by category, then backstopped
+by a gap sweep over wordfreq's top 120k — every common word the site could not
+look up was reviewed by hand, which is where the inflections (`podcasts`,
+`retweeted`) and the unglamorous ones (`relatable`, `remastered`) came from.
+wordfreq's corpora end ~2021, so 2022-2026 entries are curation only.
+
+### Company names (S&P 500 + world top 500)
+
+**596 company names** the CMU dictionary never had: the S&P 500 constituents plus
+the world's 500 largest public companies by market capitalisation, tagged
+violet **Co** with an **S&P 500 / Global 500** badge. Legal suffixes are dropped
+(`AbbVie`, not `AbbVie Inc`), accents folded (`nestle`), and a parenthetical
+alias becomes its own entry, so `alphabet` and `google` both resolve.
+
+Pronunciations for both of these layers are built in order of reliability:
+hand-written for initialisms, brand coinages and loanwords (`tsmc`, `xiaomi`,
+`rolls-royce`); **composed from CMUdict parts** for compounds, with English
+stress placement (Germanic compound → primary on the first element,
+TOUCH-screen; Latinate prefix → primary on the root, micro-PLAS-tic); base
+pronunciation **plus the regular ending** for inflections, with voicing
+agreement (`fanbases` takes `IH0 Z`, not `S`); and g2p only for what remains.
+That order exists because g2p is bad at compounds — left to itself it read
+`touchscreen` as `T UW0 K S K R EY1 N` and `vloggers` as `G L AA1 V G ER0 Z`.
+Every generated pronunciation was reviewed against its word; they are still
+approximate, especially for foreign company names, and the UI says so.
+
+**Not in the API yet.** `runcabin.com/api/rhymer` reads only the cmudict, UD and
+new-words bundles, so these two layers are website-only until the C# service
+learns to read `mod-data.js` and `co-data.js`.
+
 ## The API (for AI assistants & scripts)
 
 The site's engine also runs server-side as a **free, keyless JSON API**, so LLM
@@ -231,6 +269,8 @@ It's a standalone static site — no build step, no server required.
 | `freq-data.js`    | Per-word commonality scores (`window.CMU_FREQ`, ~100k Zipf values) |
 | `ud-data.js`      | Top 10k Urban Dictionary terms (`window.UD_DATA`: term, ARPABET, zipf, score) |
 | `new-data.js`     | Top 2k new words of the 2020s (`window.NEW_DATA`: term, ARPABET, zipf, score, year) |
+| `mod-data.js`     | Modern lexicon 2000-2026, non-slang (`window.MOD_DATA`: term, ARPABET, zipf, year, category) |
+| `co-data.js`      | S&P 500 + world top-500 company names (`window.CO_DATA`: name, ARPABET, zipf, source, rank) |
 | `vec-data.js`     | GloVe-50d int8 word vectors for the Word sense "related" filter (lazy) |
 | `lex-data.js`     | WordNet synonyms + antonyms for the Word sense "synonym/opposite" filter (lazy) |
 | `build/`          | Build scripts + sources (see below)                              |
@@ -255,6 +295,8 @@ python build_data.py     # cmudict.dict        -> cmudict-data.js (pronunciation
 python build_freq.py     # cmudict.dict        -> freq-data.js    (commonality / Zipf)
 python build_ud.py       # ud-raw.parquet      -> ud-data.js      (top 10k UD terms + zipf rescue)
 python build_new.py      # ud-raw.parquet      -> new-data.js     (top 2k new words of the 2020s)
+python build_modern.py   # curated + cmudict   -> mod-data.js     (modern lexicon 2000-2026, non-slang)
+python build_co.py       # sp500 + global500   -> co-data.js      (company names; needs the two CSVs)
 python build_vec.py      # GloVe (downloaded)  -> vec-data.js     (word vectors, Word sense)
 python build_lex.py      # WordNet (nltk)      -> lex-data.js     (synonyms/antonyms)
 ```
@@ -265,6 +307,13 @@ back to the base word for possessives (so `challenge's` isn't stranded at 0).
 rescues common words the lossy vote data missed (Zipf ≥ 3.2, or ≥ 2.4 with
 score ≥ 20), g2p's the ones not already in CMUdict (letter-spelling
 initialisms), and blends commonality as `max(wordfreq, pseudo-from-votes)`.
+
+`build_modern.py` and `build_co.py` both **skip anything already searchable**
+(cmudict + `ud-data.js` + `new-data.js`, and for companies also `mod-data.js`),
+so they never duplicate a key or churn the existing sets. `build_co.py` needs two
+CSVs that are gitignored — the fetch commands are in its docstring. Both scripts
+resolve pronunciations hand-table → CMUdict-composed compound → base + regular
+ending → g2p, in that order; see the docstrings for why.
 
 ### How slang commonality is scored
 

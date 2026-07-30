@@ -14,6 +14,10 @@
   const udGenerated = new Set(); // ud terms whose pronunciation we auto-generated
   const newInfo = new Map();   // new-this-decade term -> { year, score }
   const newGenerated = new Set(); // new terms this file added to the index (approx pron)
+  const modInfo = new Map();   // modern-lexicon term -> { year, cat }
+  const modGenerated = new Set();
+  const coInfo = new Map();    // company name -> { src, rank }
+  const coGenerated = new Set();
 
   const VOWEL_DIGIT = /[0-2]$/;
   const VOWEL_BASE = new Set(["AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER", "EY", "IH", "IY", "OW", "OY", "UH", "UW"]);
@@ -144,6 +148,17 @@
     }
     parseUD();
     parseNew();
+    parseMod();
+    parseCo();
+  }
+
+  // Add one entry to the searchable index (used by every non-CMU layer).
+  function indexEntry(term, p, z) {
+    const keyNS = stripStress(p);
+    entries.push({ w: term, p: p, key: p, keyNS: keyNS, keyF: fuzzStr(p), keyNSF: fuzzStr(keyNS), syl: sylCount(p), z: z });
+    let arr = byWord.get(term);
+    if (!arr) { arr = []; byWord.set(term, arr); }
+    arr.push(p);
   }
 
   // Top-rated Urban Dictionary terms. Line: term \t ARPABET \t zipf \t udScore.
@@ -196,6 +211,49 @@
         newGenerated.add(term);
       }
     }
+  }
+
+  // Modern lexicon: words that entered general English 2000-2026 and are in no
+  // other layer. Line: term \t ARPABET \t zipf \t year \t category.
+  function parseMod() {
+    const raw = window.MOD_DATA || "";
+    if (!raw) return;
+    const lines = raw.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const parts = lines[i].split("\t");
+      if (parts.length < 5) continue;
+      const term = parts[0];
+      const p = parts[1];
+      const z = parseFloat(parts[2]) || 0;
+      const year = parseInt(parts[3], 10) || 0;
+      modInfo.set(term, { year: year, cat: parts[4] });
+      if (!byWord.has(term) && p) { indexEntry(term, p, z); modGenerated.add(term); }
+    }
+  }
+
+  // Company names (S&P 500 + the world's 500 largest). Line:
+  // name \t ARPABET \t zipf \t source \t rank.
+  function parseCo() {
+    const raw = window.CO_DATA || "";
+    if (!raw) return;
+    const lines = raw.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const parts = lines[i].split("\t");
+      if (parts.length < 5) continue;
+      const term = parts[0];
+      const p = parts[1];
+      const z = parseFloat(parts[2]) || 0;
+      coInfo.set(term, { src: parts[3], rank: parseInt(parts[4], 10) || 0 });
+      if (!byWord.has(term) && p) { indexEntry(term, p, z); coGenerated.add(term); }
+    }
+  }
+
+  // "sp500+world500" -> "S&P 500 · Global 500"
+  function coLabel(src) {
+    const parts = [];
+    if (src.indexOf("sp500") >= 0) parts.push("S&P 500");
+    if (src.indexOf("world500") >= 0) parts.push("Global 500");
+    return parts.join(" · ");
   }
 
   function udLink(term) {
@@ -734,7 +792,9 @@
     if (!prons || !prons.length) {
       const sugg = spellSuggestions(q);
       const coverage = "This build covers the CMU Pronouncing Dictionary (standard English), " +
-        "10,000+ Urban Dictionary terms, and 2,000+ new words of the 2020s.";
+        "10,000+ Urban Dictionary terms, 2,000+ new words of the 2020s, " +
+        "500+ words this century added to the everyday lexicon, and the names of " +
+        "the S&P 500 and the world's 500 biggest companies.";
       notFound.innerHTML =
         "<b>“" + escapeHtml(q) + "”</b> isn’t in the dictionary." +
         (sugg.length
@@ -796,14 +856,27 @@
       ? ' <a class="new-badge" href="' + udLink(word) + '" target="_blank" rel="noopener" title="New this decade — mainstream since ' +
         nu.year + '">' + icon("ic-sparkles") + "New · " + nu.year + "</a>"
       : "";
+    const mo = modInfo.get(word);
+    const modBadge = mo
+      ? ' <span class="mod-badge" title="Entered general use around ' + mo.year + ' (' + mo.cat + ') — this century\'s lexicon, not slang">' +
+        icon("ic-sparkles") + "Since " + mo.year + "</span>"
+      : "";
+    const co = coInfo.get(word);
+    const coBadge = co
+      ? ' <span class="co-badge" title="' + coLabel(co.src) + " company (rank " + co.rank + ' by size)">' +
+        icon("ic-building") + coLabel(co.src) + "</span>"
+      : "";
     const udNote = (udGenerated.has(word) || newGenerated.has(word))
       ? '<div class="pron-tip ud-note">' + icon("ic-thumbs-up") +
         "From <b style=\"color:var(--muted)\">Urban Dictionary</b> — pronunciation is auto-generated and approximate.</div>"
+      : (modGenerated.has(word) || coGenerated.has(word))
+      ? '<div class="pron-tip ud-note">' + icon("ic-sparkles") +
+        "Too new for the <b style=\"color:var(--muted)\">CMU dictionary</b> — this pronunciation was written or generated for it, so treat it as approximate.</div>"
       : "";
     return (
       '<div class="pron-card" data-pron="' + escapeAttr(display) + '" data-tail="' + escapeAttr(tail) + '">' +
         '<div class="pron-top">' +
-          '<span class="pron-word">' + escapeHtml(word) + altBadge + udBadge + newBadge + "</span>" +
+          '<span class="pron-word">' + escapeHtml(word) + altBadge + udBadge + newBadge + modBadge + coBadge + "</span>" +
           '<span class="syl-badge">' + sylCount(p) + " syllable" + (sylCount(p) === 1 ? "" : "s") + "</span>" +
           '<span class="pron-actions">' +
             '<button class="icon-btn js-speak" title="Hear it">' + icon("ic-volume") + "Say</button>" +
@@ -1381,17 +1454,24 @@
     const sylTxt = e.syl + " syll";
     const isUd = udInfo.has(e.w);
     const nu = newInfo.get(e.w);
+    const mo = modInfo.get(e.w);
+    const co = coInfo.get(e.w);
     const title = (e.z > 0 ? "commonality (Zipf) " + e.z.toFixed(2) : "rare / not in frequency data") +
       " · " + sylTxt +
       (isUd ? " · Urban Dictionary" + (udInfo.get(e.w) > 0 ? " (score " + udInfo.get(e.w).toLocaleString() + ")" : "") : "") +
       (nu ? " · new this decade (mainstream since " + nu.year + ")" : "") +
+      (mo ? " · " + mo.cat + " term, in general use since " + mo.year : "") +
+      (co ? " · " + coLabel(co.src) + " company" : "") +
       (dbl ? " · rhyme repeats ×" + dbl : "") +
       (DISTS && DISTS.has(e.w) ? " · sound distance " + DISTS.get(e.w).toFixed(2) : "");
     const udTag = isUd ? ' <span class="ud-tag" title="Urban Dictionary — click for the definition">UD</span>' : "";
     const newTag = nu ? ' <span class="new-tag" title="New this decade — click for the Urban Dictionary definition">’' + String(nu.year).slice(2) + "</span>" : "";
+    // a modern-lexicon word that is not already flagged as slang
+    const modTag = (mo && !isUd && !nu) ? ' <span class="mod-tag" title="' + escapeAttr(mo.cat + " term, in general use since " + mo.year) + '">’' + String(mo.year).slice(2) + "</span>" : "";
+    const coTag = co ? ' <span class="co-tag" title="' + escapeAttr(coLabel(co.src) + " company") + '">Co</span>' : "";
     const dblTag = dbl ? ' <span class="dbl-tag">×' + dbl + "</span>" : "";
     return '<button class="word-chip' + (dbl ? " is-double" : "") + '" data-w="' + escapeAttr(e.w) + '" title="' + escapeAttr(title) + '">' +
-      '<span class="chip-row"><span class="w">' + escapeHtml(e.w) + udTag + newTag + dblTag + "</span>" +
+      '<span class="chip-row"><span class="w">' + escapeHtml(e.w) + udTag + newTag + modTag + coTag + dblTag + "</span>" +
       '<span class="p">' + pronHtml(e) + "</span></span>" +
       '<span class="freq-track"><span class="freq-fill" style="width:' + pct + '%"></span></span>' +
       "</button>";
@@ -2295,7 +2375,9 @@
         "</b> pronunciations loaded" + (ms ? " in " + ms + " ms" : "") +
         " · CMU Pronouncing Dictionary + " + udInfo.size.toLocaleString() +
         " Urban Dictionary terms + " + newInfo.size.toLocaleString() +
-        " new words of the 2020s · ranked by commonality.";
+        " new words of the 2020s + " + modInfo.size.toLocaleString() +
+        " modern words + " + coInfo.size.toLocaleString() +
+        " company names · ranked by commonality.";
       [wordInput, lookupBtn, fragInput, searchBtn].forEach((el) => el.removeAttribute("disabled"));
       initLines();   // best-lines wall — reveals itself only if the API answers
       loadTabs();
