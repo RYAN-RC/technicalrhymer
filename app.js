@@ -6,6 +6,31 @@
 (function () {
   "use strict";
 
+  // ---- where this visit came from (read before any search rewrites the URL) ----
+  // utm_source when the link carried one (ChatGPT adds utm_source=chatgpt.com),
+  // else the referring site's host. Sent with each search ping (see the search
+  // tally below) and nowhere else; empty for a direct visit.
+  const ARRIVED_FROM = (function () {
+    try {
+      const utm = new URLSearchParams(location.search).get("utm_source");
+      if (utm) return utm.trim().slice(0, 80);
+      if (document.referrer) {
+        const host = new URL(document.referrer).hostname;
+        if (host && host !== location.hostname && !/(^|\.)technicalrhymer\.org$/i.test(host)) return host;
+      }
+    } catch (e) { /* no URL API */ }
+    return "";
+  })();
+  // A random id for this page load, so one visit's searches group together.
+  // Kept in memory only: never written to localStorage or a cookie.
+  const VISIT_ID = (function () {
+    try {
+      const a = new Uint32Array(3);
+      crypto.getRandomValues(a);
+      return Array.from(a, (x) => x.toString(36).padStart(7, "0")).join("");
+    } catch (e) { return ""; }
+  })();
+
   // ---- data ----
   const entries = [];          // { w, p, key, keyNS, syl, z }
   const byWord = new Map();    // lowercased word -> [pron, pron, ...]
@@ -1674,11 +1699,14 @@
   }
   stripStress1El.addEventListener("change", () => setIgnoreStress(stripStress1El.checked));
 
-  // ---- all-time search tally (server-side, survives redeploys) ----
+  // ---- all-time search tally + search log (server-side, survives redeploys) ----
   // Counts explicit search presses (button / Enter) with something in the box.
-  // The bump is a bare POST — nothing typed is ever sent — and the site works
-  // identically when it fails (file://, backend down, endpoint not live yet):
-  // the tally simply stays hidden.
+  // Each press also sends that search so we can see what people look for: the
+  // search box, the lookup box, the page's shareable settings (?q=&m=...), where
+  // the visit came from (ARRIVED_FROM) and this page load's random id. The
+  // about page's Privacy section says exactly this; keep the two in step. Sent
+  // as text/plain so the browser skips a CORS preflight. The site works
+  // identically when it fails (file://, backend down): the tally stays hidden.
   const STATS_URL = window.RF_STATS_URL || "https://runcabin.com/api/rhymer/searches";
   const tallyEl = $("searchTally");
 
@@ -1690,7 +1718,19 @@
 
   function bumpSearchTally() {
     try {
-      fetch(STATS_URL, { method: "POST", keepalive: true })
+      const body = JSON.stringify({
+        q: fragInput.value.trim().slice(0, 300),
+        word: wordInput.value.trim().slice(0, 60),
+        params: location.search.slice(0, 500),
+        src: ARRIVED_FROM,
+        visit: VISIT_ID,
+      });
+      fetch(STATS_URL, {
+        method: "POST",
+        keepalive: true,
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body,
+      })
         .then((r) => (r.ok ? r.json() : null))
         .then((j) => { if (j) renderTally(j.count); })
         .catch(() => { /* best-effort */ });
@@ -1704,15 +1744,16 @@
       .catch(() => { /* tally stays hidden */ });
   } catch (e) { /* */ }
 
+  // doSearch first: it rewrites the address bar, which the ping sends as params.
   searchBtn.addEventListener("click", () => {
-    if (fragInput.value.trim()) bumpSearchTally();
     doSearch();
+    if (fragInput.value.trim()) bumpSearchTally();
   });
   fragInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (fragInput.value.trim()) bumpSearchTally();
       doSearch();
+      if (fragInput.value.trim()) bumpSearchTally();
     }
   });
   ignoreStressEl.addEventListener("change", () => setIgnoreStress(ignoreStressEl.checked));
