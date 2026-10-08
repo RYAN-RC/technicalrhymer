@@ -374,7 +374,70 @@
     return { type: type, segs: segs };
   }
 
+  // Spelling fallback: people arriving from a chat answer often type letters
+  // ("*top", "op*", "dog") instead of phonemes. If every part is plain letters
+  // and at least one isn't an ARPABET symbol, the box is read as SPELLING:
+  // * or % = any letters, | = all parts in any order, no operator = the match
+  // buttons (ends with / starts with / anywhere / exact). Anything with a
+  // stress digit or made only of phoneme symbols stays a phoneme query.
+  const PHONE_SET = new Set(ALL_CONSONANTS.concat(ALL_VOWELS));
+  function spelledQuery(text) {
+    const raw = text.trim();
+    if (!raw) return null;
+    const toks = raw.toUpperCase().split(/[\s*%|]+/).filter(Boolean);
+    if (!toks.length) return null;
+    if (!toks.every((t) => /^[A-Z'.\-]+$/.test(t))) return null;
+    if (toks.every((t) => PHONE_SET.has(t))) return null;
+    const lower = raw.toLowerCase().replace(/\s+/g, " ");
+    const core = lower.replace(/[*%|]/g, " ").trim().replace(/\s+/g, " ");
+    // the letters as a dictionary word, when there's exactly one part
+    const word = (toks.length === 1 && byWord.has(core)) ? core : "";
+    return { type: "spelled", segs: [], raw: lower, core: core, word: word };
+  }
+
+  function spellMatcher(sq, mode) {
+    const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (sq.raw.indexOf("|") >= 0) {
+      const parts = sq.raw.split("|").map((s) => s.trim()).filter(Boolean);
+      return (w) => parts.every((p) => w.indexOf(p) >= 0);
+    }
+    if (/[*%]/.test(sq.raw)) {
+      const parts = sq.raw.split(/[*%]/).map((s) => s.trim());
+      const re = new RegExp("^" + parts.map(esc).join(".*") + "$");
+      return (w) => re.test(w);
+    }
+    const s = sq.core;
+    if (mode === "start") return (w) => w.startsWith(s);
+    if (mode === "any") return (w) => w.indexOf(s) >= 0;
+    if (mode === "exact") return (w) => w === s;
+    return (w) => w.endsWith(s); // "end" (default)
+  }
+
+  function spelledDisplay(sq, mode) {
+    const r = sq.raw;
+    if (r.indexOf("|") >= 0) return "spelled with " + r.split("|").map((s) => "“" + s.trim() + "”").join(" and ");
+    if (/[*%]/.test(r)) {
+      const lead = /^[*%]/.test(r), trail = /[*%]$/.test(r);
+      if (lead && !trail && !/[*%]/.test(r.slice(1))) return "spelled ending in “" + sq.core + "”";
+      if (trail && !lead && !/[*%]/.test(r.slice(0, -1))) return "spelled starting with “" + sq.core + "”";
+      return "spelled like “" + r + "”";
+    }
+    if (mode === "start") return "spelled starting with “" + sq.core + "”";
+    if (mode === "any") return "spelled with “" + sq.core + "”";
+    if (mode === "exact") return "spelled “" + sq.core + "”";
+    return "spelled ending in “" + sq.core + "”";
+  }
+
+  // the sound tail to offer for a spelled word ("top" -> "AA P")
+  function soundTailFor(word, ignoreStress) {
+    const prons = word ? byWord.get(word) : null;
+    if (!prons || !prons.length) return "";
+    const t = rhymeTail(prons[0]);
+    return ignoreStress ? stripStress(t) : t;
+  }
+
   function queryDisplay(q) {
+    if (q.type === "spelled") return q.disp || q.raw;
     const parts = q.segs.map((s) => s.join(" "));
     if (q.type === "ordered") return parts.join(" * ");
     if (q.type === "unordered") return parts.join(" | ");
@@ -633,6 +696,29 @@
     const ignoreStress = opts.ignoreStress;
     const fuzzy = opts.fuzzy;
     const mode = opts.mode;
+    const sq = spelledQuery(rawFrag);
+    if (sq) {
+      sq.disp = spelledDisplay(sq, mode);
+      sq.soundTail = soundTailFor(sq.word, ignoreStress);
+      if (mode === "near" && sq.word) {
+        // sounds like a real word: run sounds-like on its pronunciation
+        const toks = stripStress(byWord.get(sq.word)[0]).split(" ");
+        const dists = new Map(), out = [], seen = new Set();
+        soundsLikePass(toks).forEach((h) => {
+          if (seen.has(h.e.w)) { if (h.d < dists.get(h.e.w)) dists.set(h.e.w, h.d); return; }
+          seen.add(h.e.w); out.push(h.e); dists.set(h.e.w, h.d);
+        });
+        sq.disp = "that sound like “" + sq.word + "”";
+        return { results: out, q: sq, doubles: new Map(), dists: dists };
+      }
+      const hit = spellMatcher(sq, mode === "near" ? "any" : mode);
+      const out = [], seen = new Set();
+      for (let i = 0; i < entries.length; i++) {
+        const e = entries[i];
+        if (!seen.has(e.w) && hit(e.w)) { seen.add(e.w); out.push(e); }
+      }
+      return { results: out, q: sq, doubles: new Map() };
+    }
     const q = parseQuery(rawFrag, ignoreStress);
     if (!q) return { results: [], q: null };
     // fuzz the query for matching, but keep q.segs (originals) for display
@@ -1348,14 +1434,14 @@
   }
 
   function tabTitle(tab) {
-    const q = parseQuery(tab.raw, tab.ignoreStress);
+    const q = spelledQuery(tab.raw) || parseQuery(tab.raw, tab.ignoreStress);
     let s = q ? queryDisplay(q) : (tab.raw || "").toUpperCase().trim();
     if (tab.fuzzy) s += " ~";
     return s.length > 22 ? s.slice(0, 21) + "…" : s;
   }
 
   function tabTooltip(tab) {
-    const q = parseQuery(tab.raw, tab.ignoreStress);
+    const q = spelledQuery(tab.raw) || parseQuery(tab.raw, tab.ignoreStress);
     const s = q ? queryDisplay(q) : (tab.raw || "");
     const bits = [tab.mode, tab.fuzzy ? "fuzzy" : null, tab.ignoreStress ? "ignore-stress" : "with-stress", tab.sort];
     return s + "  [" + bits.filter(Boolean).join(" · ") + "]";
@@ -1527,6 +1613,25 @@
     const near = ctx.mode === "near";
     const doubles = (ctx.doubles instanceof Map) ? ctx.doubles : new Map();
     const disp = q ? queryDisplay(q) : "";
+    const spelled = !!(q && q.type === "spelled");
+    // spelled queries: say how the box read them, and offer the sound version
+    const soundChip = (spelled && q.soundTail)
+      ? '<button type="button" class="ex-chip ex-frag" data-frag="' + escapeAttr(q.soundTail) +
+        '" title="Search by sound: ' + escapeAttr(q.soundTail) + '">Rhymes with “' + escapeHtml(q.word) + "” by sound</button>"
+      : "";
+    const spellNote = spelled
+      ? '<div class="spell-note">Read as spelling. This box also takes sounds (phonemes, e.g. ' +
+        "<span class=\"frag\">AA P</span>); look a word up above to get its sounds." +
+        (soundChip ? '<div class="empty-actions">' + soundChip + "</div>" : "") + "</div>"
+      : "";
+    if (!matches.length && spelled) {
+      resultsEl.innerHTML =
+        '<div class="results-meta">No words ' + escapeHtml(disp) + "</div>" +
+        '<div class="empty">Try fewer letters, or put <b>*</b> where any letters can go (<b>*top</b> = ends in “top”, <b>op*</b> = starts with “op”).' +
+        (soundChip ? '<div class="empty-actions">' + soundChip + "</div>" : "") + "</div>";
+      if (announceEl) announceEl.textContent = "No words " + disp;
+      return;
+    }
     if (!matches.length) {
       const hint = ctx.sense
         ? "No rhymes are <b>" + escapeHtml(ctx.sense.rel) + "</b> to “<b>" + escapeHtml(ctx.sense.w) +
@@ -1596,7 +1701,8 @@
     const meta =
       '<div class="results-meta">' + icon("ic-list") +
       "<span><b style=\"color:var(--text)\">" + total.toLocaleString() + "</b> match" + (total === 1 ? "" : "es") +
-      " for <span class=\"frag\">" + escapeHtml(disp) + "</span> · " + sortLabel + fuzzNote + nearNote + senseNote + "</span>" +
+      (spelled ? " · words " + escapeHtml(disp) : " for <span class=\"frag\">" + escapeHtml(disp) + "</span>") +
+      " · " + sortLabel + (spelled ? "" : fuzzNote) + nearNote + senseNote + "</span>" +
       '<button type="button" class="icon-btn js-copy-list" title="Copy the listed words, one per line">' +
       icon("ic-copy") + "Copy list</button></div>";
 
@@ -1615,10 +1721,10 @@
     if (singleList.length > RENDER_CAP) {
       note = '<div class="more-note">Showing the ' +
         (sort === "common" ? "most common " : "first ") + RENDER_CAP.toLocaleString() +
-        " of " + singleList.length.toLocaleString() + ". Add more phonemes to narrow it down.</div>";
+        " of " + singleList.length.toLocaleString() + ". Add more " + (spelled ? "letters" : "phonemes") + " to narrow it down.</div>";
     }
 
-    resultsEl.innerHTML = meta + dblSection + body + note;
+    resultsEl.innerHTML = meta + spellNote + dblSection + body + note;
     HL = null;
     DISTS = null;
     lastWords = doubleList.slice(0, RENDER_CAP).concat(singleList.slice(0, RENDER_CAP)).map((e) => e.w);

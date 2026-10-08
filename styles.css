@@ -709,6 +709,15 @@ button.btn.ghost:hover { background: var(--surface-3); filter: none; }
 }
 .empty .ex-frag { font-family: var(--mono); letter-spacing: 0.02em; }
 
+/* a search read as spelling: how the box read it + the sound version */
+.spell-note {
+  font-size: 13px;
+  color: var(--muted);
+  margin: -4px 0 14px;
+}
+.spell-note .frag { font-family: var(--mono); }
+.spell-note .empty-actions { justify-content: flex-start; margin-top: 8px; }
+
 /* ---------- slant-rhyme (fuzzy) group editor ---------- */
 #fuzzyCfg { padding: 4px 7px; }
 #fuzzyCfg svg { width: 14px; height: 14px; }
