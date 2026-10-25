@@ -395,6 +395,62 @@
     return { type: "spelled", segs: [], raw: lower, core: core, word: word };
   }
 
+  // Mixed input: people often type sounds and words together ("OW rhyme") or
+  // ask in words ("rhymes with bone"). Both used to fall through to spelling
+  // and find nothing. Returns null for anything else, or { frag, mode, note }:
+  // the box re-read as a plain phoneme query, and a line saying how.
+  const RHYME_WORDS = new Set(["rhyme", "rhymes", "rhyming", "rhymed"]);
+  const FILLER_WORDS = new Set(["with", "for", "words", "word", "that", "which", "what", "the",
+    "a", "an", "to", "like", "of", "find", "give", "me", "sound", "sounds", "ending", "in", "on", "and"]);
+  function mixedQuery(text, mode, ignoreStress) {
+    const raw = text.trim();
+    if (!raw) return null;
+    const toks = raw.replace(/([*%|])/g, " $1 ").split(/\s+/).filter(Boolean);
+    const isOp = (t) => t === "*" || t === "%" || t === "|";
+    const isPhone = (t) => PHONE_SET.has(t.toUpperCase().replace(/[0-2]$/, ""));
+    // a sound the person meant as a sound: typed in capitals, or with a stress digit
+    const isTypedPhone = (t) => isPhone(t) && (t === t.toUpperCase() || /[0-2]$/.test(t));
+    const isWord = (t) => /^[A-Za-z'.\-]+$/.test(t) && !isPhone(t);
+
+    // "OW rhyme", "B OW N bone": keep the sounds, leave the words out
+    if (toks.some(isTypedPhone) && toks.some(isWord)) {
+      if (!toks.every((t) => isOp(t) || isPhone(t) || isWord(t))) return null;
+      const dropped = toks.filter(isWord);
+      const frag = toks.filter((t) => !isWord(t)).join(" ").toUpperCase()
+        .replace(/^[\s*%|]+|[\s*%|]+$/g, "").replace(/\s+/g, " ").trim();
+      if (!frag) return null;
+      const left = dropped.map((w) => "“" + escapeHtml(w) + "”").join(", ");
+      return {
+        frag: frag, mode: mode,
+        note: 'Searched the sounds <span class="frag">' + escapeHtml(frag) + "</span> and left out " + left +
+          ". This box takes sounds or spelling, one at a time.",
+      };
+    }
+
+    // "rhymes with bone", "what rhymes with orange?", "bone rhymes"
+    if (/[*%|]/.test(raw)) return null;
+    const words = raw.toLowerCase().replace(/[?!,"“”]/g, " ").split(/\s+/).filter(Boolean);
+    if (!words.some((w) => RHYME_WORDS.has(w))) return null;
+    const rest = words.filter((w) => !RHYME_WORDS.has(w) && !FILLER_WORDS.has(w));
+    if (rest.length !== 1 || !byWord.has(rest[0])) return null;
+    const word = rest[0];
+    if (mode === "near") {
+      const whole = stripStress(byWord.get(word)[0]);
+      return {
+        frag: whole, mode: "near",
+        note: "Read as words that sound like “" + escapeHtml(word) + "” (" +
+          '<span class="frag">' + escapeHtml(whole) + "</span>).",
+      };
+    }
+    const tail = soundTailFor(word, ignoreStress);
+    if (!tail) return null;
+    return {
+      frag: tail, mode: "end",
+      note: "Read as rhymes with “" + escapeHtml(word) + "”: words ending in its rhyme sound " +
+        '<span class="frag">' + escapeHtml(tail) + "</span>.",
+    };
+  }
+
   function spellMatcher(sq, mode) {
     const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (sq.raw.indexOf("|") >= 0) {
@@ -696,6 +752,12 @@
     const ignoreStress = opts.ignoreStress;
     const fuzzy = opts.fuzzy;
     const mode = opts.mode;
+    const mq = mixedQuery(rawFrag, mode, ignoreStress);
+    if (mq) {
+      const r = search(mq.frag, { ignoreStress: ignoreStress, fuzzy: fuzzy, mode: mq.mode });
+      if (r.q) r.q.mixNote = mq.note;
+      return r;
+    }
     const sq = spelledQuery(rawFrag);
     if (sq) {
       sq.disp = spelledDisplay(sq, mode);
@@ -1433,15 +1495,23 @@
     resultsEl.scrollIntoView({ behavior: SMOOTH, block: "nearest" });
   }
 
+  // the box as search() will read it: mixed input becomes its sounds
+  function tabQueryText(tab) {
+    const mq = mixedQuery(tab.raw || "", tab.mode, tab.ignoreStress);
+    return mq ? mq.frag : tab.raw;
+  }
+
   function tabTitle(tab) {
-    const q = spelledQuery(tab.raw) || parseQuery(tab.raw, tab.ignoreStress);
+    const raw = tabQueryText(tab);
+    const q = spelledQuery(raw) || parseQuery(raw, tab.ignoreStress);
     let s = q ? queryDisplay(q) : (tab.raw || "").toUpperCase().trim();
     if (tab.fuzzy) s += " ~";
     return s.length > 22 ? s.slice(0, 21) + "…" : s;
   }
 
   function tabTooltip(tab) {
-    const q = spelledQuery(tab.raw) || parseQuery(tab.raw, tab.ignoreStress);
+    const raw = tabQueryText(tab);
+    const q = spelledQuery(raw) || parseQuery(raw, tab.ignoreStress);
     const s = q ? queryDisplay(q) : (tab.raw || "");
     const bits = [tab.mode, tab.fuzzy ? "fuzzy" : null, tab.ignoreStress ? "ignore-stress" : "with-stress", tab.sort];
     return s + "  [" + bits.filter(Boolean).join(" · ") + "]";
@@ -1614,6 +1684,8 @@
     const doubles = (ctx.doubles instanceof Map) ? ctx.doubles : new Map();
     const disp = q ? queryDisplay(q) : "";
     const spelled = !!(q && q.type === "spelled");
+    // mixed input re-read as sounds (mixedQuery): say how the box read it
+    const mixNote = (q && q.mixNote) ? '<div class="spell-note">' + q.mixNote + "</div>" : "";
     // spelled queries: say how the box read them, and offer the sound version
     const soundChip = (spelled && q.soundTail)
       ? '<button type="button" class="ex-chip ex-frag" data-frag="' + escapeAttr(q.soundTail) +
@@ -1655,7 +1727,7 @@
         }
       }
       resultsEl.innerHTML =
-        '<div class="results-meta">No matches for <span class="frag">' + escapeHtml(disp) + "</span></div>" +
+        '<div class="results-meta">No matches for <span class="frag">' + escapeHtml(disp) + "</span></div>" + mixNote +
         '<div class="empty">' + hint +
         (acts.length ? '<div class="empty-actions">' + acts.join("") + "</div>" : "") + "</div>";
       if (announceEl) announceEl.textContent = "No matches for " + disp;
@@ -1724,7 +1796,7 @@
         " of " + singleList.length.toLocaleString() + ". Add more " + (spelled ? "letters" : "phonemes") + " to narrow it down.</div>";
     }
 
-    resultsEl.innerHTML = meta + spellNote + dblSection + body + note;
+    resultsEl.innerHTML = meta + mixNote + spellNote + dblSection + body + note;
     HL = null;
     DISTS = null;
     lastWords = doubleList.slice(0, RENDER_CAP).concat(singleList.slice(0, RENDER_CAP)).map((e) => e.w);
