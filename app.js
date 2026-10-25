@@ -397,8 +397,10 @@
 
   // Mixed input: people often type sounds and words together ("OW rhyme") or
   // ask in words ("rhymes with bone"). Both used to fall through to spelling
-  // and find nothing. Returns null for anything else, or { frag, mode, note }:
-  // the box re-read as a plain phoneme query, and a line saying how.
+  // and find nothing. Returns null for anything else, or { frag, mode, word, note }:
+  // the box re-read as a plain phoneme query, the word to show in the lookup
+  // box (or ""), and a line saying how. On a search press doSearch() rewrites
+  // the boxes to frag/word, so the note quotes what was typed.
   const RHYME_WORDS = new Set(["rhyme", "rhymes", "rhyming", "rhymed"]);
   const FILLER_WORDS = new Set(["with", "for", "words", "word", "that", "which", "what", "the",
     "a", "an", "to", "like", "of", "find", "give", "me", "sound", "sounds", "ending", "in", "on", "and"]);
@@ -411,19 +413,18 @@
     // a sound the person meant as a sound: typed in capitals, or with a stress digit
     const isTypedPhone = (t) => isPhone(t) && (t === t.toUpperCase() || /[0-2]$/.test(t));
     const isWord = (t) => /^[A-Za-z'.\-]+$/.test(t) && !isPhone(t);
+    const typed = "“" + escapeHtml(raw.length > 60 ? raw.slice(0, 59) + "…" : raw) + "”";
 
     // "OW rhyme", "B OW N bone": keep the sounds, leave the words out
     if (toks.some(isTypedPhone) && toks.some(isWord)) {
       if (!toks.every((t) => isOp(t) || isPhone(t) || isWord(t))) return null;
-      const dropped = toks.filter(isWord);
       const frag = toks.filter((t) => !isWord(t)).join(" ").toUpperCase()
         .replace(/^[\s*%|]+|[\s*%|]+$/g, "").replace(/\s+/g, " ").trim();
       if (!frag) return null;
-      const left = dropped.map((w) => "“" + escapeHtml(w) + "”").join(", ");
       return {
-        frag: frag, mode: mode,
-        note: 'Searched the sounds <span class="frag">' + escapeHtml(frag) + "</span> and left out " + left +
-          ". This box takes sounds or spelling, one at a time.",
+        frag: frag, mode: mode, word: "",
+        note: "Read " + typed + ' as the sounds <span class="frag">' + escapeHtml(frag) +
+          "</span>. This box takes sounds or spelling, one at a time.",
       };
     }
 
@@ -437,16 +438,16 @@
     if (mode === "near") {
       const whole = stripStress(byWord.get(word)[0]);
       return {
-        frag: whole, mode: "near",
-        note: "Read as words that sound like “" + escapeHtml(word) + "” (" +
+        frag: whole, mode: "near", word: word,
+        note: "Read " + typed + " as words that sound like “" + escapeHtml(word) + "” (" +
           '<span class="frag">' + escapeHtml(whole) + "</span>).",
       };
     }
     const tail = soundTailFor(word, ignoreStress);
     if (!tail) return null;
     return {
-      frag: tail, mode: "end",
-      note: "Read as rhymes with “" + escapeHtml(word) + "”: words ending in its rhyme sound " +
+      frag: tail, mode: "end", word: word,
+      note: "Read " + typed + " as the rhyme sound of “" + escapeHtml(word) + "”: words ending in " +
         '<span class="frag">' + escapeHtml(tail) + "</span>.",
     };
   }
@@ -1130,6 +1131,18 @@
   // running a search (or changing any control) drives the LIVE tab and shows it
   function doSearch() {
     const live = tabs[0];
+    // mixed input ("rhymes with bone", "OW rhyme"): put what will be searched
+    // in the boxes (OW N here, bone in the lookup, Ends with), so the sounds
+    // are there to see and edit; the note keeps what was typed
+    const mq = mixedQuery(fragInput.value, mode, ignoreStressEl.checked);
+    if (mq) {
+      fragInput.value = mq.frag;
+      autoGrow();
+      syncClearBtns();
+      if (mq.mode !== mode) { mode = mq.mode; setSeg(matchBtns, "data-mode", mode); savePrefs(); }
+      if (mq.word) { wordInput.value = mq.word; doLookup(false); }
+    }
+    live.mixNote = mq ? mq.note : "";
     live.raw = fragInput.value;
     live.mode = mode;
     live.fuzzy = fuzzyEl.checked;
@@ -1475,6 +1488,7 @@
       return;
     }
     const found = search(tab.raw, { ignoreStress: tab.ignoreStress, mode: tab.mode, fuzzy: tab.fuzzy });
+    if (tab.mixNote && found.q && !found.q.mixNote) found.q.mixNote = tab.mixNote;
     const sense = tab.sense;
 
     if (sense && sense.word) {
@@ -1894,10 +1908,11 @@
     tallyEl.hidden = false;
   }
 
-  function bumpSearchTally() {
+  // typed = the box as the person typed it; doSearch() may have rewritten it since
+  function bumpSearchTally(typed) {
     try {
       const body = JSON.stringify({
-        q: fragInput.value.trim().slice(0, 300),
+        q: (typed || fragInput.value).trim().slice(0, 300),
         word: wordInput.value.trim().slice(0, 60),
         params: location.search.slice(0, 500),
         src: ARRIVED_FROM,
@@ -1923,15 +1938,18 @@
   } catch (e) { /* */ }
 
   // doSearch first: it rewrites the address bar, which the ping sends as params.
+  // The typed text is read first: doSearch can rewrite mixed input to sounds.
   searchBtn.addEventListener("click", () => {
+    const typed = fragInput.value;
     doSearch();
-    if (fragInput.value.trim()) bumpSearchTally();
+    if (typed.trim()) bumpSearchTally(typed);
   });
   fragInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      const typed = fragInput.value;
       doSearch();
-      if (fragInput.value.trim()) bumpSearchTally();
+      if (typed.trim()) bumpSearchTally(typed);
     }
   });
   ignoreStressEl.addEventListener("change", () => setIgnoreStress(ignoreStressEl.checked));
