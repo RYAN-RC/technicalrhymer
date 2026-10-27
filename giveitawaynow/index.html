@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Give It Away Now</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="A race where billionaires advance by giving their fortunes away. The richest are nowhere near the finish line.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a night race meeting. Tote-board header, turf lanes, chalk lines, a checkered finish. One deliberate dark look. */
+:root {
+  --night: #0c1c15;
+  --turf: #143826;
+  --turf-alt: #184130;
+  --chalk: #f3efe4;
+  --muted: #a7bcb0;
+  --line: rgba(243, 239, 228, .16);
+  --amber: #ffb627;
+  --amber-ink: #241a00;
+  --good: #5bd08a;
+  --bad: #ff6b5e;
+  --rep: #ff5d5d;
+  --dem: #5b9bff;
+  --display: "Bowlby One", "Arial Black", Impact, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--night);
+  color: var(--chalk);
+  font: 16px/1.5 var(--body);
+}
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+a { color: var(--amber); }
+:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+
+/* Header / tote board */
+header { padding-block: 28px 8px; }
+.brand {
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 7vw, 4.6rem);
+  line-height: .95;
+  letter-spacing: .01em;
+  margin: 0;
+  text-wrap: balance;
+}
+.brand span { color: var(--amber); }
+.dek { color: var(--muted); max-width: 62ch; margin: 12px 0 0; font-size: 1.05rem; }
+
+nav.tabs {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin: 24px 0 0; padding: 0; list-style: none;
+}
+nav.tabs a {
+  display: inline-block; text-decoration: none;
+  font: 600 .82rem/1 var(--mono); text-transform: uppercase; letter-spacing: .08em;
+  color: var(--chalk); border: 1px solid var(--line);
+  padding: 11px 14px; border-radius: 3px;
+}
+nav.tabs a[aria-current="page"] { background: var(--amber); color: var(--amber-ink); border-color: var(--amber); }
+
+main { padding-block: 20px 40px; }
+section h2 {
+  font-family: var(--display); font-weight: 400;
+  font-size: clamp(1.5rem, 4vw, 2.2rem); line-height: 1.05;
+  margin: 8px 0 6px; text-wrap: balance;
+}
+.lede { color: var(--muted); max-width: 66ch; margin: 0 0 18px; }
+
+/* Controls */
+.controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 14px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+.seg button {
+  font: 600 .78rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em;
+  background: transparent; color: var(--chalk); border: 0; padding: 10px 12px; cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: var(--chalk); color: var(--night); }
+.toggle { display: inline-flex; gap: 8px; align-items: center; font-size: .92rem; cursor: pointer; }
+.toggle input { width: 18px; height: 18px; accent-color: var(--amber); }
+.toggle em { font-style: normal; font: 600 .66rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--amber-ink); background: var(--amber); padding: 3px 5px; border-radius: 2px; }
+
+/* Race */
+.race { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--chalk); border-bottom: 2px solid var(--chalk); }
+.lane {
+  display: grid; grid-template-columns: 250px 1fr; align-items: stretch;
+  background: var(--turf);
+  border-bottom: 1px dashed var(--line);
+}
+.lane:nth-child(even) { background: var(--turf-alt); }
+.lane:last-child { border-bottom: 0; }
+.who { display: flex; gap: 10px; padding: 10px 12px; align-items: center; border-right: 1px solid var(--line); min-width: 0; }
+.post {
+  flex: none; width: 26px; height: 26px; display: grid; place-items: center;
+  font: 600 .8rem/1 var(--mono); color: var(--night); background: var(--chalk); border-radius: 2px;
+}
+.who-text { min-width: 0; display: grid; gap: 2px; }
+.who b { font-size: 1rem; line-height: 1.2; }
+.meta { font: .74rem/1.35 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.like {
+  justify-self: start; font: 600 .7rem/1 var(--mono); padding: 4px 6px; border-radius: 2px;
+  border: 1px solid currentColor; font-variant-numeric: tabular-nums;
+}
+.like.pos { color: var(--good); }
+.like.neg { color: var(--bad); }
+.like.none { color: var(--muted); border-style: dashed; font-weight: 400; }
+.hide-like .like { display: none; }
+
+.track { position: relative; min-height: 64px; margin-right: 22px; }
+.track::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: linear-gradient(to right, var(--line) 1px, transparent 1px);
+  background-size: 25% 100%;
+}
+.finish {
+  position: absolute; top: 0; bottom: 0; right: -22px; width: 22px;
+  background:
+    conic-gradient(var(--chalk) 25%, var(--night) 0 50%, var(--chalk) 0 75%, var(--night) 0) 0 0 / 11px 11px;
+}
+.runner {
+  position: absolute; top: 50%;
+  left: calc((100% - 46px) * var(--p, 0));
+  transform: translateY(-50%);
+  display: flex; align-items: center; gap: 6px;
+  transition: left 1.6s cubic-bezier(.2, .7, .2, 1);
+}
+.runner.flip { flex-direction: row-reverse; }
+.runner svg { width: 46px; height: 46px; flex: none; animation: bob .5s ease-in-out infinite alternate; filter: drop-shadow(0 2px 0 rgba(0,0,0,.35)); }
+.runner.stalled svg { animation-duration: 1.6s; }
+.pct {
+  font: 600 .9rem/1 var(--mono); background: var(--night); color: var(--chalk);
+  padding: 4px 6px; border-radius: 2px; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+@keyframes bob { from { transform: translateY(-2px); } to { transform: translateY(2px); } }
+
+.scale { display: grid; grid-template-columns: 250px 1fr; margin-top: 6px; }
+.scale ol { list-style: none; margin: 0 22px 0 0; padding: 0; display: flex; justify-content: space-between; font: .7rem/1 var(--mono); color: var(--muted); }
+.scale .lbl { font: .7rem/1 var(--mono); color: var(--muted); padding-left: 12px; }
+
+.callout {
+  margin: 22px 0 0; padding: 14px 16px; border-left: 4px solid var(--amber);
+  background: rgba(255, 182, 39, .08); max-width: 72ch;
+}
+.callout p { margin: 0; }
+.callout p + p { margin-top: 6px; color: var(--muted); font-size: .92rem; }
+
+/* Boards (loudest / control) */
+.board { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.row {
+  display: grid; grid-template-columns: 40px 52px 1fr; gap: 12px; align-items: start;
+  padding: 14px; background: var(--turf); border-radius: 3px;
+}
+.row .place { font-family: var(--display); font-size: 1.6rem; line-height: 1; color: var(--amber); }
+.row svg { width: 52px; height: 52px; }
+.row-body { min-width: 0; }
+.row-body h3 { margin: 0; font-size: 1.1rem; }
+.reach { margin: 4px 0 0; font: 600 1.05rem/1.3 var(--mono); color: var(--chalk); }
+.reach small { display: block; font-weight: 400; font-size: .76rem; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+.chips li { font-size: .8rem; padding: 3px 8px; border: 1px solid var(--line); border-radius: 999px; }
+.note { margin: 8px 0 0; color: var(--muted); font-size: .88rem; }
+.flag { font: 600 .64rem/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); }
+
+.cols { display: grid; grid-template-columns: 1.15fr 1fr; gap: 28px; align-items: start; }
+.cols > div { min-width: 0; }
+h3.sub { font-family: var(--display); font-weight: 400; font-size: 1.25rem; margin: 0 0 4px; }
+.bars { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.bar { display: grid; grid-template-columns: 150px 1fr; gap: 10px; align-items: center; }
+.bar .nm { font-size: .9rem; line-height: 1.2; }
+.bar .fill-wrap { position: relative; height: 28px; }
+.bar .fill { height: 100%; border-radius: 2px; min-width: 3px; }
+.bar .fill.R { background: var(--rep); }
+.bar .fill.D { background: var(--dem); }
+.bar .amt {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  font: 600 .8rem/1 var(--mono); white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.legend { display: flex; gap: 14px; font: .74rem/1 var(--mono); color: var(--muted); margin-top: 10px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+footer { border-top: 1px solid var(--line); padding-block: 22px 40px; color: var(--muted); font-size: .86rem; }
+footer h2 { font: 600 .74rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--chalk); margin: 0 0 10px; }
+footer ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; max-width: 80ch; }
+footer p { max-width: 72ch; }
+
+@media (max-width: 720px) {
+  .lane, .scale { grid-template-columns: 1fr; }
+  .who { border-right: 0; border-bottom: 1px solid var(--line); }
+  .scale .lbl { display: none; }
+  .track { margin-left: 8px; }
+  .cols { grid-template-columns: 1fr; }
+  .bar { grid-template-columns: 110px 1fr; }
+  .row { grid-template-columns: 30px 44px 1fr; gap: 10px; }
+  .row svg { width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .runner { transition: none; }
+  .runner svg { animation: none; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1 class="brand">Give It Away <span>Now</span></h1>
+    <p class="dek">A race where the world's richest people move forward only by giving their money away. The finish line is a fortune given away in full. Most of the richest have barely left the gate.</p>
+    <nav class="tabs" aria-label="Boards">
+      <a href="#race" data-tab="race">The race</a>
+      <a href="#loudest" data-tab="loudest">Loudest</a>
+      <a href="#control" data-tab="control">Who wants to control you</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="view-race" data-view="race">
+      <h2>The race to give it away</h2>
+      <p class="lede">Track position is the share of each fortune given to charity so far: lifetime giving divided by giving plus current net worth, the same method Forbes uses. The finish line is 100%.</p>
+
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Order lanes">
+          <button type="button" id="sort-giving" aria-pressed="true">Leaders first</button>
+          <button type="button" id="sort-wealth" aria-pressed="false">Richest first</button>
+        </div>
+        <label class="toggle" for="show-like"><input type="checkbox" id="show-like" checked> Show how much the public likes them <em>Experiment</em></label>
+      </div>
+
+      <ol class="race" id="race"></ol>
+      <div class="scale" aria-hidden="true">
+        <span class="lbl">Share given away</span>
+        <ol><li>0%</li><li>25%</li><li>50%</li><li>75%</li><li>100%</li></ol>
+      </div>
+
+      <div class="callout">
+        <p><strong>Elon Musk and Larry Page are the two richest people in the world. In this race they are last and second to last.</strong> In 2025 alone, MacKenzie Scott gave away $7.2B. Forbes reports that is more than Musk, Page, Larry Ellison and Jeff Bezos have given across their whole lives.</p>
+        <p>Likeability is net favorability (favorable minus unfavorable) from a Reuters/Ipsos poll of US adults in February 2025. A YouGov/Economist poll in February 2026 found Buffett was still the only one of seven billionaires with a positive rating. People with no recent national poll say so.</p>
+      </div>
+    </section>
+
+    <section id="view-loudest" data-view="loudest" hidden>
+      <h2>Loudest: who holds the biggest megaphone</h2>
+      <p class="lede">The audience each billionaire owns or controls through platforms and news outlets. This measures reach, not intent. What they do with it is for you to judge. Units differ (daily users, monthly users, site visits), so each figure states its unit.</p>
+      <ol class="board" id="loudest"></ol>
+    </section>
+
+    <section id="view-control" data-view="control" hidden>
+      <h2>Who wants to control you</h2>
+      <p class="lede">Two kinds of control: money spent to decide who governs you, and ownership of the feeds and data systems that shape what you see and what is known about you. Both parties' megadonors are included.</p>
+      <div class="cols">
+        <div>
+          <h3 class="sub">Buying the vote</h3>
+          <p class="note">Personal contributions in the 2024 US federal election cycle, mostly through super PACs. Bars are to scale.</p>
+          <ul class="bars" id="bars"></ul>
+          <div class="legend"><span><i style="background:var(--rep)"></i>Mostly Republican</span><span><i style="background:var(--dem)"></i>Mostly Democratic</span></div>
+        </div>
+        <div>
+          <h3 class="sub">Owning the feed</h3>
+          <p class="note">Who runs the systems that rank your news feed, store your data, or sell analysis of it to governments.</p>
+          <ol class="board" id="feeds"></ol>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <h2>Sources and method</h2>
+    <p>Figures were checked on 27 October 2026. Net worth moves daily, so treat every number as an estimate. Figures marked <span class="flag">calc</span> are computed here from the sources listed. Figures marked <span class="flag">bound</span> are an upper limit, not an exact amount.</p>
+    <ol id="sources"></ol>
+  </footer>
+</div>
+
+<script>
+const SRC = {
+  f400: { t: "Forbes 400 Philanthropy Score 2026 (Sep 2026)", u: "https://www.forbes.com/sites/gigizamora/2026/09/16/americas-400-richest-people-have-donated-just-4-of-their-wealth-to-charity/" },
+  ftop25: { t: "Forbes, America's Top 25 Philanthropists (Feb 2026)", u: "https://www.forbes.com/sites/forbeswealthteam/2026/02/09/americas-top-25-philanthropists---and-why-musk-page-and-ellison-arent-on-the-list/" },
+  frt: { t: "Forbes Real-Time Billionaires (late Oct 2026)", u: "https://www.forbes.com/real-time-billionaires/" },
+  fwb: { t: "Forbes World's Billionaires 2026 (Mar 2026)", u: "https://www.forbes.com/sites/chasewithorn/2026/03/10/forbes-worlds-billionaires-list-2026-the-top-200/" },
+  fgates: { t: "Forbes profile: Bill Gates", u: "https://www.forbes.com/profile/bill-gates/" },
+  f25: { t: "Forbes, Top givers 2025 (Bezos lifetime giving)", u: "https://www.forbes.com/sites/ellamalmgren/2025/09/09/americas-richest-billionaires-keep-getting-richer-theyre-not-donating-much-more/" },
+  musk006: { t: "IBTimes on Forbes: Musk has given 0.06% of his fortune", u: "https://www.ibtimes.co.uk/elon-musk-worlds-richest-man-has-donated-just-006-his-fortune-charity-1778118" },
+  ipsos: { t: "Visual Capitalist: How popular are America's richest billionaires (Reuters/Ipsos, Feb 2025)", u: "https://www.visualcapitalist.com/charted-how-popular-are-americas-richest-billionaires/" },
+  yougov: { t: "Economist/YouGov poll, Feb 2026", u: "https://yougov.com/en-us/articles/54079-few-americans-want-increase-overall-government-spending-many-support-spending-more-specific-areas-february-6-9-2026-economist-yougov-poll" },
+  usnews: { t: "US News: Biggest political donors of the 2024 election (OpenSecrets data)", u: "https://www.usnews.com/news/elections/articles/2024-11-05/the-biggest-political-donors-of-the-2024-election" },
+  cbs: { t: "CBS News: Trump megadonors in 2024", u: "https://www.cbsnews.com/news/trump-megadonors-2024-election/" },
+  newsweek: { t: "Newsweek: Musk's political donations vs the top 10", u: "https://www.newsweek.com/elon-musk-political-donations-2077299" },
+  xmau: { t: "X user statistics 2026 (citing SpaceX S-1, May 2026)", u: "https://countly.net/how-many-x-users-are-there-in-2026-global-by-country-193c" },
+  owners: { t: "The Crosscheck: Who owns the news (May 2026)", u: "https://thecrosscheck.org/analysis/2026-05-14-us-media-ownership-oligarchy-tracker/" },
+  fair: { t: "Factually: outlets owned by Murdoch, Bezos, Musk, Soon-Shiong, Bloomberg", u: "https://factually.co/fact-checks/media/outlets-owned-by-rupert-murdoch-jeff-bezos-elon-musk-patrick-soon-shiong-michael-bloomberg-a8f84c" },
+  meta: { t: "Meta investor relations: quarterly earnings (daily active people)", u: "https://investor.atmeta.com/" },
+};
+
+// Race data. given/worth in $B. share = given / (given + worth).
+const RACERS = [
+  { id: "soros", name: "George Soros", ini: "GS", silk: "#7fd1c7", given: 24.2, share: 74, src: ["f400"], like: null },
+  { id: "scott", name: "MacKenzie Scott", ini: "MS", silk: "#f6a6c8", given: 26.4, worth: 28.6, calc: true, src: ["ftop25", "fwb"], like: null },
+  { id: "buffett", name: "Warren Buffett", ini: "WB", silk: "#ffd166", given: 72.6, worth: 144, share: 33.5, src: ["f400"], like: { fav: 52, unfav: 26 } },
+  { id: "gates", name: "Bill Gates", ini: "BG", silk: "#9ad1ff", given: 52.6, worth: 119.1, calc: true, src: ["ftop25", "fgates"], note: "Giving counts Bill Gates and Melinda French Gates together.", like: { fav: 49, unfav: 43 } },
+  { id: "bloomberg", name: "Michael Bloomberg", ini: "MB", silk: "#c3a6ff", given: 25.4, worth: 109, calc: true, src: ["ftop25", "fwb"], like: null },
+  { id: "bezos", name: "Jeff Bezos", ini: "JB", silk: "#ffb38a", given: 4.7, worth: 369, calc: true, src: ["f25", "frt"], like: { fav: 29, unfav: 55 } },
+  { id: "ellison", name: "Larry Ellison", ini: "LE", silk: "#ff8f8f", worth: 166.4, share: 1.1, bound: true, src: ["ftop25", "frt"], note: "Upper limit: Forbes says Scott's $7.2B in 2025 beat the lifetime giving of Musk, Page, Ellison and Bezos combined.", like: null },
+  { id: "musk", name: "Elon Musk", ini: "EM", silk: "#b8f27c", worth: 927.6, share: 0.06, src: ["musk006", "frt"], like: { fav: 39, unfav: 55 } },
+  { id: "page", name: "Larry Page", ini: "LP", silk: "#e9e4d4", worth: 261.2, share: 0.03, src: ["musk006", "frt"], like: null },
+];
+RACERS.forEach(r => {
+  if (r.share == null) r.share = +(100 * r.given / (r.given + r.worth)).toFixed(1);
+  if (r.worth == null) r.worth = +(r.given / (r.share / 100) - r.given).toFixed(1);
+});
+
+const LOUDEST = [
+  { name: "Mark Zuckerberg", ini: "MZ", silk: "#9ad1ff", reach: "3.5B+ people a day", unit: "Daily users across Meta's apps, from Meta's quarterly reports", owns: ["Facebook", "Instagram", "WhatsApp", "Threads", "Majority voting control of Meta"], src: ["meta"] },
+  { name: "Elon Musk", ini: "EM", silk: "#b8f27c", reach: "~550M a month", unit: "Monthly users of X and Grok, March 2026, from the SpaceX S-1 filing", owns: ["X", "Grok", "The most-followed account on X"], src: ["xmau"] },
+  { name: "Ellison family", ini: "LE", silk: "#ff8f8f", reach: "CBS, plus a stake in TikTok US", unit: "No single audience figure. Ordered here by the size of the outlets.", owns: ["CBS News (Paramount Skydance)", "15% of TikTok US via Oracle", "Signed deal for Warner Bros. Discovery, owner of CNN"], src: ["owners"], flag: true },
+  { name: "Murdoch family", ini: "RM", silk: "#ffd166", reach: "~5.5B site visits a year", unit: "Visits to its news websites in the 12 months to Nov 2025 (FAIR analysis)", owns: ["Fox News", "The Wall Street Journal", "New York Post"], src: ["owners"] },
+  { name: "Jeff Bezos", ini: "JB", silk: "#ffb38a", reach: "The Washington Post", unit: "No single audience figure. Ordered here by the size of the outlets.", owns: ["The Washington Post", "Amazon (Prime Video, Twitch)"], src: ["fair"], flag: true },
+  { name: "Michael Bloomberg", ini: "MB", silk: "#c3a6ff", reach: "Bloomberg News", unit: "No single audience figure. Ordered here by the size of the outlets.", owns: ["Bloomberg News", "Bloomberg Terminal"], src: ["fair"], flag: true },
+  { name: "Patrick Soon-Shiong", ini: "PS", silk: "#7fd1c7", reach: "Los Angeles Times", unit: "No single audience figure. Ordered here by the size of the outlets.", owns: ["Los Angeles Times"], src: ["fair"], flag: true },
+];
+
+// 2024 federal cycle, $M, OpenSecrets via the cited outlets.
+const DONORS = [
+  { name: "Elon Musk", amt: 291, side: "R", src: ["usnews"] },
+  { name: "Ken Griffin", amt: 100, side: "R", src: ["cbs"] },
+  { name: "Miriam Adelson", amt: 100, side: "R", src: ["cbs"], approx: true },
+  { name: "Jeff Yass", amt: 96, side: "R", src: ["usnews"] },
+  { name: "Michael Bloomberg", amt: 43.5, side: "D", src: ["usnews", "newsweek"], alt: "Newsweek counts $64M" },
+  { name: "Dustin & Cari Moskovitz", amt: 38.8, side: "D", src: ["usnews", "newsweek"], alt: "Newsweek counts $51M" },
+  { name: "Jim & Marilyn Simons", amt: 30.8, side: "D", src: ["usnews"] },
+  { name: "Reid Hoffman", amt: 26.7, side: "D", src: ["usnews"] },
+];
+
+const FEEDS = [
+  { name: "Mark Zuckerberg", ini: "MZ", silk: "#9ad1ff", what: "Ranks the feeds of billions of people and holds the ad profiles built from them.", chips: ["Facebook and Instagram feeds", "WhatsApp"] },
+  { name: "Elon Musk", ini: "EM", silk: "#b8f27c", what: "Sets the X ranking algorithm and runs the Grok chatbot built into it.", chips: ["X algorithm", "Grok"] },
+  { name: "Larry Ellison", ini: "LE", silk: "#ff8f8f", what: "Oracle stores data for governments and companies, and its stake in TikTok US gives it a role over that app's data and algorithm.", chips: ["Oracle cloud", "TikTok US"] },
+  { name: "Peter Thiel", ini: "PT", silk: "#e9e4d4", what: "Co-founded Palantir, which sells data-analysis software to governments, including US immigration enforcement (ICE).", chips: ["Palantir"] },
+];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const money = b => b >= 100 ? `$${Math.round(b)}B` : `$${b.toFixed(1).replace(/\.0$/, "")}B`;
+const pct = v => v < 1 ? `${v}%` : v < 10 ? `${v.toFixed(1)}%` : `${Math.round(v)}%`;
+
+// Jockey head: helmet in the racer's silk colour, initials on the cap, mood from how much they give.
+function head(ini, silk, share) {
+  const mood = share == null ? 0 : share >= 20 ? 1 : share >= 1 ? 0 : -1;
+  const mouth = mood === 1 ? "M17 33 Q24 39 31 33" : mood === -1 ? "M17 36 Q24 31 31 36" : "M17 34 L31 34";
+  return `<svg viewBox="0 0 48 48" aria-hidden="true">
+    <circle cx="24" cy="26" r="17" fill="#f3efe4"/>
+    <path d="M7 24 A17 17 0 0 1 41 24 L44 26 L7 26 Z" fill="${silk}" stroke="#0c1c15" stroke-width="1.5"/>
+    <text x="24" y="21" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="9" fill="#0c1c15">${esc(ini)}</text>
+    <circle cx="18" cy="29" r="1.9" fill="#0c1c15"/><circle cx="30" cy="29" r="1.9" fill="#0c1c15"/>
+    <path d="${mouth}" stroke="#0c1c15" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <circle cx="24" cy="26" r="17" fill="none" stroke="#0c1c15" stroke-width="1.5"/>
+  </svg>`;
+}
+
+function likeChip(l) {
+  if (!l) return `<span class="like none">No recent national poll</span>`;
+  const net = l.fav - l.unfav;
+  return `<span class="like ${net >= 0 ? "pos" : "neg"}" title="${l.fav}% favorable, ${l.unfav}% unfavorable">Liked ${net >= 0 ? "+" : "−"}${Math.abs(net)} net</span>`;
+}
+
+let order = "giving";
+function renderRace() {
+  const list = [...RACERS].sort(order === "giving" ? (a, b) => b.share - a.share : (a, b) => b.worth - a.worth);
+  $("#race").innerHTML = list.map((r, i) => {
+    const flags = (r.calc ? ` <span class="flag">calc</span>` : "") + (r.bound ? ` <span class="flag">bound</span>` : "");
+    const givenTxt = r.given != null ? `gave ${money(r.given)}` : `gave ${r.bound ? "under " : "about "}${pct(r.share)}`;
+    return `<li class="lane" data-id="${r.id}">
+      <div class="who">
+        <span class="post">${i + 1}</span>
+        <div class="who-text">
+          <b>${esc(r.name)}</b>
+          <span class="meta">Worth ${money(r.worth)} · ${givenTxt}</span>
+          ${likeChip(r.like)}
+        </div>
+      </div>
+      <div class="track" title="${esc(r.note || "")}">
+        <div class="runner ${r.share > 80 ? "flip" : ""} ${r.share < 1 ? "stalled" : ""}" style="--p:0" data-p="${r.share / 100}">
+          ${head(r.ini, r.silk, r.share)}
+          <span class="pct">${r.bound ? "≤ " : ""}${pct(r.share)}${flags}</span>
+        </div>
+        <div class="finish"></div>
+      </div>
+    </li>`;
+  }).join("");
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelectorAll(".runner").forEach(el => el.style.setProperty("--p", el.dataset.p));
+  }));
+}
+
+function setOrder(next) {
+  order = next;
+  $("#sort-giving").setAttribute("aria-pressed", next === "giving");
+  $("#sort-wealth").setAttribute("aria-pressed", next === "wealth");
+  renderRace();
+}
+$("#sort-giving").addEventListener("click", () => setOrder("giving"));
+$("#sort-wealth").addEventListener("click", () => setOrder("wealth"));
+$("#show-like").addEventListener("change", e => {
+  $("#race").classList.toggle("hide-like", !e.target.checked);
+  try { localStorage.setItem("giaw-like", e.target.checked ? "1" : "0"); } catch (_) {}
+});
+try {
+  if (localStorage.getItem("giaw-like") === "0") { $("#show-like").checked = false; $("#race").classList.add("hide-like"); }
+} catch (_) {}
+
+$("#loudest").innerHTML = LOUDEST.map((p, i) => `
+  <li class="row">
+    <span class="place">${i + 1}</span>
+    ${head(p.ini, p.silk, null)}
+    <div class="row-body">
+      <h3>${esc(p.name)}${p.flag ? ` <span class="flag">no audience figure</span>` : ""}</h3>
+      <p class="reach">${esc(p.reach)}<small>${esc(p.unit)}</small></p>
+      <ul class="chips">${p.owns.map(o => `<li>${esc(o)}</li>`).join("")}</ul>
+    </div>
+  </li>`).join("");
+
+const maxAmt = Math.max(...DONORS.map(d => d.amt));
+$("#bars").innerHTML = DONORS.map(d => {
+  const w = 100 * d.amt / maxAmt;
+  const inside = w > 55;
+  return `<li class="bar" title="${esc(d.alt || "")}">
+    <span class="nm">${esc(d.name)}</span>
+    <span class="fill-wrap">
+      <span class="fill ${d.side}" style="display:block;width:${w}%"></span>
+      <span class="amt" style="${inside ? `right:${100 - w}%;padding-right:8px;color:#0c1c15` : `left:calc(${w}% + 6px)`}">${d.approx ? "~" : ""}$${d.amt}M${d.alt ? "*" : ""}</span>
+    </span>
+  </li>`;
+}).join("") + `<li class="note">* Other counts that include more outside spending are higher: ${DONORS.filter(d => d.alt).map(d => `${esc(d.name)}: ${esc(d.alt.replace("Newsweek counts ", ""))}`).join(", ")} (Newsweek).</li>`;
+
+$("#feeds").innerHTML = FEEDS.map(p => `
+  <li class="row" style="grid-template-columns:52px 1fr">
+    ${head(p.ini, p.silk, null)}
+    <div class="row-body">
+      <h3>${esc(p.name)}</h3>
+      <p class="note" style="margin-top:4px;color:var(--chalk)">${esc(p.what)}</p>
+      <ul class="chips">${p.chips.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+    </div>
+  </li>`).join("");
+
+$("#sources").innerHTML = Object.values(SRC).map(s => `<li><a href="${s.u}" target="_blank" rel="noopener">${esc(s.t)}</a></li>`).join("");
+
+const VIEWS = ["race", "loudest", "control"];
+function route() {
+  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "race";
+  document.querySelectorAll("[data-view]").forEach(s => s.hidden = s.dataset.view !== v);
+  document.querySelectorAll("[data-tab]").forEach(a => a.dataset.tab === v ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+  if (v === "race") renderRace();
+}
+addEventListener("hashchange", route);
+route();
+</script>
+</html>
