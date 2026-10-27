@@ -3,47 +3,43 @@
 <head>
 <meta charset="utf-8">
 <style>
+  @font-face { font-family: "Libre Caslon Text"; font-style: normal; font-weight: 400; src: url(../../fonts/caslon-text-400.woff2) format("woff2"); }
+  @font-face { font-family: "Libre Caslon Text"; font-style: italic; font-weight: 400; src: url(../../fonts/caslon-text-400i.woff2) format("woff2"); }
+  @font-face { font-family: "Libre Caslon Display"; font-weight: 400; src: url(../../fonts/caslon-display-400.woff2) format("woff2"); }
+  @font-face { font-family: "IBM Plex Mono"; font-weight: 400; src: url(../../fonts/plex-mono-400.woff2) format("woff2"); }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     width: 1200px; height: 630px; overflow: hidden;
-    background: #0a0b10;
-    background-image: radial-gradient(900px 500px at 50% -20%, #17162a 0%, #0a0b10 60%);
-    font-family: "Segoe UI", system-ui, sans-serif;
-    color: #e8eaf0;
+    background-color: #fbf8f1;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.25 0 0 0 0 0.2 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    font-family: "Libre Caslon Text", Georgia, serif;
+    color: #161412;
+    padding: 0 110px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 34px;
   }
-  .brand { display: flex; align-items: center; gap: 26px; }
-  .mark {
-    width: 108px; height: 108px; border-radius: 28px;
-    background: linear-gradient(160deg, #7c6cff 0%, #9d7bff 100%);
-    display: grid; place-items: center;
-    box-shadow: 0 24px 70px -18px rgba(124, 108, 255, 0.75);
+  .rule { width: 100%; border-top: 5px double #161412; }
+  h1 {
+    font-family: "Libre Caslon Display", Georgia, serif;
+    font-weight: 400; font-size: 132px; letter-spacing: -0.01em; line-height: 1;
+    margin: 46px 0 26px;
   }
-  .mark svg { width: 60px; height: 60px; color: #fff; }
-  h1 { font-size: 88px; font-weight: 800; letter-spacing: -0.02em; }
-  .tag { font-size: 34px; color: #9aa0ad; }
-  .tag b { color: #e8eaf0; font-weight: 650; }
-  .chips { display: flex; gap: 14px; margin-top: 6px; }
-  .chip {
-    font-family: "Cascadia Code", Consolas, monospace;
-    font-size: 30px; font-weight: 600; color: #9d7bff;
-    background: rgba(124, 108, 255, 0.13);
-    border: 2px solid rgba(124, 108, 255, 0.45);
-    border-radius: 12px; padding: 10px 20px;
+  .tag { font-size: 38px; font-style: italic; color: #514b43; }
+  .tag b { font-style: normal; font-weight: 400; color: #161412; }
+  .entry { display: flex; align-items: baseline; gap: 26px; margin: 34px 0 46px; }
+  .entry i { font-size: 40px; color: #161412; }
+  .entry span { font-family: "IBM Plex Mono", monospace; font-size: 34px; letter-spacing: 0.06em; color: #a51d1d; }
+  .domain {
+    margin-top: 24px; font-size: 26px; color: #514b43;
+    font-variant: all-small-caps; letter-spacing: 0.12em;
   }
-  .domain { font-size: 24px; color: #6b7280; letter-spacing: 0.04em; margin-top: 2px; }
 </style>
 </head>
 <body>
-  <div class="brand">
-    <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg></div>
-    <h1>Technical Rhymer</h1>
-  </div>
+  <div class="rule"></div>
+  <h1>Technical Rhymer</h1>
   <div class="tag">Rhymes by <b>sound</b>, not spelling.</div>
-  <div class="chips">
-    <span class="chip">AO</span><span class="chip">R</span><span class="chip">AH</span><span class="chip">N</span><span class="chip">JH</span>
-  </div>
+  <div class="entry"><i>orange</i><span>AO R AH N JH</span></div>
+  <div class="rule"></div>
   <div class="domain">technicalrhymer.org</div>
 </body>
 </html>
