@@ -150,6 +150,52 @@ MANUAL = [
     ("sigma boy", 2025, 3.0, None),
     ("vibe coding", 2025, 3.2, None),
     ("bombardino crocodilo", 2025, 2.9, "B AA2 M B AA0 R D IY1 N OW0 K R OW2 K OW0 D IY1 L OW0"),
+    # third curation round 2026-11-08 — the slang that went mainstream
+    # Aug-Nov 2026 (Dictionary.com WOTY "maxxing" 10-26, Collins WOTY
+    # "mogging" 11-03 with "friendslop" on its shortlist, Google's Sept 2026
+    # most-searched teen slang), plus 2020s staples the earlier rounds missed.
+    # Every term has an exact Urban Dictionary headword (API, 2026-11-08) and
+    # a news or dictionary explainer; none was searchable before.
+    # 2025
+    ("performative male", 2025, 3.2, None),
+    ("gen z stare", 2025, 3.2, "JH EH1 N Z IY1 S T EH1 R"),
+    ("sdiybt", 2025, 2.9, "EH1 S D IY1 AY1 W AY1 B IY1 T IY1"),
+    ("icl", 2025, 2.9, "AY1 S IY1 EH1 L"),
+    # 2026
+    ("maxxing", 2026, 3.5, "M AE1 K S IH0 NG"),
+    ("quiet on the creek", 2026, 3.2, None),
+    ("lowkenuinely", 2026, 3.2, "L OW2 K EH1 N Y UW0 AH0 N L IY0"),
+    ("chud", 2026, 3.2, "CH AH1 D"),
+    ("larp", 2026, 3.2, "L AA1 R P"),
+    ("larper", 2026, 2.9, "L AA1 R P ER0"),
+    ("crine", 2026, 3.0, "K R AY1 N"),
+    ("son im crine", 2026, 2.7, "S AH1 N AY1 M K R AY1 N"),
+    ("you the birthday", 2026, 3.0, None),
+    ("friendslop", 2026, 3.0, "F R EH1 N D S L AA2 P"),
+    ("slopper", 2026, 3.0, "S L AA1 P ER0"),
+    ("framemogging", 2026, 3.0, "F R EY1 M M AA2 G IH0 NG"),
+    ("mogged", 2026, 2.9, "M AA1 G D"),
+    ("jestermaxxing", 2026, 2.9, "JH EH1 S T ER0 M AE2 K S IH0 NG"),
+    ("choppelganger", 2026, 2.9, "CH AA1 P AH0 L G AE2 NG ER0"),
+    ("boy kibble", 2026, 2.9, None),
+    ("la peace", 2026, 2.9, None),
+    ("meat proxy", 2026, 2.9, None),
+    ("mbappe special", 2026, 2.7, "EH0 M B AA0 P EY1 S P EH1 SH AH0 L"),
+    ("bonesmashing", 2026, 2.7, "B OW1 N S M AE2 SH IH0 NG"),
+    ("great meme reset", 2026, 2.7, None),
+    # 2020s staples the first two rounds missed
+    ("chronically online", 2021, 3.0, None),
+    ("goated", 2021, 3.2, "G OW1 T IH0 D"),
+    ("goblin mode", 2022, 3.2, None),
+    ("ijbol", 2022, 2.9, "AY1 JH EY1 B IY1 OW1 EH1 L"),
+    ("joever", 2023, 3.0, "JH OW1 V ER0"),
+    ("standing on business", 2023, 3.0, None),
+    ("lil bro", 2023, 3.0, None),
+    ("clock it", 2023, 2.9, None),
+    ("millennial pause", 2023, 2.7, None),
+    ("big back", 2024, 2.9, None),
+    ("nah i'd win", 2024, 3.0, None),
+    ("type shi", 2024, 3.0, "T AY1 P SH IH1"),
 ]
 
 ok_re = re.compile(r"^[a-z0-9][a-z0-9 '.\-]*$")

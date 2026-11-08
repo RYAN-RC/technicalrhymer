@@ -186,8 +186,12 @@ marginal — max pre-2020 score ≤ max(20, 10% of its 2020s peak). That admits
 `rizz` (junk 2015 nickname def at −50 vs. the real 626-vote 2023 def) while
 keeping out `karen` (a genuinely popular 392-vote def from 2010). Pronunciations
 are g2p like the UD set, except vowel-less acronyms (`tds`, `smh`) which are
-spelled out as letter names. The source dataset ends **Nov 2023**, so 2024+
-coinages aren't included yet.
+spelled out as letter names. The source dataset ends **Nov 2023**, so later
+coinages come from hand-curated rounds (`MANUAL` in `build_new.py`: 2026-07-05,
+2026-07-28 and 2026-11-08), each term checked against the Urban Dictionary API.
+`build_new.py` breaks ties at the score cutoff in set order, so a full rebuild
+reshuffles the lowest-scored auto terms; to add curated terms, rebuild and keep
+the committed auto section.
 
 ### The modern lexicon (non-slang, 1990-2026)
 

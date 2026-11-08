@@ -2089,4 +2089,41 @@ bruzz	B R AH1 Z	2.90	0	2025
 glorp	G L AO1 R P	2.70	0	2025
 sigma boy	S IH1 G M AH0 B OY1	3.50	0	2025
 vibe coding	V AY1 B K OW1 D IH0 NG	3.57	0	2025
-bombardino crocodilo	B AA2 M B AA0 R D IY1 N OW0 K R OW2 K OW0 D IY1 L OW0	2.90	0	2025`;
+bombardino crocodilo	B AA2 M B AA0 R D IY1 N OW0 K R OW2 K OW0 D IY1 L OW0	2.90	0	2025
+performative male	P ER0 F AO1 R M AH0 T IH0 V M EY1 L	3.20	0	2025
+gen z stare	JH EH1 N Z IY1 S T EH1 R	3.69	0	2025
+sdiybt	EH1 S D IY1 AY1 W AY1 B IY1 T IY1	2.90	0	2025
+icl	AY1 S IY1 EH1 L	2.90	0	2025
+maxxing	M AE1 K S IH0 NG	3.50	0	2026
+quiet on the creek	K W AY1 AH0 T AA1 N DH AH0 K R IY1 K	4.18	0	2026
+lowkenuinely	L OW2 K EH1 N Y UW0 AH0 N L IY0	3.20	0	2026
+chud	CH AH1 D	3.20	0	2026
+larp	L AA1 R P	3.20	0	2026
+larper	L AA1 R P ER0	2.90	0	2026
+crine	K R AY1 N	3.00	0	2026
+son im crine	S AH1 N AY1 M K R AY1 N	2.70	0	2026
+you the birthday	Y UW1 DH AH0 B ER1 TH D EY2	4.76	0	2026
+friendslop	F R EH1 N D S L AA2 P	3.00	0	2026
+slopper	S L AA1 P ER0	3.00	0	2026
+framemogging	F R EY1 M M AA2 G IH0 NG	3.00	0	2026
+mogged	M AA1 G D	2.90	0	2026
+jestermaxxing	JH EH1 S T ER0 M AE2 K S IH0 NG	2.90	0	2026
+choppelganger	CH AA1 P AH0 L G AE2 NG ER0	2.90	0	2026
+boy kibble	B OY1 K IH1 B AH0 L	2.90	0	2026
+la peace	L AA1 P IY1 S	4.73	0	2026
+meat proxy	M IY1 T P R AA1 K S IY0	3.68	0	2026
+mbappe special	EH0 M B AA0 P EY1 S P EH1 SH AH0 L	2.70	0	2026
+bonesmashing	B OW1 N S M AE2 SH IH0 NG	2.70	0	2026
+great meme reset	G R EY1 T M EH1 M R IY0 S EH1 T	3.56	0	2026
+chronically online	K R AA1 N IH0 K AH0 L IY0 AO1 N L AY2 N	3.09	0	2021
+goated	G OW1 T IH0 D	3.20	0	2021
+goblin mode	G AA1 B L IH0 N M OW1 D	3.29	0	2022
+ijbol	AY1 JH EY1 B IY1 OW1 EH1 L	2.90	0	2022
+joever	JH OW1 V ER0	3.00	0	2023
+standing on business	S T AE1 N D IH0 NG AA1 N B IH1 Z N AH0 S	4.78	0	2023
+lil bro	L IH1 L B R OW1	3.77	0	2023
+clock it	K L AA1 K IH1 T	4.43	0	2023
+millennial pause	M IH0 L EH1 N IY0 AH0 L P AO1 Z	3.25	0	2023
+big back	B IH1 G B AE1 K	5.52	0	2024
+nah i'd win	N AA1 AY1 D W IH1 N	4.32	0	2024
+type shi	T AY1 P SH IH1	3.45	0	2024`;
