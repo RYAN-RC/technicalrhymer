@@ -1895,8 +1895,7 @@
   // Counts explicit search presses (button / Enter) with something in the box.
   // Each press also sends that search so we can see what people look for: the
   // search box, the lookup box, the page's shareable settings (?q=&m=...), where
-  // the visit came from (ARRIVED_FROM) and this page load's random id. The
-  // about page's Privacy section says exactly this; keep the two in step. Sent
+  // the visit came from (ARRIVED_FROM) and this page load's random id. Sent
   // as text/plain so the browser skips a CORS preflight. The site works
   // identically when it fails (file://, backend down): the tally stays hidden.
   const STATS_URL = window.RF_STATS_URL || "https://runcabin.com/api/rhymer/searches";
