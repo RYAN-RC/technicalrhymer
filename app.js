@@ -2697,6 +2697,7 @@
   // Browsers without a recorder never see the mic button.
   const VOICE_MAX_MS = 30000;
   const VOICE_MAX_BYTES = 600 * 1024;
+  const VOICE_SILENT_PEAK = 0.015;   // loudest sample under ~-36 dBFS: nothing was said
 
   function initVoice() {
     const recBtn = $("lineRecord");
@@ -2710,6 +2711,7 @@
     const discardBtn = $("voiceDiscard");
     const timeEl = $("voiceTime");
     const barEl = $("voiceBar");
+    const dotEl = strip ? strip.querySelector(".voice-dot") : null;
     const none = { recording: () => false, take: () => null, clear() {}, lock() {} };
     if (!recBtn || !strip) return none;
     const md = navigator.mediaDevices;
@@ -2726,7 +2728,11 @@
     let cutoff = null;
     let take = null;        // { blob, url, ms, type }
     let player = null;
-    let dropped = false;    // the take was thrown away while stopping
+    // Mic level while recording: the dot swells with the voice, and a take
+    // that never rose above a whisper is not sent (speech-to-text makes up
+    // words from silence). Only trusted when the level meter actually ran.
+    let meter = null;       // { ctx, analyser, buf }
+    let peak = 0;
 
     function pickType() {
       const prefs = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4;codecs=mp4a.40.2", "audio/mp4"];
@@ -2770,10 +2776,29 @@
       setMode("off");
     }
 
+    function level() {
+      if (!meter || meter.ctx.state !== "running") return 0;
+      meter.analyser.getFloatTimeDomainData(meter.buf);
+      let p = 0;
+      for (let i = 0; i < meter.buf.length; i++) p = Math.max(p, Math.abs(meter.buf[i]));
+      return p;
+    }
+
     function tick() {
       const ms = performance.now() - startedAt;
       timeEl.textContent = clipTime(VOICE_MAX_MS - ms) + " left";
       barEl.style.width = Math.min(100, ms / VOICE_MAX_MS * 100) + "%";
+      const p = level();
+      peak = Math.max(peak, p);
+      if (dotEl) dotEl.style.transform = "scale(" + (1 + Math.min(0.8, p * 3)).toFixed(2) + ")";
+    }
+
+    function stopMeter() {
+      const heard = meter && meter.ctx.state === "running" ? peak : null;   // null: the meter never ran
+      if (meter) { try { meter.ctx.close(); } catch (e) {} }
+      meter = null;
+      if (dotEl) dotEl.style.transform = "";
+      return heard;
     }
 
     function stop() {
@@ -2786,10 +2811,18 @@
     async function start() {
       clear();
       wallStop();
-      dropped = false;
+      peak = 0;
+      // The meter's context is made inside the click, before any await, so
+      // Safari lets it run; if it doesn't, the take is never judged silent.
+      let ctx = null;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) { ctx = new AC(); ctx.resume(); }
+      } catch (e) { ctx = null; }
       try {
         stream = await md.getUserMedia({ audio: true });
       } catch (err) {
+        if (ctx) ctx.close();
         linesNoteSet(err && err.name === "NotAllowedError"
           ? "The mic is blocked. Allow it for this site to record, or type your bar."
           : "Couldn't open a mic. Type your bar instead.", "err");
@@ -2800,8 +2833,17 @@
         rec = new MediaRecorder(stream, type ? { mimeType: type, audioBitsPerSecond: 64000 } : { audioBitsPerSecond: 64000 });
       } catch (err) {
         releaseMic();
+        if (ctx) ctx.close();
         linesNoteSet("This browser can't record here. Type your bar instead.", "err");
         return;
+      }
+      if (ctx) {
+        try {
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 2048;
+          ctx.createMediaStreamSource(stream).connect(analyser);
+          meter = { ctx: ctx, analyser: analyser, buf: new Float32Array(analyser.fftSize) };
+        } catch (e) { try { ctx.close(); } catch (e2) {} meter = null; }
       }
       chunks = [];
       rec.ondataavailable = (ev) => { if (ev.data && ev.data.size) chunks.push(ev.data); };
@@ -2812,7 +2854,12 @@
         rec = null;
         chunks = [];
         releaseMic();
-        if (dropped) { setMode("off"); return; }
+        const heard = stopMeter();
+        if (heard !== null && heard < VOICE_SILENT_PEAK) {
+          setMode("off");
+          linesNoteSet("Didn't hear anything. Check your mic and try again.", "err");
+          return;
+        }
         if (ms < 1000 || blob.size < 256) {
           setMode("off");
           linesNoteSet("Too short. Give it at least a second.", "err");

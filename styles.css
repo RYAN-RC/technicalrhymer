@@ -1231,6 +1231,7 @@ button.btn.voice-rec[hidden] { display: none; }
   border-radius: 50%;
   background: var(--accent);
   animation: voice-pulse 1.1s ease-in-out infinite;
+  transition: transform 0.15s ease-out;
 }
 .voice-strip.ready .voice-dot { display: none; }
 @keyframes voice-pulse { 50% { opacity: 0.25; } }
