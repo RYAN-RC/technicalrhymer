@@ -2571,7 +2571,15 @@
     when.className = "line-when";
     when.textContent = lineWhen(entry.at);
     cap.append(pen, when);
-    if (entry.audio && entry.id) fig.append(clipRow(entry));
+    if (entry.audio && entry.id) {
+      if (entry.title) {
+        const t = document.createElement("div");
+        t.className = "line-title";
+        t.textContent = entry.title;      // textContent only, like the line
+        fig.append(t);
+      }
+      fig.append(clipRow(entry));
+    }
     fig.append(q, cap);
     return fig;
   }
@@ -2637,11 +2645,14 @@
 
       let request;
       if (take) {
-        // The clip itself goes up; the server reads its length, turns it into
-        // text, and runs that text past the same bouncer as a typed line.
+        // The clip itself goes up with its title; the server reads its length,
+        // turns it into text, and judges the whole clip (a looser bouncer than
+        // the one for typed lines).
         linesNoteSet("Listening to your clip…");
         const fd = new FormData();
         fd.append("penName", penName);
+        const title = voice.title();
+        if (title) fd.append("title", title);
         fd.append("audio", take.blob, take.type.indexOf("mp4") >= 0 ? "bar.m4a" : "bar.webm");
         request = fetch(linesApiUrl() + "/voice", { method: "POST", body: fd });
       } else {
@@ -2666,9 +2677,9 @@
             if (empty) empty.remove();
             wall.prepend(lineCard({
               id: d.id, penName: d.penName, line: d.line, at: d.at,
-              audio: !!d.audio, durationMs: d.durationMs,
+              audio: !!d.audio, durationMs: d.durationMs, title: d.title,
             }, true));
-            if (take) voice.clear(); else lineEl.value = "";
+            if (take) voice.done(); else lineEl.value = "";
             linesNoteSet("That's a bar — it's on the wall.", "ok");
             if (announceEl) announceEl.textContent = "Your line is on the wall.";
           } else if (d.status === "rejected") {
@@ -2712,7 +2723,9 @@
     const timeEl = $("voiceTime");
     const barEl = $("voiceBar");
     const dotEl = strip ? strip.querySelector(".voice-dot") : null;
-    const none = { recording: () => false, take: () => null, clear() {}, lock() {} };
+    const titleShell = $("titleShell");
+    const titleEl = $("clipTitle");
+    const none = { recording: () => false, take: () => null, title: () => "", clear() {}, done() {}, lock() {} };
     if (!recBtn || !strip) return none;
     const md = navigator.mediaDevices;
     if (!window.MediaRecorder || !md || !md.getUserMedia) return none;
@@ -2747,6 +2760,7 @@
       strip.hidden = !on;
       shell.hidden = on;
       recBtn.hidden = on;
+      if (titleShell) titleShell.hidden = !on;   // a clip can carry a title; a typed line can't
       strip.classList.toggle("recording", mode === "recording");
       strip.classList.toggle("ready", mode === "ready");
       stopBtn.hidden = mode !== "recording";
@@ -2915,8 +2929,14 @@
     return {
       recording: () => !!rec,
       take: () => take,
+      // Kept through "record again" and a rejected send; cleared once the clip is on the wall.
+      title: () => (titleEl ? titleEl.value.trim() : ""),
       clear: clear,
-      lock(on) { [playBtn, redoBtn, discardBtn].forEach((b) => { b.disabled = on; }); },
+      done() { clear(); if (titleEl) titleEl.value = ""; },
+      lock(on) {
+        [playBtn, redoBtn, discardBtn].forEach((b) => { b.disabled = on; });
+        if (titleEl) titleEl.disabled = on;
+      },
     };
   }
 

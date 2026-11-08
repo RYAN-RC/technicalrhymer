@@ -92,6 +92,9 @@
       <symbol id="ic-record" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 19v3" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><rect x="9" y="2" width="6" height="13" rx="3" />
       </symbol>
+      <symbol id="ic-type" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 4v16" /><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2" /><path d="M9 20h6" />
+      </symbol>
       <symbol id="ic-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
       </symbol>
@@ -354,6 +357,11 @@
           </div>
           <button id="lineRecord" class="btn ghost voice-rec" type="button" aria-label="Record your bar, up to 30 seconds. Clips are public on the wall." title="Record up to 30 seconds" hidden><svg aria-hidden="true"><use href="#ic-record"></use></svg><span class="voice-rec-label">Record</span></button>
           <button id="lineSubmit" class="btn" type="submit"><svg aria-hidden="true"><use href="#ic-send"></use></svg>Drop it</button>
+        </div>
+        <!-- Clip title: shown while recording or holding a take; the wall shows it above the player. -->
+        <div class="input-shell lines-title" id="titleShell" hidden>
+          <svg class="lead" aria-hidden="true"><use href="#ic-type"></use></svg>
+          <input id="clipTitle" type="text" maxlength="60" placeholder="Title your clip (optional)" aria-label="Title for your clip (optional)" autocomplete="off" />
         </div>
         <p id="voiceNote" class="lines-voice-note" hidden>
           <svg aria-hidden="true"><use href="#ic-record"></use></svg>Or say it: record up to 30 seconds. Clips are public, so if yours makes the wall, anyone can play it.

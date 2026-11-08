@@ -1289,6 +1289,15 @@ button.btn.voice-rec[hidden] { display: none; }
 }
 .lines-voice-note svg { flex: none; width: 14px; height: 14px; color: var(--accent); }
 .lines-voice-note[hidden] { display: none; }
+.lines-title { margin-top: 10px; }
+.line-card .line-title {
+  margin-bottom: -2px;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
 .line-audio { display: flex; align-items: center; gap: 10px; }
 .line-audio .voice-btn { width: 30px; height: 30px; }
 .line-audio.playing .voice-btn { background: var(--accent-soft); border-color: var(--accent-line); }
