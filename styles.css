@@ -122,6 +122,13 @@ h1 {
   margin: 0 auto;
 }
 .tagline b { color: var(--text); font-style: normal; font-weight: 400; }
+.byline {
+  margin: 12px 0 0;
+  font-size: 15px;
+  font-variant: all-small-caps;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
 .about-link {
   display: inline-flex;
   align-items: center;

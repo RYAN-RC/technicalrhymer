@@ -161,4 +161,4 @@ Prefer the API for lookups; fetch bundles only when you genuinely need the whole
 
 ## About
 
-Technical Rhymer is an independent project by Ryan Mergen (contact: ryan@runcabin.com), built and hosted on RunCabin (https://runcabin.com), the agent-callable website platform. Design notes and methodology: https://technicalrhymer.org/about.html
+Technical Rhymer was created by Ryan Mergen, a poet (contact: ryan@runcabin.com). It is an independent project, built and hosted on RunCabin (https://runcabin.com), the agent-callable website platform. Design notes and methodology: https://technicalrhymer.org/about.html
