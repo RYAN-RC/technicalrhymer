@@ -2487,11 +2487,82 @@
     return d.toLocaleDateString(undefined, opts);
   }
 
+  // m:ss for clip lengths and countdowns.
+  function clipTime(ms) {
+    const s = Math.max(0, Math.round(ms / 1000));
+    return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  }
+
+  function iconUse(btn, id) {
+    const use = btn.querySelector("use");
+    if (use) use.setAttribute("href", id);
+  }
+
+  // One player for every clip on the wall: starting one stops the last.
+  const wallAudio = { el: null, btn: null, row: null };
+  function wallStop() {
+    if (wallAudio.el) wallAudio.el.pause();
+    if (wallAudio.btn) {
+      iconUse(wallAudio.btn, "#ic-play");
+      wallAudio.btn.setAttribute("aria-label", wallAudio.btn.dataset.label || "Play");
+    }
+    if (wallAudio.row) wallAudio.row.classList.remove("playing");
+    wallAudio.btn = null;
+    wallAudio.row = null;
+  }
+
+  function clipRow(entry) {
+    const row = document.createElement("div");
+    row.className = "line-audio";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "voice-btn";
+    btn.dataset.label = "Play " + entry.penName + "'s clip";
+    btn.setAttribute("aria-label", btn.dataset.label);
+    btn.innerHTML = '<svg aria-hidden="true"><use href="#ic-play"></use></svg>';
+    const meter = document.createElement("span");
+    meter.className = "voice-meter";
+    meter.setAttribute("aria-hidden", "true");
+    const fill = document.createElement("span");
+    meter.appendChild(fill);
+    const dur = document.createElement("span");
+    dur.className = "voice-time";
+    const total = entry.durationMs || 0;
+    dur.textContent = total ? clipTime(total) : "";
+    row.append(btn, meter, dur);
+
+    btn.addEventListener("click", () => {
+      if (wallAudio.btn === btn && wallAudio.el && !wallAudio.el.paused) { wallStop(); return; }
+      wallStop();
+      if (!wallAudio.el) {
+        wallAudio.el = new Audio();
+        wallAudio.el.preload = "none";
+      }
+      const a = wallAudio.el;
+      a.ontimeupdate = () => {
+        const len = isFinite(a.duration) && a.duration > 0 ? a.duration * 1000 : total;
+        if (len) fill.style.width = Math.min(100, (a.currentTime * 1000 / len) * 100) + "%";
+        dur.textContent = clipTime(Math.max(0, (len || 0) - a.currentTime * 1000));
+      };
+      a.onended = () => { fill.style.width = "0%"; dur.textContent = total ? clipTime(total) : ""; wallStop(); };
+      const src = linesApiUrl() + "/" + entry.id + "/audio";
+      if (a.dataset.src !== src) { a.src = src; a.dataset.src = src; }
+      wallAudio.btn = btn;
+      wallAudio.row = row;
+      row.classList.add("playing");
+      iconUse(btn, "#ic-pause");
+      btn.setAttribute("aria-label", "Pause");
+      const p = a.play();
+      if (p && p.catch) p.catch(() => { wallStop(); linesNoteSet("Couldn't play that clip right now.", "err"); });
+    });
+    return row;
+  }
+
   function lineCard(entry, fresh) {
     const fig = document.createElement("figure");
-    fig.className = "line-card" + (fresh ? " fresh" : "");
+    fig.className = "line-card" + (fresh ? " fresh" : "") + (entry.audio ? " has-audio" : "");
     const q = document.createElement("blockquote");
-    q.textContent = entry.line;           // textContent only — never HTML
+    q.textContent = entry.line;           // textContent only — never HTML (for a clip: its transcript)
     const cap = document.createElement("figcaption");
     const pen = document.createElement("span");
     pen.className = "line-pen";
@@ -2500,6 +2571,7 @@
     when.className = "line-when";
     when.textContent = lineWhen(entry.at);
     cap.append(pen, when);
+    if (entry.audio && entry.id) fig.append(clipRow(entry));
     fig.append(q, cap);
     return fig;
   }
@@ -2548,22 +2620,40 @@
       })
       .catch(() => {});       // backend absent — section stays hidden
 
+    const voice = initVoice();
+
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const penName = penEl.value.trim();
-      const line = lineEl.value.trim();
       if (penName.length < 1) { linesNoteSet("Pick a pen name first.", "err"); penEl.focus(); return; }
-      if (line.length < 4) { linesNoteSet("That line needs a few more syllables.", "err"); lineEl.focus(); return; }
+      if (voice.recording()) return;
+      const take = voice.take();
+      const line = lineEl.value.trim();
+      if (!take && line.length < 4) { linesNoteSet("That line needs a few more syllables.", "err"); lineEl.focus(); return; }
 
       btn.disabled = true;
       btn.classList.add("busy");
-      linesNoteSet("Checking your line…");
+      voice.lock(true);
 
-      fetch(linesApiUrl(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ penName: penName, line: line }),
-      })
+      let request;
+      if (take) {
+        // The clip itself goes up; the server reads its length, turns it into
+        // text, and runs that text past the same bouncer as a typed line.
+        linesNoteSet("Listening to your clip…");
+        const fd = new FormData();
+        fd.append("penName", penName);
+        fd.append("audio", take.blob, take.type.indexOf("mp4") >= 0 ? "bar.m4a" : "bar.webm");
+        request = fetch(linesApiUrl() + "/voice", { method: "POST", body: fd });
+      } else {
+        linesNoteSet("Checking your line…");
+        request = fetch(linesApiUrl(), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ penName: penName, line: line }),
+        });
+      }
+
+      request
         .then((r) => {
           if (r.status === 429) throw new Error("slow-down");
           return r.json().then((d) => ({ http: r.status, d }));
@@ -2574,12 +2664,16 @@
             const wall = $("linesWall");
             const empty = wall.querySelector(".lines-empty");
             if (empty) empty.remove();
-            wall.prepend(lineCard({ penName: d.penName, line: d.line, at: d.at }, true));
-            lineEl.value = "";
+            wall.prepend(lineCard({
+              id: d.id, penName: d.penName, line: d.line, at: d.at,
+              audio: !!d.audio, durationMs: d.durationMs,
+            }, true));
+            if (take) voice.clear(); else lineEl.value = "";
             linesNoteSet("That's a bar — it's on the wall.", "ok");
             if (announceEl) announceEl.textContent = "Your line is on the wall.";
           } else if (d.status === "rejected") {
-            linesNoteSet(d.reason || "That one didn't make the wall.", "err");
+            const heard = take && d.heard ? " We heard: “" + d.heard + "”" : "";
+            linesNoteSet((d.reason || "That one didn't make the wall.") + heard, "err");
           } else {
             linesNoteSet(d.error || "Couldn't check your line right now — try again in a minute.", "err");
           }
@@ -2592,8 +2686,191 @@
         .finally(() => {
           btn.disabled = false;
           btn.classList.remove("busy");
+          voice.lock(false);
         });
     });
+  }
+
+  // ---- voice bars: record up to 30 s instead of typing ----
+  // MediaRecorder gives WebM/Opus in Chrome, Edge and Firefox and MP4/AAC in
+  // Safari; the server checks the real length again and refuses past 30 s.
+  // Browsers without a recorder never see the mic button.
+  const VOICE_MAX_MS = 30000;
+  const VOICE_MAX_BYTES = 600 * 1024;
+
+  function initVoice() {
+    const recBtn = $("lineRecord");
+    const strip = $("voiceStrip");
+    const shell = $("lineShell");
+    const lineEl = $("lineInput");
+    const submit = $("lineSubmit");
+    const playBtn = $("voicePlay");
+    const stopBtn = $("voiceStop");
+    const redoBtn = $("voiceRedo");
+    const discardBtn = $("voiceDiscard");
+    const timeEl = $("voiceTime");
+    const barEl = $("voiceBar");
+    const none = { recording: () => false, take: () => null, clear() {}, lock() {} };
+    if (!recBtn || !strip) return none;
+    const md = navigator.mediaDevices;
+    if (!window.MediaRecorder || !md || !md.getUserMedia) return none;
+
+    recBtn.hidden = false;
+    $("voiceNote").hidden = false;
+
+    let rec = null;
+    let stream = null;
+    let chunks = [];
+    let startedAt = 0;
+    let ticker = null;
+    let cutoff = null;
+    let take = null;        // { blob, url, ms, type }
+    let player = null;
+    let dropped = false;    // the take was thrown away while stopping
+
+    function pickType() {
+      const prefs = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4;codecs=mp4a.40.2", "audio/mp4"];
+      for (const t of prefs) {
+        try { if (MediaRecorder.isTypeSupported(t)) return t; } catch (e) {}
+      }
+      return "";
+    }
+
+    function setMode(mode) {   // "off" | "recording" | "ready"
+      const on = mode !== "off";
+      strip.hidden = !on;
+      shell.hidden = on;
+      recBtn.hidden = on;
+      strip.classList.toggle("recording", mode === "recording");
+      strip.classList.toggle("ready", mode === "ready");
+      stopBtn.hidden = mode !== "recording";
+      playBtn.hidden = redoBtn.hidden = discardBtn.hidden = mode !== "ready";
+      submit.disabled = mode === "recording";
+      if (mode === "ready") submit.focus();
+      if (mode !== "recording") barEl.style.width = "0%";
+    }
+
+    function releaseMic() {
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+    }
+
+    function stopPlayer() {
+      if (player) { player.pause(); player.currentTime = 0; }
+      iconUse(playBtn, "#ic-play");
+      playBtn.setAttribute("aria-label", "Play your take");
+      if (take) { timeEl.textContent = clipTime(take.ms); barEl.style.width = "0%"; }
+    }
+
+    function clear() {
+      stopPlayer();
+      if (take) URL.revokeObjectURL(take.url);
+      take = null;
+      player = null;
+      setMode("off");
+    }
+
+    function tick() {
+      const ms = performance.now() - startedAt;
+      timeEl.textContent = clipTime(VOICE_MAX_MS - ms) + " left";
+      barEl.style.width = Math.min(100, ms / VOICE_MAX_MS * 100) + "%";
+    }
+
+    function stop() {
+      clearInterval(ticker);
+      clearTimeout(cutoff);
+      ticker = cutoff = null;
+      if (rec && rec.state !== "inactive") rec.stop();
+    }
+
+    async function start() {
+      clear();
+      wallStop();
+      dropped = false;
+      try {
+        stream = await md.getUserMedia({ audio: true });
+      } catch (err) {
+        linesNoteSet(err && err.name === "NotAllowedError"
+          ? "The mic is blocked. Allow it for this site to record, or type your bar."
+          : "Couldn't open a mic. Type your bar instead.", "err");
+        return;
+      }
+      const type = pickType();
+      try {
+        rec = new MediaRecorder(stream, type ? { mimeType: type, audioBitsPerSecond: 64000 } : { audioBitsPerSecond: 64000 });
+      } catch (err) {
+        releaseMic();
+        linesNoteSet("This browser can't record here. Type your bar instead.", "err");
+        return;
+      }
+      chunks = [];
+      rec.ondataavailable = (ev) => { if (ev.data && ev.data.size) chunks.push(ev.data); };
+      rec.onstop = () => {
+        const ms = Math.min(VOICE_MAX_MS, performance.now() - startedAt);
+        const blobType = (rec && rec.mimeType) || (chunks[0] && chunks[0].type) || "audio/webm";
+        const blob = new Blob(chunks, { type: blobType });
+        rec = null;
+        chunks = [];
+        releaseMic();
+        if (dropped) { setMode("off"); return; }
+        if (ms < 1000 || blob.size < 256) {
+          setMode("off");
+          linesNoteSet("Too short. Give it at least a second.", "err");
+          return;
+        }
+        if (blob.size > VOICE_MAX_BYTES) {
+          setMode("off");
+          linesNoteSet("That take is too big to send. Try a shorter one.", "err");
+          return;
+        }
+        take = { blob: blob, url: URL.createObjectURL(blob), ms: ms, type: blobType };
+        timeEl.textContent = clipTime(ms);
+        setMode("ready");
+        linesNoteSet("Play it back, record again, or drop it on the wall.");
+      };
+      rec.start();
+      startedAt = performance.now();
+      setMode("recording");
+      tick();
+      ticker = setInterval(tick, 200);
+      cutoff = setTimeout(stop, VOICE_MAX_MS);   // the hard stop at 30 s
+      linesNoteSet("Recording. Say your bar, then hit stop.");
+      if (announceEl) announceEl.textContent = "Recording. You have 30 seconds.";
+      stopBtn.focus();
+    }
+
+    recBtn.addEventListener("click", start);
+    stopBtn.addEventListener("click", stop);
+    redoBtn.addEventListener("click", start);
+    discardBtn.addEventListener("click", () => {
+      clear();
+      linesNoteSet("Take thrown away. Type your bar, or record another.");
+      lineEl.focus();
+    });
+    playBtn.addEventListener("click", () => {
+      if (!take) return;
+      if (!player) {
+        player = new Audio(take.url);
+        player.ontimeupdate = () => {
+          barEl.style.width = Math.min(100, player.currentTime * 1000 / take.ms * 100) + "%";
+          timeEl.textContent = clipTime(take.ms - player.currentTime * 1000);
+        };
+        player.onended = stopPlayer;
+      }
+      if (!player.paused) { stopPlayer(); return; }
+      wallStop();
+      iconUse(playBtn, "#ic-pause");
+      playBtn.setAttribute("aria-label", "Stop playback");
+      const p = player.play();
+      if (p && p.catch) p.catch(stopPlayer);
+    });
+
+    return {
+      recording: () => !!rec,
+      take: () => take,
+      clear: clear,
+      lock(on) { [playBtn, redoBtn, discardBtn].forEach((b) => { b.disabled = on; }); },
+    };
   }
 
   // ---- boot ----

@@ -89,6 +89,18 @@
       <symbol id="ic-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="m11 7.601-5.994 8.19a1 1 0 0 0 .1 1.298l.817.818a1 1 0 0 0 1.314.087L15.09 12" /><path d="M16.5 21.174C15.5 20.5 14.372 20 13 20c-2.058 0-3.928 2.356-6 2-2.072-.356-2.775-3.369-1.5-4.5" /><circle cx="16" cy="7" r="5" />
       </symbol>
+      <symbol id="ic-record" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 19v3" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><rect x="9" y="2" width="6" height="13" rx="3" />
+      </symbol>
+      <symbol id="ic-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
+      </symbol>
+      <symbol id="ic-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="14" y="3" width="5" height="18" rx="1" /><rect x="5" y="3" width="5" height="18" rx="1" />
+      </symbol>
+      <symbol id="ic-square" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+      </symbol>
       <symbol id="ic-feather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z" /><path d="M16 8 2 22" /><path d="M17.5 15H9" />
       </symbol>
@@ -326,12 +338,26 @@
             <svg class="lead" aria-hidden="true"><use href="#ic-feather"></use></svg>
             <input id="penName" type="text" maxlength="24" placeholder="Pen name" autocomplete="off" spellcheck="false" />
           </div>
-          <div class="input-shell">
+          <div class="input-shell" id="lineShell">
             <svg class="lead" aria-hidden="true"><use href="#ic-mic"></use></svg>
             <input id="lineInput" type="text" maxlength="200" placeholder="One bar. Make it count." autocomplete="off" />
           </div>
+          <!-- Voice bar: shown while recording or holding a take, in place of the text box. -->
+          <div id="voiceStrip" class="voice-strip" hidden>
+            <span class="voice-dot" aria-hidden="true"></span>
+            <button id="voicePlay" class="voice-btn" type="button" aria-label="Play your take" hidden><svg aria-hidden="true"><use href="#ic-play"></use></svg></button>
+            <span id="voiceTime" class="voice-time">0:30 left</span>
+            <span class="voice-meter" aria-hidden="true"><span id="voiceBar"></span></span>
+            <button id="voiceStop" class="voice-btn" type="button" aria-label="Stop recording"><svg aria-hidden="true"><use href="#ic-square"></use></svg></button>
+            <button id="voiceRedo" class="voice-btn" type="button" aria-label="Record again" title="Record again" hidden><svg aria-hidden="true"><use href="#ic-rotate-ccw"></use></svg></button>
+            <button id="voiceDiscard" class="voice-btn" type="button" aria-label="Throw this take away and type instead" title="Type instead" hidden><svg aria-hidden="true"><use href="#ic-x"></use></svg></button>
+          </div>
+          <button id="lineRecord" class="btn ghost voice-rec" type="button" aria-label="Record your bar, up to 30 seconds. Clips are public on the wall." title="Record up to 30 seconds" hidden><svg aria-hidden="true"><use href="#ic-record"></use></svg><span class="voice-rec-label">Record</span></button>
           <button id="lineSubmit" class="btn" type="submit"><svg aria-hidden="true"><use href="#ic-send"></use></svg>Drop it</button>
         </div>
+        <p id="voiceNote" class="lines-voice-note" hidden>
+          <svg aria-hidden="true"><use href="#ic-record"></use></svg>Or say it: record up to 30 seconds. Clips are public, so if yours makes the wall, anyone can play it.
+        </p>
         <div class="lines-note" id="linesNote" aria-live="polite">
           Found the perfect rhyme? Put it to work. Approved bars are stored and shown publicly on
           the wall — an AI bouncer turns away spam, links, and lines aimed at real people.

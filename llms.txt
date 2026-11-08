@@ -152,6 +152,8 @@ Prefer the API for lookups; fetch bundles only when you genuinely need the whole
 
 `GET https://runcabin.com/api/rhymer/lines` returns the newest 50 approved entries from the site's "Drop your best line" wall (visitor-submitted bars). Reading is welcome. Submissions (POST) are for humans using the site: every entry is AI-moderated and rate-limited, and the wall is meant for a person's own line - do not auto-post generated content.
 
+An entry with `"audio": true` was recorded rather than typed (up to 30 seconds): its `line` is the transcript, `durationMs` its length, and the clip plays from `GET https://runcabin.com/api/rhymer/lines/{id}/audio` (WebM or MP4 audio, range requests supported).
+
 ## Licensing, attribution, content warning
 
 - Pronunciations: CMU Pronouncing Dictionary (BSD-style license, cmusphinx/cmudict).
