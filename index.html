@@ -485,8 +485,21 @@
   <script src="new-data.js"></script>
   <script src="mod-data.js"></script>
   <script src="co-data.js"></script>
-  <!-- optional local-only default API key (key.local.js is gitignored; absent on deploys) -->
-  <script src="key.local.js" onerror="void 0"></script>
+  <!-- optional local-only default API key (key.local.js is gitignored; absent on deploys).
+       Only ever requested when running from disk or localhost: the live site never
+       asks for it, so an accidentally uploaded copy can't put a key on the page.
+       app.js reads RF_* settings at call time, so a late load is fine. -->
+  <script>
+    (function () {
+      var h = location.hostname;
+      if (location.protocol === "file:" || h === "localhost" || h === "127.0.0.1" || h === "[::1]") {
+        var s = document.createElement("script");
+        s.src = "key.local.js";
+        s.onerror = function () {};
+        document.body.appendChild(s);
+      }
+    })();
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
