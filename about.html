@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>About — Technical Rhymer</title>
+  <title>About Technical Rhymer</title>
   <meta name="description" content="How Technical Rhymer is designed: ARPABET phoneme search over CMUdict, commonality ranking, fuzzy sound matching, AI word-sense filtering, and a fully static architecture." />
   <meta name="author" content="Ryan Mergen" />
   <link rel="canonical" href="https://technicalrhymer.org/about.html" />
   <link rel="llms-txt" href="/llms.txt" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="Technical Rhymer" />
-  <meta property="og:title" content="About — Technical Rhymer" />
+  <meta property="og:title" content="About Technical Rhymer" />
   <meta property="og:description" content="Design notes: why rhyme search should run on phonemes, and how the matching, ranking, and datasets work." />
   <meta property="og:url" content="https://technicalrhymer.org/about.html" />
   <meta property="og:image" content="https://technicalrhymer.org/og.png" />
@@ -70,8 +70,8 @@
         <h1>About Technical Rhymer</h1>
       </div>
       <p class="tagline">
-        A rhyming dictionary that works the way rhyme actually works: on <b>sound</b>.
-        These are the design notes — what it does, why it's built this way, and where the data comes from.
+        A rhyming dictionary that works on <b>sound</b>, which is where rhyme lives.
+        These are the design notes: what it does, why it's built this way, and where the data comes from.
       </p>
       <p class="byline">Created by Ryan Mergen, a poet</p>
     </header>
@@ -82,18 +82,17 @@
         <h2>Why search by sound, not spelling</h2>
       </div>
       <p>
-        Rhyme lives in pronunciation, and English spelling is a famously unreliable witness to it:
+        Rhyme lives in pronunciation, and English spelling is a poor guide to it:
         <i>colonel</i> rhymes with <i>kernel</i>, <i>through</i> with <i>threw</i>, and <i>cough</i>,
         <i>though</i>, and <i>tough</i> agree on almost nothing. Letter-based rhyme tools inherit all
-        of that noise. Technical Rhymer instead searches over <b>phonemes</b> — the actual sounds —
+        of that noise. Technical Rhymer searches over <b>phonemes</b>, the sounds themselves,
         written in <b>ARPABET</b>, the notation used by the CMU Pronouncing Dictionary:
         <i>orange</i> is <code>AO1 R AH0 N JH</code>.
       </p>
       <p>
         Digits on vowels mark stress: <code>1</code> primary, <code>2</code> secondary,
         <code>0</code> unstressed. A perfect rhyme is "same sounds from the last stressed vowel to the
-        end", which is exactly a <b>suffix match</b> on the phoneme string — that one observation is
-        the whole design. Look a word up, take the tail you care about, and search it.
+        end", which is a <b>suffix match</b> on the phoneme string. Most of the design follows from that. Look a word up, take the tail you care about, and search it.
       </p>
     </section>
 
@@ -104,31 +103,31 @@
       </div>
       <p>
         Every entry is indexed by its phoneme string, and a search scans all of them (a linear pass
-        over ~145k pronunciations takes tens of milliseconds — no clever index needed). The match
+        over ~145k pronunciations takes tens of milliseconds, so there is no index). The match
         modes anchor the fragment: <b>Ends with</b> is the rhyme case, <b>Starts with</b> finds
         alliterative twins, <b>Anywhere</b> and <b>Exact</b> do what they say. The fifth mode,
-        <b>Sounds like</b>, doesn't anchor a fragment at all &mdash; it compares whole
+        <b>Sounds like</b>, doesn't anchor a fragment at all. It compares whole
         pronunciations, and gets its own section below. Two operators build
-        richer patterns: <code>*</code> requires parts in order with anything between
+        longer patterns: <code>*</code> requires parts in order with anything between
         (<code>AO R * JH</code>), and <code>|</code> requires parts in any order. Listing a part
         twice (<code>B | B</code>) demands it occur twice.
       </p>
       <p>
-        <b>Stress is ignored by default</b>: requiring stress digits to match eliminates most slant
-        rhymes people actually want, so exact-stress matching is the opt-in, not the default.
-        <b>Double rhymes</b> — words where the searched segment occurs twice or more, like
-        <i>rat-a-tat</i> for <code>AE T</code> — get split into their own section with a
+        <b>Stress is ignored by default</b>: requiring stress digits to match throws out most of the slant
+        rhymes people want, so exact-stress matching is the opt-in, not the default.
+        <b>Double rhymes</b> (words where the searched segment occurs twice or more, like
+        <i>rat-a-tat</i> for <code>AE T</code>) get split into their own section with a
         <code>×N</code> badge, since a repeated rhyme is usually the better find.
       </p>
       <p>
         <b>Fuzzy matching</b> (opt-in) treats like-sounding consonants as interchangeable for slant
-        rhymes. The classes are grouped by <b>manner and voicing</b> of articulation — so
+        rhymes. The classes are grouped by <b>manner and voicing</b> of articulation, so
         <code>T</code>&harr;<code>K</code> match but <code>T</code>&harr;<code>D</code> (a voicing
         change) do not:
       </p>
       <p>
         You never have to type ARPABET cold: looked-up pronunciations drop into the search box with
-        a click, results highlight exactly which sounds matched, and a tap-to-build <b>phoneme
+        a click, results highlight which sounds matched, and a tap-to-build <b>phoneme
         keyboard</b> under the search box shows every sound with an example word.
       </p>
       <table class="fuzzy-table">
@@ -143,12 +142,12 @@
         <tr><td>Glides</td><td><code>W Y</code></td></tr>
       </table>
       <p>
-        Vowels are <b>not fuzzed by default</b> — vowel identity is most of what makes a rhyme
+        Vowels are <b>not fuzzed by default</b>. The vowel is most of what makes a rhyme
         feel like one, so out of the box every vowel matches only itself.
       </p>
       <p>
-        Those are the <b>defaults</b>, not dogma: the gear next to the Fuzzy toggle opens an editor
-        where you can regroup the consonants however your ear likes — merge voicings, split the
+        You can change those <b>defaults</b>. The gear next to the Fuzzy toggle opens an editor
+        where you can regroup the consonants however your ear likes: merge voicings, split the
         sibilants, set a sound loose so it only matches itself. There's a vowel section too: it
         ships with no groups at all, but if your ear hears <code>EH</code> and <code>IH</code> as
         cousins you can group them for looser slant rhymes. Custom groups persist in your browser,
@@ -164,22 +163,22 @@
       <p>
         The anchored modes ask "which words <i>contain</i> this sound?" <b>Sounds like</b> asks a
         different question: "which words sound like this one, <i>overall</i>?" Put a whole
-        pronunciation in the box &mdash; looking a word up drops it there for you &mdash; pick
+        pronunciation in the box (looking a word up drops it there for you), pick
         <b>Sounds like</b>, and you get near-homophones and whole-word slant rhymes:
         <code>T R EH ZH ER</code> (<i>treasure</i>) surfaces <i>pleasure</i> and <i>pressure</i>,
         <code>K ER N AH L</code> (<i>colonel</i>) surfaces <i>kernel</i> and then <i>kennel</i>,
         including matches no anchored fragment would ever catch.
       </p>
       <p>
-        Under the hood it's an edit distance over phonemes &mdash; the fewest changes needed to
-        turn one pronunciation into the other &mdash; except swapping two sounds isn't a flat
+        Under the hood it's an edit distance over phonemes, the fewest changes needed to
+        turn one pronunciation into the other. The difference is that swapping two sounds isn't a flat
         price: it costs <b>how far apart your mouth is</b> when making them. Vowels are scored by
         tongue position and lip rounding, and a diphthong counts as its start&rarr;glide path, so
         <code>AY</code> (<i>hide</i>) sits partway between <code>AA</code> (<i>odd</i>) and
-        <code>IY</code> (<i>eat</i>). Consonants are priced by place, manner, and voicing &mdash;
-        the same physics as the fuzzy classes above, but on a sliding scale instead of in-or-out
+        <code>IY</code> (<i>eat</i>). Consonants are priced by place, manner, and voicing,
+        the same features as the fuzzy classes above, but on a sliding scale instead of in-or-out
         of a group. A vowel never trades cheaply for a consonant, and dropping or inserting a
-        sound costs about a full point &mdash; except the schwa (<code>AH</code>), which comes and
+        sound costs about a full point. The exception is the schwa (<code>AH</code>), which comes and
         goes cheaply, because in real speech it does. Some example prices:
       </p>
       <table class="fuzzy-table">
@@ -195,11 +194,11 @@
       </table>
       <p>
         A word makes the list when its total distance stays within <code>max(2, len&nbsp;/&nbsp;3)</code>,
-        where <i>len</i> is the shorter of the two pronunciations &mdash; longer words earn more
+        where <i>len</i> is the shorter of the two pronunciations, so longer words get more
         slack. Results order <b>closest first</b> (in half-point bands, with the usual
         commonality ranking inside each band), and hovering any result shows its exact distance.
         Stress marks and the Fuzzy toggle don't apply in this mode: closeness already <i>is</i>
-        the model. And it's still the same brute-force honesty as everything else here &mdash; one
+        the model. It's still a brute-force scan like everything else here: one
         linear pass over all ~146k pronunciations, made fast by skipping words whose length can't
         fit under the threshold and abandoning a comparison the moment it goes over budget
         (tens of milliseconds, no index).
@@ -213,7 +212,7 @@
       </div>
       <p>
         A rhyme search for a short tail can return thousands of words, and most of them are words
-        nobody would use. Results are therefore ranked by <b>commonality</b> — the
+        nobody would use. Results are therefore ranked by <b>commonality</b>, using the
         <a href="https://github.com/rspeer/wordfreq" target="_blank" rel="noopener">wordfreq</a>
         project's Zipf scale, where ~7 is <i>the</i> and ~1 is deep obscurity. The thin bar under
         each result is that score. Usable rhymes surface first; the exotic tail is still there at
@@ -228,26 +227,26 @@
       </div>
       <p>
         Rhyming is usually rhyming <i>about something</i>. The optional filter keeps only results
-        related to a word you name — searching <code>EH ZH ER</code> while writing about pirates
+        related to a word you name. Searching <code>EH ZH ER</code> while writing about pirates
         keeps <i>treasure</i>. It has two engines:
       </p>
       <ul>
         <li>
-          <b>AI mode</b> <svg style="width:12px;height:12px;vertical-align:-1px" aria-hidden="true"><use href="#ic-sparkles"></use></svg> —
+          <b>AI mode</b> <svg style="width:12px;height:12px;vertical-align:-1px" aria-hidden="true"><use href="#ic-sparkles"></use></svg>:
           the top candidates are sent to a small relay we run, which asks <b>Claude</b> which of
-          them are related / synonyms / opposites. No key, no account, nothing to configure —
+          them are related / synonyms / opposites. You don't need a key or an account;
           the API key lives on the relay, never in your browser. Requests are rate-limited and
           budget-capped (it's a free site). This is the primary engine because real-world
-          association ("pirates" &rarr; "treasure") is exactly what language models are good at
-          and word vectors are mediocre at.
+          association ("pirates" &rarr; "treasure") is something language models do well
+          and word vectors do poorly.
         </li>
         <li>
-          <b>Offline mode</b> — if the AI is busy or over budget, "related" falls back to GloVe
+          <b>Offline mode</b>: if the AI is busy or over budget, "related" falls back to GloVe
           word vectors (50-dimensional, int8-quantized to keep the file small) with a
           cosine-similarity cutoff, and "synonym" / "opposite" use WordNet. The split exists
-          because embeddings famously place antonyms <i>close together</i> (<i>hot</i> and
+          because embeddings place antonyms <i>close together</i> (<i>hot</i> and
           <i>cold</i> appear in identical contexts), so cosine similarity can't tell likeness from
-          opposition — a curated lexicon can.
+          opposition. A hand-built lexicon like WordNet can.
         </li>
       </ul>
     </section>
@@ -257,27 +256,27 @@
         <span class="ic"><svg aria-hidden="true"><use href="#ic-database"></use></svg></span>
         <h2>The dictionary</h2>
       </div>
-      <p>Five layers, each honestly labeled in the UI:</p>
+      <p>Five layers, each labeled in the UI:</p>
       <ul>
         <li>
-          <b>CMU Pronouncing Dictionary</b> — ~135k standard-English words with curated
-          pronunciations. The backbone.
+          <b>CMU Pronouncing Dictionary</b>: ~135k standard-English words with hand-checked
+          pronunciations. Most results come from here.
         </li>
         <li>
-          <b>Urban Dictionary top 10,000</b> (gold <b style="color:var(--ud)">UD</b> badge) — the
+          <b>Urban Dictionary top 10,000</b> (gold <b style="color:var(--ud)">UD</b> badge): the
           highest-net-voted slang terms. Pronunciations for terms CMUdict lacks are auto-generated
           with a grapheme-to-phoneme model, so they're approximate. UD content is user-submitted
           and can be crude or NSFW; it's included as-is, with vote scores and links back to the
-          source for attribution. The vote data in the source dump is lossy — famous terms like
-          <i>lmao</i> and <i>yeet</i> survive with single-digit scores — so a commonality rescue
-          adds ~440 words the votes lost: anything genuinely common in real-world text
+          source for attribution. The vote data in the source dump is lossy (famous terms like
+          <i>lmao</i> and <i>yeet</i> survive with single-digit scores), so a commonality rescue
+          adds ~440 words the votes lost: anything common in real-world text
           (wordfreq Zipf &ge; 3.2), or moderately common with real surviving votes, gets in
           regardless of its recorded score. Rescued terms show a plain UD badge instead of a
           meaningless number, and initialisms among them are letter-spelled
           (<i>idk</i> &rarr; <code>AY1 D IY1 K EY1</code>).
         </li>
         <li>
-          <b>New words of the 2020s</b> (teal <b style="color:var(--new)">’2x</b> badge) — the
+          <b>New words of the 2020s</b> (teal <b style="color:var(--new)">’2x</b> badge): the
           2,000 top-rated terms whose first meaningful Urban Dictionary definition appeared in 2020
           or later and that don't exist in CMUdict. "First meaningful" matters: a raw
           first-definition-date rule would exclude <i>rizz</i> because someone defined it as a
@@ -286,19 +285,19 @@
           Pronunciations are approximate: grapheme-to-phoneme for pronounceable terms, letter names
           for vowel-less acronyms (<i>tds</i> &rarr; <code>T IY1 D IY1 EH1 S</code>). The source
           dataset ends in November 2023, so past that point the set is hand-curated: about 85
-          era-defining terms through 2026 — <i>skibidi</i>, <i>hawk tuah</i>, <i>six seven</i>,
-          <i>clanker</i>, <i>vibe coding</i>, <i>tralalero tralala</i> — picked editorially and
+          terms through 2026 (<i>skibidi</i>, <i>hawk tuah</i>, <i>six seven</i>,
+          <i>clanker</i>, <i>vibe coding</i>, <i>tralalero tralala</i>), picked by hand and
           validated against the live Urban Dictionary API, with hand-checked pronunciations. Urban Dictionary no longer publishes vote counts, so these carry no
           score.
         </li>
         <li>
-          <b>The modern lexicon</b> (sky <b style="color:var(--mod)">’1x</b> badge) — 693 words that
+          <b>The modern lexicon</b> (sky <b style="color:var(--mod)">’1x</b> badge): 693 words that
           entered ordinary English between 1990 and 2026 and exist in none of the layers above. This
           is the non-slang counterpart to the set before it: <i>webcam</i>, <i>dial-up</i>,
           <i>britpop</i>, <i>podcaster</i>, <i>ransomware</i>, <i>microplastics</i>,
-          <i>neurodivergent</i>, <i>gochujang</i>, <i>shrinkflation</i>, <i>exoplanet</i> —
-          newspaper, office, clinic and record-sleeve English, not street slang. The 1990s are in
-          here for a specific reason: CMUdict was frozen mid-decade, so it knows <i>internet</i>
+          <i>neurodivergent</i>, <i>gochujang</i>, <i>shrinkflation</i>, <i>exoplanet</i>.
+          Newspaper, office, clinic and record-sleeve English, not street slang. The 1990s are in
+          here because CMUdict was frozen mid-decade, so it knows <i>internet</i>
           and <i>email</i> but not <i>webcam</i>, <i>mp3</i> or <i>drum and bass</i>, and almost
           none of the decade's music vocabulary. The list was curated category by category and then backstopped
           by a gap sweep: every word in wordfreq's top 120,000 that this site could not look up was
@@ -307,7 +306,7 @@
           corpora end around 2021, so 2022-2026 terms come from curation alone.
         </li>
         <li>
-          <b>Company names</b> (violet <b style="color:var(--co)">Co</b> badge) — the S&amp;P 500
+          <b>Company names</b> (violet <b style="color:var(--co)">Co</b> badge): the S&amp;P 500
           plus the world's 500 largest public companies by market value, minus every name CMUdict
           already had: 596 additions. Legal suffixes are dropped, because nobody says them
           ("AbbVie", not "AbbVie Inc"), and a parenthetical alias becomes its own entry, so
@@ -315,23 +314,23 @@
         </li>
       </ul>
       <p>
-        Pronunciations in those last two layers are built in a deliberate order, because
+        Pronunciations in those last two layers are built in a set order, because
         grapheme-to-phoneme models are good at ordinary morphology and terrible at compounds and
-        proper nouns — left alone, one read <i>touchscreen</i> as
+        proper nouns. Left alone, one read <i>touchscreen</i> as
         <code>T UW0 K S K R EY1 N</code> and <i>vloggers</i> as <code>G L AA1 V G ER0 Z</code>.
         So: initialisms, brand coinages and loanwords are hand-written (<i>TSMC</i> letter by
         letter, <i>Xiaomi</i> as <code>SH AW1 M IY0</code>); compounds are composed from the real
-        CMUdict pronunciations of their parts, with stress placed the way English places it — a
+        CMUdict pronunciations of their parts, with stress placed the way English places it: a
         Germanic compound keeps it on the first element (TOUCH-screen) and a Latinate prefix moves
         it onto the root (micro-PLAS-tic); inflected forms take their base pronunciation plus the
         regular ending with voicing agreement (<i>fanbase</i> &rarr; <i>fanbases</i> adds
         <code>IH0 Z</code>, not <code>S</code>); and only what is left goes to the model. Every
         generated pronunciation was then read back against its word. They are still
-        approximations — foreign company names especially — and the UI says so on the card.
+        approximations, foreign company names especially, and the UI says so on the card.
       </p>
       <p>
         One ranking caveat about multi-word entries: wordfreq scores a phrase by combining its
-        words as if they occurred independently, which overstates a specific collocation badly —
+        words as if they occurred independently, which badly overstates a fixed phrase:
         it puts <i>girl power</i> at Zipf 5.14, up among the most common words in the language.
         Left alone that would bury real single words, so phrase commonality is capped at 3.40:
         above slang, below everyday vocabulary.
@@ -341,16 +340,16 @@
     <section class="step">
       <div class="step-head">
         <span class="ic"><svg aria-hidden="true"><use href="#ic-wrench"></use></svg></span>
-        <h2>Engineering: aggressively static</h2>
+        <h2>Engineering: static files</h2>
       </div>
       <p>
-        The site is static files — no database, no framework, no build step at runtime. All
+        The site is static files. There is no database or framework, and nothing is built at runtime. All
         dictionary data (~15&nbsp;MB across eight bundles) is baked into plain JavaScript files
         loaded with <code>&lt;script&gt;</code> tags, which means search works offline and even
         opened directly from disk over <code>file://</code>. The heavy word-vector and WordNet
-        bundles are lazy-loaded only if the offline sense filter is actually used. There are two
+        bundles are lazy-loaded only if the offline sense filter is used. There are two
         exceptions to "no server": the word-sense relay described above, and the
-        <b>Drop your best line</b> wall — both fixed-function endpoints. The relay exists purely so
+        <b>Drop your best line</b> wall. Both do one fixed job. The relay exists so
         the AI key never ships to your browser; the wall stores the lines people submit, typed or
         recorded as a clip of up to 30 seconds with an optional title, so it can show and play them
         (and AI-checks each one first, a clip by its transcript and title).
@@ -360,7 +359,7 @@
         wordfreq scores, GloVe quantization, WordNet extraction, Urban Dictionary ranking and
         grapheme-to-phoneme). The runtime never depends on them. Pinned result tabs and your
         preferences (fuzzy matching, stress handling, sort, match mode, panels) persist in
-        <code>localStorage</code> only — no cookies — and stick across visits. Searches also sync
+        <code>localStorage</code> only (no cookies) and stick across visits. Searches also sync
         into the address bar (<code>?q=AH+N+JH</code>), so any query is shareable as a plain link;
         opening someone else's link never overwrites your own preferences.
       </p>
@@ -372,22 +371,22 @@
         <h2>For AI assistants: the API</h2>
       </div>
       <p>
-        Aggressively static has one blind spot: the search engine runs in <em>your browser</em>, so an
-        AI assistant that fetches the page gets an empty shell and no rhymes. The fix is a free JSON
-        API — the same engine and the same data, ported server-side, no key, no signup, any origin:
+        Static files have one blind spot: the search engine runs in <em>your browser</em>, so an
+        AI assistant that fetches the page gets an empty shell and no rhymes. So there is a free JSON
+        API with the same engine and data, ported server-side. It needs no key or signup and accepts any origin:
       </p>
       <ul>
-        <li><code>GET runcabin.com/api/rhymer/pron?word=orange</code> — a word's ARPABET pronunciations and perfect-rhyme tails.</li>
-        <li><code>GET runcabin.com/api/rhymer/rhymes?word=treasure</code> — rhymes for a word, or pass <code>q=EH+ZH+ER</code> for a raw phoneme pattern with the full query language (match modes, <code>*</code> and <code>|</code> operators, fuzzy sound classes, stress control).</li>
+        <li><code>GET runcabin.com/api/rhymer/pron?word=orange</code>: a word's ARPABET pronunciations and perfect-rhyme tails.</li>
+        <li><code>GET runcabin.com/api/rhymer/rhymes?word=treasure</code>: rhymes for a word, or pass <code>q=EH+ZH+ER</code> for a raw phoneme pattern with the full query language (match modes, <code>*</code> and <code>|</code> operators, fuzzy sound classes, stress control).</li>
       </ul>
       <p>
         The API lives on <a href="https://runcabin.com" target="_blank" rel="noopener">RunCabin</a> (the
         platform hosting this site) because technicalrhymer.org itself serves only static files. It is
-        rate-limited to 30 requests a minute per IP and returns actionable errors — send a bad phoneme
+        rate-limited to 30 requests a minute per IP and explains its errors. Send a bad phoneme
         and the response lists the valid ones. If you are an AI assistant reading this:
         <a href="llms.txt">llms.txt</a> is your full guide, and
-        <a href="openapi.json">openapi.json</a> is the machine-readable spec. Humans get the same
-        answers with more violet either way.
+        <a href="openapi.json">openapi.json</a> is the machine-readable spec. People get the same
+        answers on the page.
       </p>
     </section>
 
@@ -398,15 +397,15 @@
         <h2>Credits</h2>
       </div>
       <ul>
-        <li><a href="https://github.com/cmusphinx/cmudict" target="_blank" rel="noopener">CMU Pronouncing Dictionary</a> — pronunciations (ARPABET).</li>
-        <li><a href="https://github.com/rspeer/wordfreq" target="_blank" rel="noopener">wordfreq</a> — Zipf commonality scores.</li>
-        <li><a href="https://nlp.stanford.edu/projects/glove/" target="_blank" rel="noopener">GloVe</a> — offline word vectors (glove-wiki-gigaword-50).</li>
-        <li><a href="https://wordnet.princeton.edu/" target="_blank" rel="noopener">WordNet</a> — synonyms and antonyms.</li>
-        <li><a href="https://www.urbandictionary.com" target="_blank" rel="noopener">Urban Dictionary</a> — slang terms, vote scores, and on-demand definitions (© their authors), via the <code>georgiyozhegov/urbandictionary-raw</code> dataset and the public API.</li>
-        <li><a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> — on-demand definitions for standard words, by Wiktionary contributors (<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA</a>).</li>
-        <li><a href="https://github.com/Kyubyong/g2p" target="_blank" rel="noopener">g2p_en</a> — grapheme-to-phoneme for words CMUdict doesn't know.</li>
-        <li><a href="https://github.com/datasets/s-and-p-500-companies" target="_blank" rel="noopener">S&amp;P 500 constituents</a> (Wikipedia-derived) and <a href="https://companiesmarketcap.com" target="_blank" rel="noopener">companiesmarketcap.com</a> — company names and rankings. Company names are trademarks of their owners; they appear here only as pronunciations.</li>
-        <li><a href="https://lucide.dev" target="_blank" rel="noopener">Lucide</a> — icons.</li>
+        <li><a href="https://github.com/cmusphinx/cmudict" target="_blank" rel="noopener">CMU Pronouncing Dictionary</a>: pronunciations (ARPABET).</li>
+        <li><a href="https://github.com/rspeer/wordfreq" target="_blank" rel="noopener">wordfreq</a>: Zipf commonality scores.</li>
+        <li><a href="https://nlp.stanford.edu/projects/glove/" target="_blank" rel="noopener">GloVe</a>: offline word vectors (glove-wiki-gigaword-50).</li>
+        <li><a href="https://wordnet.princeton.edu/" target="_blank" rel="noopener">WordNet</a>: synonyms and antonyms.</li>
+        <li><a href="https://www.urbandictionary.com" target="_blank" rel="noopener">Urban Dictionary</a>: slang terms, vote scores, and on-demand definitions (© their authors), via the <code>georgiyozhegov/urbandictionary-raw</code> dataset and the public API.</li>
+        <li><a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a>: on-demand definitions for standard words, by Wiktionary contributors (<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA</a>).</li>
+        <li><a href="https://github.com/Kyubyong/g2p" target="_blank" rel="noopener">g2p_en</a>: grapheme-to-phoneme for words CMUdict doesn't know.</li>
+        <li><a href="https://github.com/datasets/s-and-p-500-companies" target="_blank" rel="noopener">S&amp;P 500 constituents</a> (Wikipedia-derived) and <a href="https://companiesmarketcap.com" target="_blank" rel="noopener">companiesmarketcap.com</a>: company names and rankings. Company names are trademarks of their owners; they appear here only as pronunciations.</li>
+        <li><a href="https://lucide.dev" target="_blank" rel="noopener">Lucide</a>: icons.</li>
       </ul>
     </section>
 

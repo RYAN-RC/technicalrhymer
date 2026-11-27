@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Technical Rhymer — search by pronunciation</title>
+  <title>Technical Rhymer: search by pronunciation</title>
   <meta name="description" content="Technical Rhymer (technicalrhymer.org): look up a word's pronunciation, then find every word that rhymes or matches a phoneme pattern. Powered by the CMU Pronouncing Dictionary." />
   <meta name="author" content="Ryan Mergen" />
   <link rel="canonical" href="https://technicalrhymer.org/" />
   <link rel="llms-txt" href="/llms.txt" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Technical Rhymer" />
-  <meta property="og:title" content="Technical Rhymer — search by pronunciation" />
+  <meta property="og:title" content="Technical Rhymer: search by pronunciation" />
   <meta property="og:description" content="Rhymes by sound, not spelling: phoneme-fragment search over the CMU Pronouncing Dictionary, plus slang and the new words of the 2020s." />
   <meta property="og:url" content="https://technicalrhymer.org/" />
   <meta property="og:image" content="https://technicalrhymer.org/og.png" />
@@ -160,7 +160,7 @@
             <input id="stripStress1" type="checkbox" checked />
             <span class="slider"></span>
           </label>
-          <label for="stripStress1">Ignore stress &mdash; show &amp; copy the pronunciation without stress numbers</label>
+          <label for="stripStress1">Ignore stress: show &amp; copy the pronunciation without stress numbers</label>
         </div>
       </div>
       <div id="pronResult" class="pron-result"></div>
@@ -214,7 +214,7 @@
             <input id="fuzzy" type="checkbox" />
             <span class="slider"></span>
           </label>
-          <label for="fuzzy">Fuzzy &mdash; match similar-sounding consonants</label>
+          <label for="fuzzy">Fuzzy: match similar-sounding consonants</label>
           <button id="fuzzyCfg" class="icon-btn" type="button" title="Customize which consonants count as similar"><svg aria-hidden="true"><use href="#ic-sliders"></use></svg><span id="fuzzyCustomTag" hidden>custom</span></button>
         </div>
       </div>
@@ -314,7 +314,7 @@
           </div>
           <div class="sense-hint">
             The filter asks <b>Claude</b> which rhymes are <b>related</b> / <b>synonyms</b> /
-            <b>opposites</b> of your word — so <code>EH ZH ER</code> + “pirates” keeps
+            <b>opposites</b> of your word, so <code>EH ZH ER</code> + “pirates” keeps
             <code>treasure</code>. No key or account needed; requests are rate-limited, and if the
             AI is busy it falls back to offline word vectors + WordNet.
             <span class="sense-status" id="senseStatus"></span>
@@ -368,7 +368,7 @@
         </p>
         <div class="lines-note" id="linesNote" aria-live="polite">
           Found the perfect rhyme? Put it to work. Approved bars are stored and shown publicly on
-          the wall — an AI bouncer turns away spam, links, and lines aimed at real people.
+          the wall. An AI bouncer turns away spam, links, and lines aimed at real people.
         </div>
       </form>
     </section>
@@ -378,7 +378,7 @@
       <div id="searchTally" class="tally" hidden></div>
       <p style="margin:10px 0 0">
         Pronunciations: <a href="https://github.com/cmusphinx/cmudict" target="_blank" rel="noopener">CMU Pronouncing Dictionary</a>
-        (~135k standard English words). ARPABET notation — digits on vowels mark stress
+        (~135k standard English words). ARPABET notation: digits on vowels mark stress
         (1 = primary, 2 = secondary, 0 = none). Commonality ranking via
         <a href="https://github.com/rspeer/wordfreq" target="_blank" rel="noopener">wordfreq</a>
         (Zipf scale).
@@ -388,34 +388,33 @@
         are the top 10,000 highest-rated entries from
         <a href="https://www.urbandictionary.com" target="_blank" rel="noopener">Urban Dictionary</a>
         (definitions and vote scores © their respective authors), plus a few hundred common
-        words — <i>lmao</i>, <i>yeet</i>, <i>covid</i> — whose vote records the source data
+        words (<i>lmao</i>, <i>yeet</i>, <i>covid</i>) whose vote records the source data
         lost; their pronunciations are auto-generated and approximate. Urban Dictionary content
         is user-submitted and may be crude, offensive, or NSFW.
       </p>
       <p style="margin:8px 0 0">
         Terms marked <span class="new-tag" style="vertical-align:middle">’23</span> are
-        <b style="color:var(--muted)">new words of the 2020s</b> — 2,000 top-rated terms first
+        <b style="color:var(--muted)">new words of the 2020s</b>: 2,000 top-rated terms first
         (meaningfully) defined on Urban Dictionary in 2020 or later and absent from CMUdict,
-        plus a hand-curated set of iconic terms through 2026 — with auto-generated approximate
+        plus a hand-picked set of terms through 2026, with auto-generated approximate
         pronunciations.
       </p>
       <p style="margin:8px 0 0">
         Words marked <span class="mod-tag" style="vertical-align:middle">’15</span> are the
-        <b style="color:var(--muted)">modern lexicon</b> — 693 words that entered ordinary
+        <b style="color:var(--muted)">modern lexicon</b>: 693 words that entered ordinary
         English between 1990 and 2026, the stretch a dictionary frozen mid-nineties cannot
         cover (<i>webcam</i>, <i>britpop</i>, <i>podcaster</i>, <i>ransomware</i>,
         <i>microplastics</i>, <i>gochujang</i>). Not slang: newspaper, office, clinic and
         record-sleeve English. Names marked
         <span class="co-tag" style="vertical-align:middle">Co</span> are the
         <b style="color:var(--muted)">S&amp;P 500</b> and the world's 500 largest public
-        companies by market value — 596 of them CMUdict never knew. Pronunciations for both
+        companies by market value, 596 of them new to CMUdict. Pronunciations for both
         are hand-written where the spelling gives no clue (<i>TSMC</i>, <i>Rolls-Royce</i>,
         <i>Xiaomi</i>) and otherwise built from CMUdict parts, so treat them as approximate.
       </p>
       <p style="margin:8px 0 0">
-        <a href="about.html">About Technical Rhymer</a> — how the search, ranking, and datasets
-        are designed. AI assistant or script? There's a free JSON API —
-        see <a href="llms.txt">llms.txt</a> or <a href="about.html#api">the API notes</a>.
+        <a href="about.html">About Technical Rhymer</a>: how the search, ranking, and datasets
+        are designed. AI assistant or script? There's a free JSON API. See <a href="llms.txt">llms.txt</a> or <a href="about.html#api">the API notes</a>.
         <span style="color:var(--faint)">technicalrhymer.org</span>
       </p>
       <p style="margin:8px 0 0">
@@ -433,9 +432,9 @@
     </div>
     <p class="fz-hint">
       When <b>Fuzzy</b> is on, sounds in the same group are treated as the same sound.
-      Tap a sound to pick it up, then tap the group to move it to &mdash; or move it to
-      <b>Loose</b> so it only matches itself. Vowels start loose &mdash; the vowel is the
-      rhyme &mdash; but you can group similar-sounding vowels too for looser slant rhymes.
+      Tap a sound to pick it up, then tap the group to move it to, or move it to
+      <b>Loose</b> so it only matches itself. Vowels start loose, since the vowel is the
+      rhyme, but you can group similar-sounding vowels too for looser slant rhymes.
     </p>
     <div class="fz-sec-head">
       <span>Consonants</span>
@@ -463,12 +462,12 @@
     </div>
     <div id="udBody" class="ud-body"></div>
     <p class="fz-hint ud-foot" id="udFootUd">
-      Definitions load on demand from the Urban Dictionary API — © their authors, crude and
-      unfiltered by design.
+      Definitions load on demand from the Urban Dictionary API. © their authors, crude and
+      unfiltered.
       <a id="udOut" href="https://www.urbandictionary.com" target="_blank" rel="noopener">View on urbandictionary.com<svg aria-hidden="true" class="ud-out-ic"><use href="#ic-external"></use></svg></a>
     </p>
     <p class="fz-hint ud-foot" id="udFootWik" hidden>
-      Definitions load on demand from the Wiktionary API — text by Wiktionary contributors,
+      Definitions load on demand from the Wiktionary API. Text by Wiktionary contributors,
       <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA</a>.
       <a id="wikOut" href="https://en.wiktionary.org" target="_blank" rel="noopener">View on wiktionary.org<svg aria-hidden="true" class="ud-out-ic"><use href="#ic-external"></use></svg></a>
     </p>
