@@ -972,7 +972,7 @@
       notFound.innerHTML =
         "<b>“" + escapeHtml(q) + "”</b> isn’t in the dictionary." +
         (sugg.length
-          ? " Closest spellings — click one to look it up:" +
+          ? " Closest spellings (click one to look it up):" +
             '<div class="nf-sugg">' +
             sugg.map((s) => '<button type="button" class="ex-chip" data-w="' + escapeAttr(s.w) + '">' + escapeHtml(s.w) + "</button>").join("") +
             "</div>" +
@@ -986,7 +986,7 @@
     let html = "";
     if (prons.length > 1) {
       html += '<div class="pron-multi-hint">' + icon("ic-arrow-down") +
-        prons.length + " pronunciations — click the one you want to drop it in the search box.</div>";
+        prons.length + " pronunciations. Click one to drop it in the search box.</div>";
     }
     prons.forEach((p, i) => {
       html += renderPronCard(displayWord, p, prons.length > 1 ? i + 1 : 0);
@@ -1027,12 +1027,12 @@
       : "";
     const nu = newInfo.get(word);
     const newBadge = nu
-      ? ' <a class="new-badge" href="' + udLink(word) + '" target="_blank" rel="noopener" title="New this decade — mainstream since ' +
+      ? ' <a class="new-badge" href="' + udLink(word) + '" target="_blank" rel="noopener" title="New this decade, mainstream since ' +
         nu.year + '">' + icon("ic-sparkles") + "New · " + nu.year + "</a>"
       : "";
     const mo = modInfo.get(word);
     const modBadge = mo
-      ? ' <span class="mod-badge" title="Entered general use around ' + mo.year + ' (' + mo.cat + ') — this century\'s lexicon, not slang">' +
+      ? ' <span class="mod-badge" title="Entered general use around ' + mo.year + ' (' + mo.cat + '). Modern lexicon, not slang">' +
         icon("ic-sparkles") + "Since " + mo.year + "</span>"
       : "";
     const co = coInfo.get(word);
@@ -1042,10 +1042,10 @@
       : "";
     const udNote = (udGenerated.has(word) || newGenerated.has(word))
       ? '<div class="pron-tip ud-note">' + icon("ic-thumbs-up") +
-        "From <b style=\"color:var(--muted)\">Urban Dictionary</b> — pronunciation is auto-generated and approximate.</div>"
+        "From <b style=\"color:var(--muted)\">Urban Dictionary</b>. The pronunciation is auto-generated and approximate.</div>"
       : (modGenerated.has(word) || coGenerated.has(word))
       ? '<div class="pron-tip ud-note">' + icon("ic-sparkles") +
-        "Too new for the <b style=\"color:var(--muted)\">CMU dictionary</b> — this pronunciation was written or generated for it, so treat it as approximate.</div>"
+        "Too new for the <b style=\"color:var(--muted)\">CMU dictionary</b>. This pronunciation was written or generated for it, so treat it as approximate.</div>"
       : "";
     return (
       '<div class="pron-card" data-pron="' + escapeAttr(display) + '" data-tail="' + escapeAttr(tail) + '">' +
@@ -1323,7 +1323,7 @@
     if (!res.ok) {
       let detail = "";
       try { const j = await res.json(); detail = j.error || ""; } catch (e) { /* */ }
-      throw new Error("HTTP " + res.status + (detail ? " — " + detail : ""));
+      throw new Error("HTTP " + res.status + (detail ? ": " + detail : ""));
     }
     const data = await res.json();
     const out = new Set();
@@ -1371,7 +1371,7 @@
     if (!res.ok) {
       let detail = "";
       try { const j = await res.json(); detail = (j.error && j.error.message) || ""; } catch (e) { /* */ }
-      throw new Error("HTTP " + res.status + (detail ? " — " + detail : ""));
+      throw new Error("HTTP " + res.status + (detail ? ": " + detail : ""));
     }
     const data = await res.json();
     const block = (data.content || []).find((b) => b.type === "text");
@@ -1442,7 +1442,7 @@
       if (activeTabId !== tab.id) return;
       // AI unavailable (rate limit, budget, offline…) — degrade to the
       // bundled word-vector/WordNet filter instead of failing the search.
-      setSenseStatus("AI filter unavailable (" + err.message + ") — using the offline filter.", true);
+      setSenseStatus("AI filter unavailable (" + err.message + "). Using the offline filter.", true);
       offlineFilterAndRender(tab, found);
     });
   }
@@ -1455,7 +1455,7 @@
     }
     const ctx = senseContext(tab.sense);
     if (ctx && !ctx.ok) {
-      setSenseStatus(ctx.reason + " — showing unfiltered. (Add an API key for smarter results.)", true);
+      setSenseStatus(ctx.reason + ", so showing unfiltered results.", true);
       const rctx = tabCtx(tab);
       rctx.doubles = found.doubles;
       rctx.dists = found.dists;
@@ -1482,7 +1482,7 @@
       const chips = FRAG_EXAMPLES.map((x) =>
         '<button type="button" class="ex-chip ex-frag" data-frag="' + escapeAttr(x.f) +
         '" title="' + escapeAttr(x.hint) + '">' + escapeHtml(x.f) + "</button>").join("");
-      resultsEl.innerHTML = '<div class="empty">Type or paste a pronunciation fragment above — or try one:' +
+      resultsEl.innerHTML = '<div class="empty">Type or paste a pronunciation fragment above, or try one:' +
         '<div class="empty-actions">' + chips + "</div></div>";
       setSenseStatus("");
       return;
@@ -1559,7 +1559,7 @@
     tabs.forEach((tab) => {
       const b = document.createElement("button");
       b.className = "tab" + (tab.id === activeTabId ? " active" : "") + (tab.live ? " live" : "");
-      b.title = tab.live ? "Current search — updates as you search" : tabTooltip(tab);
+      b.title = tab.live ? "Current search (updates as you search)" : tabTooltip(tab);
       const label = document.createElement("span");
       label.className = "tab-label";
       label.textContent = tab.live ? "Live" : tabTitle(tab);
@@ -1659,8 +1659,8 @@
       (co ? " · " + coLabel(co.src) + " company" : "") +
       (dbl ? " · rhyme repeats ×" + dbl : "") +
       (DISTS && DISTS.has(e.w) ? " · sound distance " + DISTS.get(e.w).toFixed(2) : "");
-    const udTag = isUd ? ' <span class="ud-tag" title="Urban Dictionary — click for the definition">UD</span>' : "";
-    const newTag = nu ? ' <span class="new-tag" title="New this decade — click for the Urban Dictionary definition">’' + String(nu.year).slice(2) + "</span>" : "";
+    const udTag = isUd ? ' <span class="ud-tag" title="Urban Dictionary: click for the definition">UD</span>' : "";
+    const newTag = nu ? ' <span class="new-tag" title="New this decade: click for the Urban Dictionary definition">’' + String(nu.year).slice(2) + "</span>" : "";
     // a modern-lexicon word that is not already flagged as slang
     const modTag = (mo && !isUd && !nu) ? ' <span class="mod-tag" title="' + escapeAttr(mo.cat + " term, in general use since " + mo.year) + '">’' + String(mo.year).slice(2) + "</span>" : "";
     const coTag = co ? ' <span class="co-tag" title="' + escapeAttr(coLabel(co.src) + " company") + '">Co</span>' : "";
@@ -2147,8 +2147,8 @@
   }
 
   function renderFzEditor() {
-    renderFzSection(fzGroupsEl, fzEdit, ALL_CONSONANTS, "cons", "Loose sounds — each matches only itself");
-    renderFzSection(fzvGroupsEl, fzvEdit, ALL_VOWELS, "vows", "Loose vowels — each matches only itself");
+    renderFzSection(fzGroupsEl, fzEdit, ALL_CONSONANTS, "cons", "Loose sounds: each matches only itself");
+    renderFzSection(fzvGroupsEl, fzvEdit, ALL_VOWELS, "vows", "Loose vowels: each matches only itself");
   }
 
   function openFuzzyDialog() {
@@ -2275,7 +2275,7 @@
     });
     if (list.length > UD_DEFS_SHOWN) {
       udBodyEl.appendChild(udEl("p", "ud-status",
-        "Top " + UD_DEFS_SHOWN + " of " + list.length.toLocaleString() + " definitions — the rest are on urbandictionary.com."));
+        "Top " + UD_DEFS_SHOWN + " of " + list.length.toLocaleString() + " definitions. The rest are on urbandictionary.com."));
     }
   }
 
@@ -2317,7 +2317,7 @@
       .catch(() => {
         if (seq !== udSeq) return;
         udBodyEl.innerHTML = "";
-        const p = udEl("p", "ud-status", "Couldn’t reach Urban Dictionary — ");
+        const p = udEl("p", "ud-status", "Couldn’t reach Urban Dictionary. ");
         const a = udEl("a", null, "open it there instead");
         a.href = udLink(term);
         a.target = "_blank";
@@ -2357,7 +2357,7 @@
   function renderWikDefs(term, blocks) {
     udBodyEl.innerHTML = "";
     if (!blocks || !blocks.length) {
-      const p = udEl("p", "ud-status", "Wiktionary doesn’t have this one — ");
+      const p = udEl("p", "ud-status", "Wiktionary doesn’t have this one. ");
       const a = udEl("a", null, "search it there");
       a.href = "https://en.wiktionary.org/w/index.php?search=" + encodeURIComponent(term);
       a.target = "_blank";
@@ -2401,7 +2401,7 @@
       .catch(() => {
         if (seq !== udSeq) return;
         udBodyEl.innerHTML = "";
-        const p = udEl("p", "ud-status", "Couldn’t reach Wiktionary — ");
+        const p = udEl("p", "ud-status", "Couldn’t reach Wiktionary. ");
         const a = udEl("a", null, "open it there instead");
         a.href = wikPageLink(term);
         a.target = "_blank";
@@ -2590,7 +2590,7 @@
     if (!lines.length) {
       const empty = document.createElement("p");
       empty.className = "lines-empty";
-      empty.textContent = "The wall is fresh — no lines yet. Yours could be the first.";
+      empty.textContent = "No lines yet. Yours could be the first.";
       wall.appendChild(empty);
       return;
     }
@@ -2680,19 +2680,19 @@
               audio: !!d.audio, durationMs: d.durationMs, title: d.title,
             }, true));
             if (take) voice.done(); else lineEl.value = "";
-            linesNoteSet("That's a bar — it's on the wall.", "ok");
+            linesNoteSet("That's a bar. It's on the wall.", "ok");
             if (announceEl) announceEl.textContent = "Your line is on the wall.";
           } else if (d.status === "rejected") {
             const heard = take && d.heard ? " We heard: “" + d.heard + "”" : "";
             linesNoteSet((d.reason || "That one didn't make the wall.") + heard, "err");
           } else {
-            linesNoteSet(d.error || "Couldn't check your line right now — try again in a minute.", "err");
+            linesNoteSet(d.error || "Couldn't check your line right now. Try again in a minute.", "err");
           }
         })
         .catch((err) => {
           linesNoteSet(err && err.message === "slow-down"
-            ? "Easy — three drops a minute. Give it a moment."
-            : "Couldn't reach the wall — try again in a minute.", "err");
+            ? "Easy. Three drops a minute, so give it a moment."
+            : "Couldn't reach the wall. Try again in a minute.", "err");
         })
         .finally(() => {
           btn.disabled = false;
