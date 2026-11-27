@@ -31,6 +31,61 @@
     } catch (e) { return ""; }
   })();
 
+  // ---- network guards ----
+  // Running from disk or localhost (dev) vs the live site.
+  const IS_LOCAL = (function () {
+    try {
+      const h = location.hostname;
+      return location.protocol === "file:" || h === "localhost" || h === "127.0.0.1" || h === "[::1]";
+    } catch (e) { return false; }
+  })();
+
+  // window.RF_* endpoint/key overrides are a dev convenience (key.local.js).
+  // On the live site they are ignored, so nothing on the page can redirect
+  // the app's API calls (or a pasted search) to another host.
+  function devOverride(name) {
+    if (!IS_LOCAL) return "";
+    const v = window[name];
+    return typeof v === "string" ? v.trim() : "";
+  }
+
+  // Request timeouts (ms). A hung request fails instead of spinning forever.
+  const TIMEOUT = {
+    quick: 8000,     // tally, wall list, dictionary lookups
+    ai: 25000,       // word-sense filter (model call behind the relay)
+    line: 25000,     // typed line: moderation check
+    voice: 60000,    // voice clip: upload + transcribe + moderation
+  };
+
+  // fetch() with a hard timeout. Rejects with an Error whose name is
+  // "TimeoutError" when the time runs out.
+  function fetchT(url, opts, ms) {
+    opts = opts || {};
+    if (typeof AbortController !== "function") return fetch(url, opts);
+    const ctl = new AbortController();
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; ctl.abort(); }, ms || TIMEOUT.quick);
+    return fetch(url, Object.assign({}, opts, { signal: ctl.signal }))
+      .catch((err) => {
+        if (timedOut) {
+          const e = new Error("timed out");
+          e.name = "TimeoutError";
+          throw e;
+        }
+        throw err;
+      })
+      .finally(() => clearTimeout(timer));
+  }
+
+  // Only plain web links from third-party data become clickable hrefs
+  // (blocks javascript:, data: and the like).
+  function safeHttpUrl(u) {
+    try {
+      const url = new URL(String(u));
+      return url.protocol === "https:" || url.protocol === "http:" ? url.href : "";
+    } catch (e) { return ""; }
+  }
+
   // ---- data ----
   const entries = [];          // { w, p, key, keyNS, syl, z }
   const byWord = new Map();    // lowercased word -> [pron, pron, ...]
@@ -1308,18 +1363,18 @@
   // Local dev: key.local.js (gitignored) sets RF_DEFAULT_KEY and we call
   // Anthropic browser-direct instead.
   function senseProxyUrl() {
-    return window.RF_SENSE_PROXY || "https://runcabin.com/api/rhymer/sense";
+    return devOverride("RF_SENSE_PROXY") || "https://runcabin.com/api/rhymer/sense";
   }
   function getApiKey() {
-    return (window.RF_DEFAULT_KEY || "").trim(); // local-only (key.local.js)
+    return devOverride("RF_DEFAULT_KEY"); // local-only (key.local.js); ignored on the live site
   }
 
   async function proxySenseMatches(word, rel, candidates) {
-    const res = await fetch(senseProxyUrl(), {
+    const res = await fetchT(senseProxyUrl(), {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ word: word, rel: rel, candidates: candidates }),
-    });
+    }, TIMEOUT.ai);
     if (!res.ok) {
       let detail = "";
       try { const j = await res.json(); detail = j.error || ""; } catch (e) { /* */ }
@@ -1358,7 +1413,7 @@
         },
       },
     };
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetchT("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -1367,7 +1422,7 @@
         "anthropic-dangerous-direct-browser-access": "true",
       },
       body: JSON.stringify(body),
-    });
+    }, TIMEOUT.ai);
     if (!res.ok) {
       let detail = "";
       try { const j = await res.json(); detail = (j.error && j.error.message) || ""; } catch (e) { /* */ }
@@ -1898,7 +1953,7 @@
   // the visit came from (ARRIVED_FROM) and this page load's random id. Sent
   // as text/plain so the browser skips a CORS preflight. The site works
   // identically when it fails (file://, backend down): the tally stays hidden.
-  const STATS_URL = window.RF_STATS_URL || "https://runcabin.com/api/rhymer/searches";
+  const STATS_URL = devOverride("RF_STATS_URL") || "https://runcabin.com/api/rhymer/searches";
   const tallyEl = $("searchTally");
 
   function renderTally(n) {
@@ -1917,12 +1972,12 @@
         src: ARRIVED_FROM,
         visit: VISIT_ID,
       });
-      fetch(STATS_URL, {
+      fetchT(STATS_URL, {
         method: "POST",
         keepalive: true,
         headers: { "Content-Type": "text/plain;charset=UTF-8" },
         body,
-      })
+      }, TIMEOUT.quick)
         .then((r) => (r.ok ? r.json() : null))
         .then((j) => { if (j) renderTally(j.count); })
         .catch(() => { /* best-effort */ });
@@ -1930,7 +1985,7 @@
   }
 
   try {
-    fetch(STATS_URL)
+    fetchT(STATS_URL, null, TIMEOUT.quick)
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => { if (j) renderTally(j.count); })
       .catch(() => { /* tally stays hidden */ });
@@ -2263,9 +2318,10 @@
       }
       const year = String(d.written_on || "").slice(0, 4);
       meta.appendChild(udEl("span", null, "by " + (d.author || "anonymous") + (year ? ", " + year : "")));
-      if (d.permalink) {
+      const permalink = safeHttpUrl(d.permalink);
+      if (permalink) {
         const a = udEl("a", "ud-def-link", "open");
-        a.href = d.permalink;
+        a.href = permalink;
         a.target = "_blank";
         a.rel = "noopener";
         meta.appendChild(a);
@@ -2306,7 +2362,7 @@
     udOutEl.href = udLink(term);
     const cached = udDefCache.get(term);
     if (cached) { renderUdDefs(term, cached); return; }
-    fetch(UD_API + encodeURIComponent(term))
+    fetchT(UD_API + encodeURIComponent(term), null, TIMEOUT.quick)
       .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then((j) => {
         const list = (j && Array.isArray(j.list) ? j.list : [])
@@ -2383,7 +2439,7 @@
     wikOutEl.href = wikPageLink(term);
     const cached = wikDefCache.get(term);
     if (cached !== undefined) { renderWikDefs(term, cached); return; }
-    const fetchDef = (title) => fetch(WIK_API + encodeURIComponent(title.replace(/ /g, "_")))
+    const fetchDef = (title) => fetchT(WIK_API + encodeURIComponent(title.replace(/ /g, "_")), null, TIMEOUT.quick)
       .then((r) => {
         if (r.status === 404) return null;
         if (!r.ok) throw new Error("HTTP " + r.status);
@@ -2476,7 +2532,7 @@
   // deployed.
   const PEN_KEY = "rf_penname";
   function linesApiUrl() {
-    return window.RF_LINES_URL || "https://runcabin.com/api/rhymer/lines";
+    return devOverride("RF_LINES_URL") || "https://runcabin.com/api/rhymer/lines";
   }
 
   function lineWhen(iso) {
@@ -2614,7 +2670,7 @@
 
     let request;
     try {
-      request = fetch(linesApiUrl());
+      request = fetchT(linesApiUrl(), null, TIMEOUT.quick);
     } catch (e) { return; }   // file:// quirks — keep the section hidden
     request
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("wall " + r.status))))
@@ -2654,14 +2710,14 @@
         const title = voice.title();
         if (title) fd.append("title", title);
         fd.append("audio", take.blob, take.type.indexOf("mp4") >= 0 ? "bar.m4a" : "bar.webm");
-        request = fetch(linesApiUrl() + "/voice", { method: "POST", body: fd });
+        request = fetchT(linesApiUrl() + "/voice", { method: "POST", body: fd }, TIMEOUT.voice);
       } else {
         linesNoteSet("Checking your line…");
-        request = fetch(linesApiUrl(), {
+        request = fetchT(linesApiUrl(), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ penName: penName, line: line }),
-        });
+        }, TIMEOUT.line);
       }
 
       request
@@ -2692,7 +2748,9 @@
         .catch((err) => {
           linesNoteSet(err && err.message === "slow-down"
             ? "Easy — three drops a minute. Give it a moment."
-            : "Couldn't reach the wall — try again in a minute.", "err");
+            : err && err.name === "TimeoutError"
+              ? "The wall took too long to answer — try again in a minute."
+              : "Couldn't reach the wall — try again in a minute.", "err");
         })
         .finally(() => {
           btn.disabled = false;

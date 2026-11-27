@@ -72,6 +72,16 @@ when present the browser calls `api.anthropic.com` directly (via
 without the relay. It is **gitignored and must never be deployed**. Override the
 relay URL with `window.RF_SENSE_PROXY` for testing against dev.
 
+`key.local.js` and the `window.RF_*` overrides (`RF_DEFAULT_KEY`,
+`RF_SENSE_PROXY`, `RF_LINES_URL`, `RF_STATS_URL`) only take effect over
+`file://` or on `localhost` / `127.0.0.1`. The live site never requests
+`key.local.js` and ignores the overrides, so an accidentally uploaded key file
+can't end up on the page.
+
+Every network call goes through `fetchT()` in `app.js`, which aborts it after
+a timeout (`TIMEOUT` in `app.js`): 8 s for the tally, wall list and dictionary
+lookups, 25 s for the AI filter and typed wall lines, 60 s for voice clips.
+
 **Offline fallback.** If the relay is rate-limited, over budget, or unreachable,
 the filter degrades to bundled data: GloVe word vectors for **Related**
 (cosine ≥ 0.45 — `grass` keeps `meadow`/`lawn`/`pasture`, drops `car`) and
